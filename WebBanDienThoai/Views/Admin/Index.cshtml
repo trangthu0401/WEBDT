@@ -1,0 +1,104 @@
+﻿@{
+    Layout = "~/Views/Shared/Admin_Layout.cshtml";
+    ViewData["Title"] = "Tổng quan";
+}
+
+<div class="content-body">
+    <h1 class="content-title">Tổng quan</h1>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <p class="stat-card-title">Doanh thu</p>
+                <p class="stat-card-value">800,000,000</p>
+            </div>
+            <div class="stat-card-icon icon-revenue">
+                <img src="~/Image/Admin/Dashboard/admin_money_ic.png" alt="Revenue Icon" />
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <p class="stat-card-title">Sản phẩm</p>
+                <p class="stat-card-value">10293</p>
+            </div>
+            <div class="stat-card-icon icon-products">
+                <img src="~/Image/Admin/Dashboard/admin_product_icon.png" alt="Products Icon" />
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <p class="stat-card-title">Người dùng</p>
+                <p class="stat-card-value">89000</p>
+            </div>
+            <div class="stat-card-icon icon-users">
+                <img src="~/Image/Admin/Dashboard/admin_user_ic.png" alt="Users Icon" />
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <p class="stat-card-title">Đơn hàng</p>
+                <p class="stat-card-value">2040</p>
+            </div>
+            <div class="stat-card-icon icon-orders">
+                <img src="~/Image/Admin/Dashboard/admin_gift_ic.png" alt="Orders Icon" />
+            </div>
+        </div>
+
+    </section>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Doanh thu chi tiết</h3>
+            <div class="dropdown-selector">
+                <span>Tháng 10</span>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Sản phẩm bán chạy</h3>
+            <div class="dropdown-selector">
+                <span>Tháng 10</span>
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="bestseller-table">
+
+                <div class="bestseller-header">
+                    <span>Tên sản phẩm</span>
+                    <span>Xuất xứ</span>
+                    <span>Ngày</span>
+                    <span>Số lượng</span>
+                    <span>Giá</span>
+                    <span>Trạng thái</span>
+                </div>
+
+                <div class="bestseller-row">
+                    <div class="product-info">
+                        <img src="~/Image/apple-watch.png" alt="Apple Watch" class="bestseller-product-image">
+                        <span>Apple Watch</span>
+                    </div>
+
+                    <span>6096 Marjolaine Landing</span>
+                    <span>12.09.2019 - 12:53 PM</span>
+                    <span>423</span>
+                    <span>$34,295</span>
+
+                    <div>
+                        <span class="status-chip available">Còn hàng</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div> 

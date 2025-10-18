@@ -1,0 +1,111 @@
+﻿@{
+    Layout = "~/Views/Shared/Admin_Layout.cshtml";
+    ViewData["Title"] = "Sản phẩm";
+}
+
+    <div class="products-container">
+        <header class="products-header">
+        <form class="product-search-form">
+            <input type="text" placeholder="Tìm kiếm...">
+            <img src="~/Image/Admin/Product/search_black.png" alt="Search Icon">
+        </form>
+            <div class="products-actions">
+                <button class="btn btn-secondary">
+                    <span>Lọc</span>
+                    <img src="~/Image/Admin/Product/admin_filter.png" alt="Filter Icon">
+                </button>
+                <button class="btn btn-primary">
+                    <span>Thêm</span>
+                <img src="~/Image/Admin/Product/admin_add.png" alt="Add Icon">
+                </button>
+            </div>
+        </header>
+    <nav class="nav nav-pills nav-fill nav-container">
+        <a class="nav-link active" aria-current="page" href="#">Điện thoại(50)</a>
+        <a class="nav-link" href="#">Tai nghe</a>
+        <a class="nav-link" href="#">Laptop</a>
+        <a class="nav-link" href="#">Phụ kiện</a>
+    </nav>
+
+        <div class="table-responsive">
+            <div class="product-table">
+                <div class="table-header">
+                    <div class="table-cell product-col">Sản phẩm</div>
+                    <div class="table-cell price-col">Giá</div>
+                    <div class="table-cell qty-col">Số lượng</div>
+                    <div class="table-cell brand-col">Hãng</div>
+                    <div class="table-cell date-col">Ngày nhập</div>
+                    <div class="table-cell status-col">Trạng thái</div>
+                    <div class="table-cell action-col">Hành động</div>
+                </div>
+                <div class="table-body">
+                    <div class="table-row">
+                        <div class="table-cell product-col">
+                            <div class="product-info">
+                                <div class="product-image"></div>
+                                <div class="product-text">
+                                    <span class="product-id">021231</span>
+                                    <span class="product-name">Android 9</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-cell price-col">100.000 vnd</div>
+                        <div class="table-cell qty-col">40</div>
+                        <div class="table-cell brand-col">SamSung</div>
+                        <div class="table-cell date-col">04/17/23 <br>at 8:25 PM</div>
+                        <div class="table-cell status-col"><span class="status-chip available">Đang bán</span></div>
+                        <div class="table-cell action-col">
+                        <button><img src="~/Image/Admin/Product/view.png" alt="View"></button>
+                        <button><img src="~/Image/Admin/Product/edit.png" alt="Edit"></button>
+                        <button><img src="~/Image/Admin/Product/delete.png" alt="Delete"></button>
+                        </div>
+                    </div>
+                    <div class="table-row">
+                        <div class="table-cell product-col">
+                            <div class="product-info">
+                                <div class="product-image"></div>
+                                <div class="product-text">
+                                    <span class="product-id">021231</span>
+                                    <span class="product-name">Android 9 Pie</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-cell price-col">100.000 vnd</div>
+                        <div class="table-cell qty-col">40</div>
+                        <div class="table-cell brand-col">SamSung</div>
+                        <div class="table-cell date-col">04/17/23 <br>at 8:25 PM</div>
+                        <div class="table-cell status-col"><span class="status-chip hidden">Đã ẩn</span></div>
+                        <div class="table-cell action-col">
+                            <div class="crud">
+                            <button><img src="~/Image/Admin/Product/view.png" alt="View"></button>
+                            <button><img src="~/Image/Admin/Product/edit.png" alt="Edit"></button>
+                            <button><img src="~/Image/Admin/Product/delete.png" alt="Delete"></button>
+                            </div>
+                      
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="products-footer">
+            <div class="pagination-info">
+                <span class="page-count">1 - 10</span> of 13 Pages
+            </div>
+            <div class="pagination-controls">
+                <div class="page-selector">
+                    <span>The page on</span>
+                    <div class="dropdown">
+                        <span>1</span>
+                        <img src="${ASSET_PATH}/I496_860_183_15308.svg" alt="dropdown arrow">
+                    </div>
+                </div>
+                <div class="arrow-buttons">
+                    <button class="arrow-btn"><img src="${ASSET_PATH}/I496_860_183_15311.svg" alt="Previous Page"></button>
+                    <button class="arrow-btn"><img src="${ASSET_PATH}/I496_860_183_15313.svg" alt="Next Page"></button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+
