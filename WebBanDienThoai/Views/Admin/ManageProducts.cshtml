@@ -1,10 +1,10 @@
 ﻿@{
-    Layout = "~/Views/Shared/Admin_Layout.cshtml";
+    Layout = "~/Views/Shared/Admin_Layout1.cshtml";
     ViewData["Title"] = "Sản phẩm";
 }
-
+<link href="~/css/Dashboard.css" rel="stylesheet">
     <div class="products-container">
-        <header class="products-header">
+        <div class="products-header">
         <form class="product-search-form">
             <input type="text" placeholder="Tìm kiếm...">
             <img src="~/Image/Admin/Product/search_black.png" alt="Search Icon">
@@ -19,7 +19,7 @@
                 <img src="~/Image/Admin/Product/admin_add.png" alt="Add Icon">
                 </button>
             </div>
-        </header>
+        </div>
     <nav class="nav nav-pills nav-fill nav-container">
         <a class="nav-link active" aria-current="page" href="#">Điện thoại(50)</a>
         <a class="nav-link" href="#">Tai nghe</a>
@@ -89,22 +89,23 @@
         </div>
 
         <footer class="products-footer">
-            <div class="pagination-info">
-                <span class="page-count">1 - 10</span> of 13 Pages
-            </div>
-            <div class="pagination-controls">
-                <div class="page-selector">
-                    <span>The page on</span>
-                    <div class="dropdown">
-                        <span>1</span>
-                        <img src="${ASSET_PATH}/I496_860_183_15308.svg" alt="dropdown arrow">
-                    </div>
-                </div>
-                <div class="arrow-buttons">
-                    <button class="arrow-btn"><img src="${ASSET_PATH}/I496_860_183_15311.svg" alt="Previous Page"></button>
-                    <button class="arrow-btn"><img src="${ASSET_PATH}/I496_860_183_15313.svg" alt="Next Page"></button>
-                </div>
-            </div>
+        <nav aria-label="Page navigation example" class="ms-auto">
+            <ul class="pagination">
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
         </footer>
     </div>
 

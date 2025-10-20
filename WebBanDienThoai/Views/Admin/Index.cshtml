@@ -1,11 +1,11 @@
 ﻿@{
-    Layout = "~/Views/Shared/Admin_Layout.cshtml";
+    Layout = "~/Views/Shared/Admin_Layout1.cshtml";
     ViewData["Title"] = "Tổng quan";
 }
 
 <div class="content-body">
     <h1 class="content-title">Tổng quan</h1>
-
+    <link href="~/css/Dashboard.css" rel="stylesheet" />
     <section class="stats-grid">
         <div class="stat-card">
             <div class="stat-card-info">
@@ -58,47 +58,75 @@
             <canvas id="revenueChart"></canvas>
         </div>
     </div>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0">Sản phẩm bán chạy</h3>
 
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Sản phẩm bán chạy</h3>
-            <div class="dropdown-selector">
-                <span>Tháng 10</span>
-                <i class="fa-solid fa-chevron-down"></i>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Tháng 10
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Tháng 9</a></li>
+                    <li><a class="dropdown-item" href="#">Tháng 8</a></li>
+                </ul>
             </div>
         </div>
 
-        <div class="card-body">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
 
-            <div class="bestseller-table">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Tên sản phẩm</th>
+                        <th scope="col">Xuất xứ</th>
+                        <th scope="col">Ngày</th>
+                        <th scope="col">Số lượng</th>
+                        <th scope="col">Giá</th>
+                        <th scope="col">Trạng thái</th>
+                    </tr>
+                </thead>
 
-                <div class="bestseller-header">
-                    <span>Tên sản phẩm</span>
-                    <span>Xuất xứ</span>
-                    <span>Ngày</span>
-                    <span>Số lượng</span>
-                    <span>Giá</span>
-                    <span>Trạng thái</span>
-                </div>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="~/Image/Admin/Product/apple-watch.jpg" alt="Apple Watch" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 10px;">
+                                <span>Apple Watch</span>
+                            </div>
+                        </td>
 
-                <div class="bestseller-row">
-                    <div class="product-info">
-                        <img src="~/Image/apple-watch.png" alt="Apple Watch" class="bestseller-product-image">
-                        <span>Apple Watch</span>
-                    </div>
+                        <td>6096 Marjolaine Landing</td>
+                        <td>12.09.2019 - 12:53 PM</td>
+                        <td>423</td>
+                        <td>$34,295</td>
 
-                    <span>6096 Marjolaine Landing</span>
-                    <span>12.09.2019 - 12:53 PM</span>
-                    <span>423</span>
-                    <span>$34,295</span>
+                        <td>
+                            <span class="badge rounded-pill bg-success">Còn hàng</span>
+                        </td>
+                    </tr>
 
-                    <div>
-                        <span class="status-chip available">Còn hàng</span>
-                    </div>
-                </div>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="~/Image/samsung-s23.png" alt="Samsung S23" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 10px;">
+                                <span>Samsung S23</span>
+                            </div>
+                        </td>
+                        <td>Vietnam</td>
+                        <td>15.10.2025 - 10:30 AM</td>
+                        <td>150</td>
+                        <td>$1,199</td>
+                        <td>
+                            <span class="badge rounded-pill bg-warning text-dark">Sắp hết</span>
+                        </td>
+                    </tr>
 
-            </div>
+                </tbody>
+            </table>
         </div>
     </div>
+ 
+
 
 </div> 
