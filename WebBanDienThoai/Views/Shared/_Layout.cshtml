@@ -1,59 +1,72 @@
-﻿@{
-    Layout = null; // Không lồng layout vào layout khác
-}
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] - Rabit Store</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RabitStore</title>
 
-    <!-- Bootstrap 5 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/header.css" asp-append-version="true" />
 
-    <!-- Font Awesome cho icon -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-    <link href="~/css/master.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+    @RenderSection("Styles", required: false)
 </head>
 <body>
 
-    <!-- HEADER -->
-    <header>
-        <div class="header-left">
-            <img src="~/images/logo.png" alt="Rabit Store Logo" class="logo" />
-        </div>
+    <partial name="_Header" />
 
-        <div class="header-right">
-            <div class="header-search">
-                <input type="text" placeholder="Tìm kiếm..." />
-            </div>
-
-            <div class="header-icons">
-                <i class="fa-regular fa-bell"></i>
-                <i class="fa-solid fa-gear"></i>
-                <img src="https://i.pravatar.cc/100" alt="avatar" />
-            </div>
-        </div>
-    </header>
-
-
-    <!-- SIDEBAR + CONTENT -->
-    <div class="main-container">
-        <!-- Sidebar bên trái -->
-        <nav class="sidebar">
-            <a href="#" class="active"><i class="fa-solid fa-chart-line"></i> Tổng quan</a>
-            <a href="#"><i class="fa-solid fa-box"></i> Sản phẩm</a>
-            <a href="#"><i class="fa-solid fa-user"></i> Khách hàng</a>
-            <a href="#"><i class="fa-solid fa-cube"></i> Đơn hàng</a>
-        </nav>
-
-        <!-- Khu nội dung chính -->
-        <main class="content">
+    <div class="container">
+        <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <footer class="border-top footer text-muted">
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Đợi cho toàn bộ nội dung trang được tải
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Tìm nút tài khoản và menu dropdown
+            const userButton = document.querySelector('.user-dropdown .btn-user');
+            const userMenu = document.querySelector('.user-dropdown .user-dropdown-content');
+
+            // Kiểm tra xem cả hai có tồn tại không
+            if (userButton && userMenu) {
+
+                // 1. Gán sự kiện "click" cho NÚT TÀI KHOẢN
+                userButton.addEventListener('click', function(event) {
+                    // Ngăn sự kiện click lan ra ngoài (không cần thiết lắm nhưng an toàn)
+                    event.stopPropagation();
+
+                    // Thêm/Xóa class 'is-active' trên MENU
+                    userMenu.classList.toggle('is-active');
+                });
+
+                // 2. Gán sự kiện "click" cho TOÀN BỘ TRANG (document)
+                // Dùng để xử lý khi người dùng click ra ngoài
+                document.addEventListener('click', function(event) {
+
+                    // Nếu menu đang MỞ (có class 'is-active')
+                    // VÀ (&&)
+                    // Nơi bị click KHÔNG PHẢI là nút (hoặc con của nút)
+                    if (userMenu.classList.contains('is-active') && !userButton.contains(event.target)) {
+
+                        // Thì xóa class 'is-active' để đóng menu
+                        userMenu.classList.remove('is-active');
+                    }
+                });
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,25 +1,55 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore; // <-- Thêm EF Core
+using WebBanDienThoai.Data; // <-- Thêm namespace ch?a AppDbContext
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- 1. L?y chu?i k?t n?i ---
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// --- 2. ??ng ký d?ch v? (Services) ---
+
+// ??ng ký AppDbContext v?i SQL Server
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// ??ng ký d?ch v? cho Controllers và Views
 builder.Services.AddControllersWithViews();
 
+// ??ng ký d?ch v? Authentication (xác th?c) b?ng Cookie
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login"; // ???ng d?n ??n trang ??ng nh?p
+        options.AccessDeniedPath = "/Home/AccessDenied"; // (Tùy ch?n) Trang t? ch?i
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
+    });
+
+
+// --- 3. Xây d?ng ?ng d?ng (app) ---
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --- 4. C?u hình HTTP request pipeline (Middleware) ---
+
+// C?u hình cho môi tr??ng development
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(); // Cho phép dùng file CSS, JS, Images...
 
-app.UseRouting();
+app.UseRouting(); // B?t tính n?ng ??nh tuy?n (Routing)
 
-app.UseAuthorization();
+// KÍCH HO?T XÁC TH?C VÀ PHÂN QUY?N
+// (Ph?i n?m gi?a UseRouting và MapControllerRoute)
+app.UseAuthentication(); // <-- Quan tr?ng: Xác th?c
+app.UseAuthorization(); // <-- Quan tr?ng: Phân quy?n
 
+// C?u hình ??nh tuy?n m?c ??nh
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
