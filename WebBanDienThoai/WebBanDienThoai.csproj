@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\Image\Admin\linhvatcau 3.png" />
+    <None Include="wwwroot\images\Admin\linhvatcau 3.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,8 +22,6 @@
 
   <ItemGroup>
     <Folder Include="Data\" />
-    <Folder Include="Models\" />
-    <Folder Include="wwwroot\images\" />
     <Folder Include="wwwroot\js\" />
     <Folder Include="wwwroot\lib\bootstrap\" />
     <Folder Include="wwwroot\lib\bootstrap\dist\js\" />

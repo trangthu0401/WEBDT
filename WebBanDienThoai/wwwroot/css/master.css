@@ -1,4 +1,4 @@
-﻿﻿ /* Reset chung */
+﻿/* Reset chung */
 html, body {
     height: 100%;
     margin: 0;
@@ -20,9 +20,8 @@ header {
     left: 0;
     right: 0;
     z-index: 1000;
-   
 }
-}
+/* DẤU } THỪA ĐÃ BỊ XÓA Ở ĐÂY */
 
 /* Header-left = cùng chiều rộng sidebar */
 .header-left {
@@ -42,7 +41,6 @@ header {
     flex: 1; /* tự động chiếm hết phần còn lại */
     display: flex;
     align-items: center;
-    justify-content: space-between; /* tách hai bên */
     gap: 16px;
 }
 
@@ -129,3 +127,4 @@ header {
     padding: 24px;
     overflow-y: auto;
 }
+/* DẤU } THỪA ĐÃ BỊ XÓA Ở ĐÂY */
