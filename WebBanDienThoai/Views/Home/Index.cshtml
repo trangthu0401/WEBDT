@@ -1,48 +1,50 @@
-﻿@{
-    Layout = null; // Không lồng layout vào layout khác
+﻿@model WebBanDienThoai.Models.modelView.ManageProductsViewModel
+
+@{
+    Layout = null;
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Home - Rabit Store</title>
     <link rel="stylesheet" href="~/css/home.css">
 </head>
 <body>
     <header class="site-header">
         <div class="header-top">
             <div class="container header-top-container">
-                <a href="#" class="logo">
+                <a asp-controller="Home" asp-action="Index" class="logo">
                     <h1 class="logo-text">Rabit</h1>
-                    <img src="img/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
+                    <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
                     <h1 class="logo-text">Store</h1>
                 </a>
                 <form class="search-form">
                     <input type="text" placeholder="Tìm kiếm" class="search-input">
                     <button type="submit" class="search-button">
-                        <img src="img/search.png" alt="Search Icon">
+                        <img src="~/images/search.png" alt="Search Icon">
                     </button>
                 </form>
                 <div class="header-actions">
                     <a href="#" class="cart-link">
                         <span>Giỏ hàng</span>
-                        <img src="img/giohang.png" alt="Cart Icon">
+                        <img src="~/images/giohang.png" alt="Cart Icon">
                     </a>
                     <a href="#" class="user-profile">
                         <span>Trung</span>
-                        <img src="img/user.png" alt="User Icon">
+                        <img src="~/images/user.png" alt="User Icon">
                     </a>
                 </div>
             </div>
         </div>
         <nav class="main-nav">
             <div class="container nav-container">
-                <a href="#">Trang chủ</a>
-                <a href="#products">Yêu thích</a>
+                <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                <a asp-controller="Home" asp-action="Favorites">Yêu thích</a>
                 <a href="#" class="dropdown-link">
                     Danh mục
-                    <img src="img/chevron-down.png" alt="Dropdown arrow">
+                    <img src="~/images/chevron-down.png" alt="Dropdown arrow">
                 </a>
             </div>
         </nav>
@@ -52,28 +54,45 @@
         <div class="container hero-container">
             <aside class="category-sidebar">
                 <ul>
-                    <li><a href="#"><span>Điện thoại</span> <img src="img/next .png" alt="arrow"></a></li>
-                    <li><a href="#"><span>Tablet</span> <img src="img/next .png" alt="arrow"></a></li>
-                    <li><a href="#"><span>Tai nghe</span> <img src="img/next .png" alt="arrow"></a></li>
-                    <li><a href="#"><span>Loa</span> <img src="img/next .png" alt="arrow"></a></li>
-                    <li><a href="#"><span>Thu cũ</span> <img src="img/next .png" alt="arrow"></a></li>
+                    @if (Model.BrandCounts != null && Model.BrandCounts.Any())
+                    {
+                        <li class="@(Model.BrandId == null ? "active" : "")">
+                            <a asp-controller="Home" asp-action="Index" asp-route-id="">
+                                <span>Số hãng </span>
+                                <span class="badge">@Model.TotalProductCount</span>
+                            </a>
+                        </li>
+                        @foreach (var brand in Model.BrandCounts)
+                        {
+                            <li class="@(Model.BrandId == brand.brandId ? "active" : "")">
+                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId">
+                                    <span>@brand.BrandName</span>
+                                    <img src="~/images/next .png" alt="arrow">
+                                </a>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li><a href="#"><span>Chưa có danh mục</span></a></li>
+                    }
                 </ul>
             </aside>
             <div class="hero-carousel">
                 <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:90/plain/https://dashboard.cellphones.com.vn/storage/690x300_iPhone_17_Pro_Opensale_v3.png" alt="iPhone Air Banner" class="carousel-image">
                 <button class="carousel-control prev">
-                    <img src="img/muitenphai.png" alt="Previous">
+                    <img src="~/images/muitenphai.png" alt="Previous">
                 </button>
                 <button class="carousel-control next">
-                    <img src="img/muitenphai.png" alt="Next">
+                    <img src="~/images/muitenphai.png" alt="Next">
                 </button>
             </div>
             <aside class="ads-sidebar">
                 <a href="#" class="ad-banner">
-                    <img src="img/poster1.png" alt="Watch Series Ad">
-                    <a href="#" class="ad-banner">
-                        <img src="img/poster2.png" alt="S25 Series Ad">
-                    </a>
+                    <img src="~/images/poster1.png" alt="Watch Series Ad">
+                </a>
+                <a href="#" class="ad-banner">
+                    <img src="~/images/poster2.png" alt="S25 Series Ad">
                 </a>
             </aside>
         </div>
@@ -82,57 +101,91 @@
     <section id="products" class="products-section">
         <div class="container">
             <div class="product-grid">
-                <article class="product-card">
-                    <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:300:300/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone_air-3_2.jpg" alt="Iphone 16 air / VN" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Iphone 16 air / VN</h3>
-                        <p class="product-price">24.890.000đ</p>
-                        <button class="wishlist-button">
-                            <img src="img/tym.png" alt="Wishlist heart">
-                            <span>Yêu thích</span>
-                        </button>
-                    </div>
-                </article>
-                <article class="product-card">
-                    <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/d/i/dien-thoai-samsung-galaxy-s25_1__2.png" alt="Samsung S25 VN" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Samsung S25 VN</h3>
-                        <p class="product-price">19.690.000đ</p>
-                        <button class="wishlist-button">
-                            <img src="img/tym.png" alt="Wishlist heart">
-                            <span>Yêu thích</span>
-                        </button>
-                    </div>
-                </article>
-                <article class="product-card">
-                    <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/d/i/dien-thoai-xiaomi-15_11_.png" alt="Xiaomi 15 5G" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Xiaomi 15 5G</h3>
-                        <p class="product-price">21.590.000đ</p>
-                        <button class="wishlist-button">
-                            <img src="img/tym.png" alt="Wishlist heart">
-                            <span>Yêu thích</span>
-                        </button>
-                    </div>
-                </article>
-                <article class="product-card">
-                    <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/d/i/dien-thoai-sony-xperia-1-vii.png" alt="Sony Xperia VII" class="product-image">
-                    <div class="product-info">
-                        <h3 class="product-name">Sony Xperia VII</h3>
-                        <p class="product-price">35.990.000đ</p>
-                        <button class="wishlist-button">
-                            <img src="img/tym.png" alt="Wishlist heart">
-                            <span>Yêu thích</span>
-                        </button>
-                    </div>
-                </article>
+                @if (Model.Products != null && Model.Products.Any())
+                {
+                    @foreach (var product in Model.Products)
+                    {
+                        <article class="product-card">
+                            <img src="@(string.IsNullOrEmpty(product.MainImage) ? "~/images/default-product.png" : product.MainImage)"
+                                 alt="@product.Name" class="product-image">
+
+                            <div class="product-info">
+                                <h3 class="product-name">@product.Name</h3>
+                                <p class="product-price">@product.Price.ToString("N0")đ</p>
+
+                                @if (product.IsFavorited)
+                                {
+                                    <button class="wishlist-button liked" data-productid="@product.ProductId">
+                                        <img src="~/images/tym.png" alt="Wishlist heart">
+                                        <span>Đã thích</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="wishlist-button" data-productid="@product.ProductId">
+                                        <img src="~/images/tym.png" alt="Wishlist heart">
+                                        <span>Yêu thích</span>
+                                    </button>
+                                }
+                            </div>
+                        </article>
+                    }
+                }
+                else
+                {
+                    <p>Không tìm thấy sản phẩm nào phù hợp.</p>
+                }
             </div>
         </div>
         <a href="#" class="fab-contact">
             <span>Liên hệ</span>
-            <img src="img/lienhe.png" alt="Contact Icon">
+            <img src="~/images/lienhe.png" alt="Contact Icon">
         </a>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const wishlistButtons = document.querySelectorAll('.wishlist-button');
+
+            wishlistButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const productId = this.dataset.productid;
+                    const buttonElement = this;
+                    // Kiểm tra xem nút đã 'liked' chưa
+                    const isFavorited = buttonElement.classList.contains('liked');
+
+                    // Chọn đúng URL (Thêm hoặc Xóa)
+                    const url = isFavorited ? '/Home/RemoveFromFavorites/' + productId : '/Home/AddToFavorites/' + productId;
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            // 'RequestVerificationToken': ...
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            // Lật trạng thái
+                            if(isFavorited) {
+                                // Đã xóa -> Trở về bình thường
+                                buttonElement.classList.remove('liked');
+                                buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Yêu thích</span>';
+                            } else {
+                                // Đã thêm -> Chuyển sang đỏ
+                                buttonElement.classList.add('liked');
+                                buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Đã thích</span>';
+                            }
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            });
+        });
+    </script>
 </body>
 </html>
-    

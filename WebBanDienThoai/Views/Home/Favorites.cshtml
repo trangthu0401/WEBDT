@@ -1,0 +1,132 @@
+﻿@model WebBanDienThoai.Models.modelView.FavoritesViewModel
+
+@{
+    Layout = null; 
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản phẩm Yêu thích - Rabit Store</title>
+    <link rel="stylesheet" href="~/css/home.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-top">
+            <div class="container header-top-container">
+                <a asp-controller="Home" asp-action="Index" class="logo">
+                    <h1 class="logo-text">Rabit</h1>
+                    <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
+                    <h1 class="logo-text">Store</h1>
+                </a>
+                <form class="search-form">
+                    <input type="text" placeholder="Tìm kiếm" class="search-input">
+                    <button type="submit" class="search-button">
+                        <img src="~/images/search.png" alt="Search Icon">
+                    </button>
+                </form>
+                <div class="header-actions">
+                    <a href="#" class="cart-link">
+                        <span>Giỏ hàng</span>
+                        <img src="~/images/giohang.png" alt="Cart Icon">
+                    </a>
+                    <a href="#" class="user-profile">
+                        <span>Trung</span>
+                        <img src="~/images/user.png" alt="User Icon">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container nav-container">
+                <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                <a asp-controller="Home" asp-action="Favorites">Yêu thích</a>
+                <a href="#" class="dropdown-link">
+                    Danh mục
+                    <img src="~/images/chevron-down.png" alt="Dropdown arrow">
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <section id="products" class="products-section">
+        <div class="container">
+            
+            <h2 style="text-align: center; margin-bottom: 30px; font-size: 2.5rem; color: var(--primary-red);">
+                Sản phẩm Yêu thích của bạn
+            </h2>
+
+            <div class="product-grid">
+                @if (Model.FavoriteProducts != null && Model.FavoriteProducts.Any())
+                {
+                    @foreach (var product in Model.FavoriteProducts)
+                    {
+                        <article class="product-card" id="product-card-@product.ProductId">
+                            <img src="@(string.IsNullOrEmpty(product.MainImage) ? "~/images/default-product.png" : product.MainImage)"
+                                 alt="@product.Name" class="product-image">
+
+                            <div class="product-info">
+                                <h3 class="product-name">@product.Name</h3>
+                                <p class="product-price">@product.Price.ToString("N0")đ</p>
+                                
+                                <button class="wishlist-button remove-favorite-button" data-productid="@product.ProductId">
+                                    <span>➖ Xóa</span>
+                                </button>
+                            </div>
+                        </article>
+                    }
+                }
+                else
+                {
+                    <p style="text-align: center; font-size: 1.2rem; width: 100%;">
+                        Bạn chưa có sản phẩm yêu thích nào.
+                    </p>
+                }
+            </div>
+        </div>
+        
+        <a href="#" class="fab-contact">
+            <span>Liên hệ</span>
+            <img src="~/images/lienhe.png" alt="Contact Icon">
+        </a>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Tìm tất cả các nút ".remove-favorite-button"
+            const removeButtons = document.querySelectorAll('.remove-favorite-button');
+            
+            removeButtons.forEach(button => {
+                // 2. Gán sự kiện 'click' cho mỗi nút
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); 
+                    
+                    const productId = this.dataset.productid;
+                    const buttonElement = this;
+                    // Tìm card sản phẩm cha (để xóa)
+                    const cardElement = buttonElement.closest('.product-card');
+
+                    // 3. Gửi request POST đến Controller
+                    fetch('/Home/RemoveFromFavorites/' + productId, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 4. Xử lý kết quả
+                        if(data.success) {
+                            // Nếu thành công, xóa card sản phẩm khỏi giao diện
+                            if (cardElement) {
+                                cardElement.remove();
+                            }
+                        } else {
+                            alert(data.message); 
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            });
+        });
+    </script>
+</body>
+</html>
