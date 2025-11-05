@@ -21,9 +21,6 @@ namespace WebBanDienThoai.Models.modelView
         public bool? IsActive { get; set; }
         public decimal Price { get; set; }
         public int Stock { get; set; }
-
-        // === THÊM DÒNG NÀY ===
-        // (Để trang Index biết sản phẩm này đã được thích hay chưa)
         public bool IsFavorited { get; set; } = false;
     }
 

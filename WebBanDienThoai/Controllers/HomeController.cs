@@ -4,7 +4,7 @@ using WebBanDienThoai.Models;
 using WebBanDienThoai.Models.modelView;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
-using System.Threading.Tasks; // Đảm bảo bạn có dòng này
+using System.Threading.Tasks;
 
 namespace WebBanDienThoai.Controllers
 {
@@ -19,16 +19,16 @@ namespace WebBanDienThoai.Controllers
             _context = context;
         }
 
-        // === SỬA (NÂNG CẤP LÊN ASYNC) ===
-        public async Task<IActionResult> Index(int? id) // id là BrandId
+        // === SỬA: Thêm 'string sortOrder' ===
+        public async Task<IActionResult> Index(int? id, string sortOrder)
         {
+            // Truyền sortOrder sang View để biết nút nào đang active
+            ViewData["CurrentSort"] = sortOrder;
+
             try
             {
-                // === THÊM LOGIC LẤY DS YÊU THÍCH CỦA USER ===
-                // TODO: Thay thế '1' bằng ID của khách hàng đã đăng nhập
                 int customerId = 1;
                 var favoritedVariantIds = new HashSet<int?>();
-                // Dùng 'CustomerId' (chữ 'd' thường) như file Favorite.cs của bạn
                 var customerFavorite = await _context.Favorites
                                       .Include(f => f.FavoriteDetails)
                                       .FirstOrDefaultAsync(f => f.CustomerId == customerId);
@@ -37,22 +37,18 @@ namespace WebBanDienThoai.Controllers
                 {
                     favoritedVariantIds = customerFavorite.FavoriteDetails.Select(fd => fd.VariantId).ToHashSet();
                 }
-                // === KẾT THÚC LOGIC MỚI ===
 
-
-                // 1. Bắt đầu truy vấn, KHÔNG GỌI .Include() vội
                 var productsQuery = _context.Products
                     .AsNoTracking()
                     .Where(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
 
-                // 2. Thêm logic lọc (FILTER)
                 if (id != null && id > 0)
                 {
                     productsQuery = productsQuery.Where(p => p.BrandId == id);
                 }
 
-                // 3. Thực thi: GỌI .Include() SAU CÙNG, TRƯỚC .Select()
-                var dsSanPham = productsQuery
+                // === SỬA: Tách .Select() ra để sắp xếp (Sort) ===
+                var viewModelQuery = productsQuery
                     .Include(p => p.Brand)
                     .Select(p => new ProductListViewModel
                     {
@@ -69,14 +65,26 @@ namespace WebBanDienThoai.Controllers
                         Stock = p.ProductVariants
                                  .Where(v => v.IsActive == true)
                                  .Sum(v => v.Stock ?? 0),
-
-                        // === THÊM DÒNG NÀY ===
-                        // (Kiểm tra xem CÓ BẤT KỲ biến thể nào của SP này nằm trong ds yêu thích không)
                         IsFavorited = p.ProductVariants.Any(v => favoritedVariantIds.Contains(v.VariantId))
-                    })
-                    .ToList();
+                    });
 
-                var dsHang = _context.Brands
+                // === THÊM LOGIC SẮP XẾP MỚI ===
+                switch (sortOrder)
+                {
+                    case "price_desc": // Giá cao -> thấp
+                        viewModelQuery = viewModelQuery.OrderByDescending(p => p.Price);
+                        break;
+                    case "price_asc": // Giá thấp -> cao
+                        viewModelQuery = viewModelQuery.OrderBy(p => p.Price);
+                        break;
+                    default: // Mặc định: Mới nhất
+                        viewModelQuery = viewModelQuery.OrderByDescending(p => p.CreatedDate);
+                        break;
+                }
+
+                var dsSanPham = await viewModelQuery.ToListAsync(); // Chuyển sang ToListAsync
+
+                var dsHang = await _context.Brands // Dùng async
                     .AsNoTracking()
                     .Where(b => b.Products.Any(p => p.IsActive == true))
                     .Select(b => new BrandCount
@@ -85,10 +93,10 @@ namespace WebBanDienThoai.Controllers
                         BrandName = b.BrandName,
                         Count = b.Products.Count(p => p.IsActive == true)
                     })
-                    .ToList();
+                    .ToListAsync();
 
-                var totalProductCount = _context.Products
-                    .Count(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
+                var totalProductCount = await _context.Products // Dùng async
+                    .CountAsync(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
 
                 var viewModel = new ManageProductsViewModel
                 {
@@ -107,35 +115,49 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === ACTION (GET) HIỂN THỊ TRANG YÊU THÍCH (ĐÃ SỬA LỖI) ===
-        public async Task<IActionResult> Favorites()
+        // === SỬA: Thêm 'string sortOrder' ===
+        public async Task<IActionResult> Favorites(string sortOrder)
         {
+            // Truyền sortOrder sang View
+            ViewData["CurrentSort"] = sortOrder;
+
             try
             {
                 int customerId = 1;
 
-                var favoriteProducts = await _context.FavoriteDetails
+                // Tách truy vấn ra
+                var favoritesQuery = _context.FavoriteDetails
                     .AsNoTracking()
-                    // === SỬA LỖI Ở ĐÂY: Dùng 'CustomerId' (chữ 'd' thường) ===
                     .Where(fd => fd.Favorite.CustomerId == customerId && fd.Variant.IsActive == true)
                     .Include(fd => fd.Variant.Product.Brand)
                     .Select(fd => fd.Variant)
                     .Select(v => new ProductListViewModel
                     {
-                        // === SỬA LỖI Ở ĐÂY: Thêm ProductId để JavaScript biết xóa SP nào ===
-                        ProductId = v.ProductId, // Quan trọng cho nút Xóa
+                        ProductId = v.ProductId,
                         Name = v.Product.Name + " (" + v.Color + ", " + v.Storage + ")",
                         MainImage = v.ImageUrl ?? v.Product.MainImage,
                         BrandName = v.Product.Brand.BrandName,
                         IsActive = v.IsActive ?? false,
                         CreatedDate = v.CreatedDate ?? DateTime.MinValue,
-
-                        // === SỬA LỖI Ở ĐÂY: Thêm ?? 0M ===
                         Price = (v.DiscountPrice ?? v.Price) ?? 0M,
-
                         Stock = v.Stock ?? 0
-                    })
-                    .ToListAsync();
+                    });
+
+                // === THÊM LOGIC SẮP XẾP MỚI ===
+                switch (sortOrder)
+                {
+                    case "price_desc": // Giá cao -> thấp
+                        favoritesQuery = favoritesQuery.OrderByDescending(p => p.Price);
+                        break;
+                    case "price_asc": // Giá thấp -> cao
+                        favoritesQuery = favoritesQuery.OrderBy(p => p.Price);
+                        break;
+                    default: // Mặc định: Mới nhất
+                        favoritesQuery = favoritesQuery.OrderByDescending(p => p.CreatedDate);
+                        break;
+                }
+
+                var favoriteProducts = await favoritesQuery.ToListAsync();
 
                 var viewModel = new FavoritesViewModel
                 {
@@ -151,7 +173,7 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === ACTION (POST) LƯU YÊU THÍCH (ĐÃ SỬA LỖI) ===
+        // === ACTION (POST) LƯU YÊU THÍCH (Không đổi) ===
         [HttpPost]
         public async Task<IActionResult> AddToFavorites(int id)
         {
@@ -159,13 +181,11 @@ namespace WebBanDienThoai.Controllers
             {
                 int customerId = 1;
 
-                // === SỬA LỖI Ở ĐÂY: Dùng 'CustomerId' (chữ 'd' thường) ===
                 var customerFavorite = await _context.Favorites
                                     .FirstOrDefaultAsync(f => f.CustomerId == customerId);
 
                 if (customerFavorite == null)
                 {
-                    // === SỬA LỖI Ở ĐÂY: Dùng 'CustomerId' (chữ 'd' thường) ===
                     customerFavorite = new Favorite { CustomerId = customerId };
                     _context.Favorites.Add(customerFavorite);
                     await _context.SaveChangesAsync();
@@ -203,7 +223,7 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === ACTION (POST) MỚI: ĐỂ XÓA KHỎI YÊU THÍCH ===
+        // === ACTION (POST) XÓA KHỎI YÊU THÍCH (Không đổi) ===
         [HttpPost]
         public async Task<IActionResult> RemoveFromFavorites(int id)
         {
@@ -212,16 +232,14 @@ namespace WebBanDienThoai.Controllers
                 int customerId = 1;
 
                 var customerFavorite = await _context.Favorites
-                                      .Include(f => f.FavoriteDetails) // Tải chi tiết
+                                      .Include(f => f.FavoriteDetails)
                                       .FirstOrDefaultAsync(f => f.CustomerId == customerId);
 
                 if (customerFavorite == null)
                 {
-                    // Không có gì để xóa
                     return Json(new { success = true });
                 }
 
-                // Tìm (các) biến thể của sản phẩm này (ProductId)
                 var variantIdsToRemove = await _context.ProductVariants
                     .Where(v => v.ProductId == id)
                     .Select(v => v.VariantId)
@@ -232,10 +250,9 @@ namespace WebBanDienThoai.Controllers
                     return Json(new { success = false, message = "Không tìm thấy sản phẩm." });
                 }
 
-                // Tìm chi tiết yêu thích khớp với các biến thể
                 var detailToRemove = customerFavorite.FavoriteDetails
                     .Where(fd => fd.VariantId != null && variantIdsToRemove.Contains(fd.VariantId.Value))
-                    .ToList(); // Lấy tất cả chi tiết khớp
+                    .ToList();
 
                 if (detailToRemove.Any())
                 {

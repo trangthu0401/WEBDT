@@ -1,7 +1,9 @@
 ﻿@model WebBanDienThoai.Models.modelView.FavoritesViewModel
 
 @{
-    Layout = null; 
+    Layout = null;
+    // Lấy giá trị sortOrder hiện tại từ Controller
+    var currentSort = ViewData["CurrentSort"] as string;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -52,11 +54,26 @@
 
     <section id="products" class="products-section">
         <div class="container">
-            
+
             <h2 style="text-align: center; margin-bottom: 30px; font-size: 2.5rem; color: var(--primary-red);">
                 Sản phẩm Yêu thích của bạn
             </h2>
 
+            <div class="sort-buttons">
+                <span>Sắp xếp theo:</span>
+                <a asp-controller="Home" asp-action="Favorites" asp-route-sortOrder=""
+                   class="sort-btn @(string.IsNullOrEmpty(currentSort) ? "active" : "")">
+                    Mới nhất
+                </a>
+                <a asp-controller="Home" asp-action="Favorites" asp-route-sortOrder="price_asc"
+                   class="sort-btn @(currentSort == "price_asc" ? "active" : "")">
+                    Giá thấp -> cao
+                </a>
+                <a asp-controller="Home" asp-action="Favorites" asp-route-sortOrder="price_desc"
+                   class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
+                    Giá cao -> thấp
+                </a>
+            </div>
             <div class="product-grid">
                 @if (Model.FavoriteProducts != null && Model.FavoriteProducts.Any())
                 {
@@ -69,7 +86,7 @@
                             <div class="product-info">
                                 <h3 class="product-name">@product.Name</h3>
                                 <p class="product-price">@product.Price.ToString("N0")đ</p>
-                                
+
                                 <button class="wishlist-button remove-favorite-button" data-productid="@product.ProductId">
                                     <span>➖ Xóa</span>
                                 </button>
@@ -79,13 +96,13 @@
                 }
                 else
                 {
-                    <p style="text-align: center; font-size: 1.2rem; width: 100%;">
+                    <p style="text-align: center; font-size: 1.2rem; width: 100%;" id="empty-favorites-message">
                         Bạn chưa có sản phẩm yêu thích nào.
                     </p>
                 }
             </div>
         </div>
-        
+
         <a href="#" class="fab-contact">
             <span>Liên hệ</span>
             <img src="~/images/lienhe.png" alt="Contact Icon">
@@ -94,33 +111,31 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 1. Tìm tất cả các nút ".remove-favorite-button"
             const removeButtons = document.querySelectorAll('.remove-favorite-button');
-            
+
             removeButtons.forEach(button => {
-                // 2. Gán sự kiện 'click' cho mỗi nút
                 button.addEventListener('click', function(e) {
-                    e.preventDefault(); 
-                    
+                    e.preventDefault();
+
                     const productId = this.dataset.productid;
                     const buttonElement = this;
-                    // Tìm card sản phẩm cha (để xóa)
                     const cardElement = buttonElement.closest('.product-card');
 
-                    // 3. Gửi request POST đến Controller
                     fetch('/Home/RemoveFromFavorites/' + productId, {
                         method: 'POST'
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // 4. Xử lý kết quả
                         if(data.success) {
-                            // Nếu thành công, xóa card sản phẩm khỏi giao diện
                             if (cardElement) {
                                 cardElement.remove();
                             }
+                            const remainingCards = document.querySelectorAll('.product-card');
+                            if (remainingCards.length === 0) {
+                                document.getElementById('empty-favorites-message').style.display = 'block';
+                            }
                         } else {
-                            alert(data.message); 
+                            alert(data.message);
                         }
                     })
                     .catch(error => console.error('Error:', error));

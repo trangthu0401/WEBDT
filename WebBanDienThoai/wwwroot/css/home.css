@@ -17,7 +17,6 @@
     padding: 0;
 }
 
-/* SỬA: Đổi font-family mặc định */
 body {
     font-family: 'Be Vietnam Pro', sans-serif;
     font-weight: 400;
@@ -97,7 +96,6 @@ img {
 }
 
 .logo-text {
-    /* SỬA: Xóa font-family (đã kế thừa từ body) */
     font-weight: 700;
     font-size: 40px;
     color: var(--primary-red);
@@ -127,7 +125,6 @@ img {
     border: 1px solid var(--text-placeholder);
     border-radius: 99px;
     padding: 10px 90px 10px 20px;
-    /* SỬA: Xóa font-family (đã kế thừa từ body) */
     font-size: 20px;
     color: var(--text-dark);
 }
@@ -170,7 +167,6 @@ img {
     color: var(--text-light);
     padding: 5px 15px;
     border-radius: 15px;
-    /* SỬA: Xóa font-family (đã kế thừa từ body) */
     font-size: 24px;
     font-weight: 500;
     height: 45px;
@@ -189,7 +185,6 @@ img {
     border: 1px solid var(--border-light);
     border-radius: 15px;
     padding: 7px 15px;
-    /* SỬA: Xóa font-family (đã kế thừa từ body) */
     font-size: 24px;
     font-weight: 500;
     height: 50px;
@@ -213,7 +208,6 @@ img {
 }
 
     .nav-container a {
-        /* SỬA: Xóa font-family (đã kế thừa từ body) */
         font-size: 20px;
         font-weight: 500;
         display: flex;
@@ -427,13 +421,11 @@ img {
     flex-grow: 1;
 }
 
-/* SỬA: Xóa font-family (kế thừa từ body) */
 .product-name {
     font-size: 18px;
     margin-bottom: 10px;
 }
 
-/* SỬA: Xóa font-family (kế thừa) và thêm font-weight */
 .product-price {
     font-size: 18px;
     font-weight: 600;
@@ -457,6 +449,8 @@ img {
     .wishlist-button img {
         width: 18px;
         height: 18px;
+        /* Thêm transition để trái tim chuyển màu mượt hơn */
+        transition: filter 0.2s ease-in-out;
     }
 
 .fab-contact {
@@ -535,4 +529,78 @@ img {
 
     .remove-favorite-button:hover {
         background-color: #f0f0f0;
+    }
+
+/* === DÁN TOÀN BỘ CODE NÀY VÀO CUỐI FILE home.css === */
+
+/* 1. Sửa lỗi màu xanh ở sidebar, đổi sang màu đỏ */
+.category-sidebar li.active a {
+    font-weight: bold;
+    color: var(--primary-red-solid) !important; /* Đổi thành màu đỏ */
+    background-color: rgba(255, 0, 0, 0.05) !important; /* Đổi thành màu nền đỏ nhạt */
+}
+
+.category-sidebar li.active .badge {
+    background-color: var(--primary-red-solid) !important;
+    color: white !important;
+}
+
+/* 2. Style cho nút "Đã thích" (chữ đỏ, tim đỏ) */
+.wishlist-button.liked {
+    color: var(--primary-red-solid) !important;
+}
+
+    .wishlist-button.liked img {
+        /* Filter CSS để đổi ảnh 'tym.png' (màu đen) sang màu đỏ (#ff2626) */
+        filter: invert(24%) sepia(91%) saturate(5451%) hue-rotate(347deg) brightness(101%) contrast(102%);
+    }
+
+/* 3. Style cho nút "Xóa" (dấu trừ) trên trang Yêu thích */
+.remove-favorite-button {
+    color: #555 !important;
+    font-weight: 600;
+}
+
+    .remove-favorite-button:hover {
+        background-color: #f0f0f0;
+    }
+
+/* 4. Style cho các nút Sắp xếp (Sort) mới */
+.sort-buttons {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap; /* Cho responsive */
+}
+
+    .sort-buttons span {
+        font-size: 18px;
+        font-weight: 600;
+        margin-right: 10px;
+    }
+
+.sort-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    font-size: 16px;
+    color: var(--text-dark);
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+    .sort-btn:hover {
+        background-color: #e2e6ea;
+        border-color: var(--border-medium);
+    }
+
+    /* Style cho nút đang được chọn */
+    .sort-btn.active {
+        background-color: var(--primary-red-solid);
+        color: var(--text-light);
+        border-color: var(--primary-red-solid);
+        font-weight: 600;
     }

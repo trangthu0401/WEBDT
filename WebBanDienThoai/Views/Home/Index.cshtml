@@ -2,6 +2,8 @@
 
 @{
     Layout = null;
+    // Lấy giá trị sortOrder hiện tại từ Controller
+    var currentSort = ViewData["CurrentSort"] as string;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -58,7 +60,7 @@
                     {
                         <li class="@(Model.BrandId == null ? "active" : "")">
                             <a asp-controller="Home" asp-action="Index" asp-route-id="">
-                                <span>Số hãng </span>
+                                <span>Số hãng kinh doanh</span>
                                 <span class="badge">@Model.TotalProductCount</span>
                             </a>
                         </li>
@@ -100,6 +102,22 @@
 
     <section id="products" class="products-section">
         <div class="container">
+
+            <div class="sort-buttons">
+                <span>Sắp xếp theo:</span>
+                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder=""
+                   class="sort-btn @(string.IsNullOrEmpty(currentSort) ? "active" : "")">
+                    Mới nhất
+                </a>
+                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_asc"
+                   class="sort-btn @(currentSort == "price_asc" ? "active" : "")">
+                    Giá thấp -> cao
+                </a>
+                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_desc"
+                   class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
+                    Giá cao -> thấp
+                </a>
+            </div>
             <div class="product-grid">
                 @if (Model.Products != null && Model.Products.Any())
                 {
@@ -153,10 +171,7 @@
 
                     const productId = this.dataset.productid;
                     const buttonElement = this;
-                    // Kiểm tra xem nút đã 'liked' chưa
                     const isFavorited = buttonElement.classList.contains('liked');
-
-                    // Chọn đúng URL (Thêm hoặc Xóa)
                     const url = isFavorited ? '/Home/RemoveFromFavorites/' + productId : '/Home/AddToFavorites/' + productId;
 
                     fetch(url, {
@@ -168,13 +183,10 @@
                     .then(response => response.json())
                     .then(data => {
                         if(data.success) {
-                            // Lật trạng thái
                             if(isFavorited) {
-                                // Đã xóa -> Trở về bình thường
                                 buttonElement.classList.remove('liked');
                                 buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Yêu thích</span>';
                             } else {
-                                // Đã thêm -> Chuyển sang đỏ
                                 buttonElement.classList.add('liked');
                                 buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Đã thích</span>';
                             }
