@@ -1,0 +1,210 @@
+﻿@model WebBanDienThoai.Models.ViewModels.OrderDetailViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = $"Chi tiết Đơn hàng #{Model.OrderId}";
+
+    // --- Logic cho thanh trạng thái ---
+    int progressPercent = 0;
+    bool step1Active = true; // "Chờ xác nhận" luôn active
+    bool step2Active = false;
+    bool step3Active = false;
+
+    switch (Model.OrderStatus)
+    {
+        case "Chờ xác nhận":
+            progressPercent = 25; // Có thể coi Đang xử lý là 25%
+            step2Active = true;
+            break;
+        case "Đang giao":
+            progressPercent = 50; // 50%
+            step2Active = true;
+            break;
+        case "Đã giao":
+            progressPercent = 100; // 100%
+            step2Active = true;
+            step3Active = true;
+            break;
+        case "Đã hủy":
+            progressPercent = 0;
+            break;
+    }
+}
+
+<!-- Link file CSS cho thanh trạng thái (Thêm ?v=1 để tránh cache) -->
+<link href="~/css/Admin_Order/progress-bar.css?v=1" rel="stylesheet" />
+
+<div class="container py-4">
+
+    <!-- HÀNG TIÊU ĐỀ VÀ NÚT BẤM -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="fw-bold mb-0">Chi tiết Đơn hàng #@Model.OrderId</h2>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </a>
+
+            <!-- NÚT CẬP NHẬT TRẠNG THÁI -->
+            @if (Model.OrderStatus != "Đã giao" && Model.OrderStatus != "Đã hủy")
+            {
+                <form asp-action="AdvanceStatus" method="post" class="d-inline"
+                      data-confirm="true"
+                      data-confirm-title="@(Model.OrderStatus == "Đang giao" ? "Xác nhận đã giao hàng" : "Xác nhận đơn hàng")"
+                      data-confirm-message="@(Model.OrderStatus == "Đang giao" ? "Bạn có chắc chắn muốn xác nhận đơn hàng này ĐÃ GIAO THÀNH CÔNG không?" : "Bạn có chắc chắn muốn xác nhận và giao đơn hàng này không?")"
+                      data-confirm-button-text="@(Model.OrderStatus == "Đang giao" ? "Xác nhận Đã giao" : "Xác nhận")"
+                      data-confirm-button-class="@(Model.OrderStatus == "Đang giao" ? "btn-success" : "btn-primary")"
+                      data-confirm-header-class="@(Model.OrderStatus == "Đang giao" ? "bg-success text-white" : "bg-primary text-white")">
+                    <input type="hidden" name="orderId" value="@Model.OrderId" />
+
+                    @if (Model.OrderStatus == "Chờ xác nhận" || Model.OrderStatus == "Đang xử lý")
+                    {
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-box-seam me-1"></i> Xác nhận & Giao hàng
+                        </button>
+                    }
+                    else if (Model.OrderStatus == "Đang giao")
+                    {
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i> Xác nhận Đã giao
+                        </button>
+                    }
+                </form>
+            }
+        </div>
+    </div>
+
+    <!-- THANH TRẠNG THÁI TIẾN TRÌNH -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="progress-track">
+                <!-- Đường kẻ tiến trình màu xanh -->
+                <div class="progress-line" style="width: @progressPercent%;"></div>
+
+                <!-- Bước 1: Chờ xác nhận -->
+                <div class="progress-step @(step1Active ? "active" : "")">
+                    <i class="bi bi-patch-check-fill"></i>
+                    <div class="step-label">Chờ xác nhận</div>
+                </div>
+
+                <!-- Bước 2: Đang giao -->
+                <div class="progress-step @(step2Active ? "active" : "")">
+                    <i class="bi bi-truck"></i>
+                    <div class="step-label">@Model.OrderStatus</div>
+                </div>
+
+                <!-- Bước 3: Đã giao -->
+                <div class="progress-step @(step3Active ? "active" : "")">
+                    <i class="bi bi-house-check-fill"></i>
+                    <div class="step-label">Đã giao</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BỐ CỤC CHIA ĐÔI -->
+    <div class="row g-4">
+
+        <!-- CỘT BÊN TRÁI (CHI TIẾT SẢN PHẨM) -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header text-white" style="background-color: #e63737;">
+                    <i class="bi bi-basket-fill me-1"></i> Chi tiết Sản phẩm
+                </div>
+                <div class="card-body p-0">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-3 ps-3">Sản phẩm</th>
+                                <th class="text-center">Đơn giá</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-center pe-3">Tổng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                // --- LOGIC HIỂN THỊ ẢNH (THEO YÊU CẦU CỦA BẠN) ---
+                                // Giả định: item.ImageUrl là tên file (vd: "iphone.jpg")
+                                // và được lưu trong thư mục ~/images/products/
+                                // Nếu rỗng, dùng ảnh default.
+                                var imagePath = !string.IsNullOrEmpty(item.ImageUrl)
+                                ? $"~/images/products/{item.ImageUrl}" // Đường dẫn ảnh SP
+                                : "~/images/productDefault.png";   // Ảnh mặc định
+
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="d-flex align-items-center">
+                                            <img src="@Url.Content(imagePath)"
+                                                 alt="@item.ProductName"
+                                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+
+                                            <div class="ms-3">
+                                                <strong class="d-block">@item.ProductName</strong>
+                                                <small class="text-muted">@item.Color, @item.Storage</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">@item.UnitPrice.ToString("N0", new CultureInfo("vi-VN")) ₫</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-center pe-3 fw-bold">@item.TotalItemPrice.ToString("N0", new CultureInfo("vi-VN")) ₫</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <!-- Dòng tổng tiền -->
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold pe-3">Tổng cộng:</td>
+                                <td class="text-center fw-bold fs-5 pe-3">
+                                    @Model.TotalAmount.ToString("N0", new CultureInfo("vi-VN")) ₫
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT BÊN PHẢI (THÔNG TIN KHÁCH) -->
+        <div class="col-lg-4">
+            <!-- Thông tin giao hàng -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <i class="bi bi-person-fill me-1"></i> Thông tin Người nhận
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted">Tên người nhận</h6>
+                    <p class="fw-bold">@Model.ShippingFullName</p>
+
+                    <h6 class="text-muted">Số điện thoại</h6>
+                    <p class="fw-bold">@Model.ShippingPhone</p>
+
+                    <h6 class="text-muted">Địa chỉ giao hàng</h6>
+                    <p>@Model.ShippingFullAddress</p>
+                </div>
+            </div>
+
+            <!-- Thông tin thanh toán & Vận chuyển -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <i class="bi bi-credit-card-fill me-1"></i> Thanh toán & Vận chuyển
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted">Phương thức thanh toán</h6>
+                    <p>@Model.PaymentMethod</p>
+
+                    <h6 class="text-muted">Trạng thái thanh toán</h6>
+                    <p>@Model.PaymentStatus</p>
+
+                    <hr>
+
+                    <h6 class="text-muted">Đơn vị vận chuyển</h6>
+                    <p>@Model.Carrier</p>
+
+                    <h6 class="text-muted">Mã vận đơn</h6>
+                    <p>@Model.TrackingNumber</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

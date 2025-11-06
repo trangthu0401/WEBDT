@@ -1,0 +1,147 @@
+﻿@model WebBanDienThoai.Models.ViewModels.CustomerDetailViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết khách hàng";
+}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Chi tiết khách hàng</h2>
+        <a asp-controller="Customer" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="card shadow-sm p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-center">
+                        <img src="~/images/avatar-default.jpg" class="rounded-circle mb-3" width="120" height="120" />
+                        <h4 class="fw-bold mb-1">@Model.FullName</h4>
+                    </div>
+
+                    <!-- Cột 2: Thông tin cá nhân -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <h6 class="text-muted">Giới tính</h6>
+                            <p>@Model.Gender</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-muted">Ngày sinh</h6>
+                            <p>@(Model.BirthDate?.ToString("dd/MM/yyyy") ?? "-")</p>
+                        </div>
+                    </div>
+
+                    <!-- Cột 3: Số điện thoại + Hạng khách hàng -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <h6 class="text-muted">Số điện thoại</h6>
+                            <p>@Model.Phone</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-muted">Hạng khách hàng</h6>
+                            @if (Model.CustomerType == "VIP")
+                            {
+                                <span class="badge bg-danger px-3 py-2 rounded-pill">VIP</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success px-3 py-2 rounded-pill">Thường</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#addressList" aria-expanded="false" aria-controls="addressList">
+                    <i class="bi bi-geo-alt me-1"></i> Xem địa chỉ
+                </button>
+            </div>
+
+            <div class="collapse mt-3" id="addressList">
+                <div class="card card-body shadow-sm">
+                    @if (Model.Addresses != null && Model.Addresses.Count > 0)
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var addr in Model.Addresses)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>@addr.Street</strong>, @addr.District, @addr.City, @addr.Country
+                                        @if (!string.IsNullOrEmpty(addr.PostalCode))
+                                        {
+                                            <span class="text-muted"> - @addr.PostalCode</span>
+                                        }
+                                    </div>
+                                    @if (addr.IsDefault)
+                                    {
+                                        <span class="badge bg-success">Mặc định</span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="mb-0">Chưa có địa chỉ nào.</p>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-primary text-white">
+                    Thông tin tài khoản
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted">Email đăng nhập</h6>
+                        <p>@Model.Email</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted">Vai trò</h6>
+                        <p>@Model.Role</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted">Ngày tạo</h6>
+                        <p>@(Model.CreatedAt.ToString("dd/MM/yyyy") ?? "-")</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted">Tình trạng hoạt động</h6>
+                        <p>@(Model.IsActive ? "Đang hoạt động" : "Đang khóa")</p>
+                    </div>
+                    <form asp-controller="Account" asp-action="ToggleActive" method="post" class="d-inline"
+                          data-confirm="true"
+                          data-confirm-title="Xác nhận thay đổi trạng thái"
+                          data-confirm-message="Bạn có chắc chắn muốn @(Model.IsActive ? "TẠM KHÓA" : "MỞ KHÓA") tài khoản này không?"
+                          data-confirm-button-text="@(Model.IsActive ? "Tạm khóa" : "Mở khóa")"
+                          data-confirm-button-class="@(Model.IsActive ? "btn-warning" : "btn-success")"
+                          data-confirm-header-class="@(Model.IsActive ? "bg-warning" : "bg-success") text-white"
+                          >
+
+                        <input type="hidden" name="accountId" value="@Model.AccountID" />
+
+                        <input type="hidden" name="customerId" value="@Model.CustomerID" />
+
+                        @if (Model.IsActive)
+                        {
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-lock-fill me-1"></i> Tạm khóa tài khoản
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-unlock-fill me-1"></i> Mở tài khoản
+                            </button>
+                        }
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

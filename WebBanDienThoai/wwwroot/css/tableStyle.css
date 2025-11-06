@@ -1,0 +1,50 @@
+﻿/* File: wwwroot/css/tableStyle.css (Phiên bản tối ưu) */
+
+.rounded-table {
+    border-radius: 24px;
+    overflow: hidden; /* BẮT BUỘC: Để bo góc hoạt động */
+    border: 1px solid #CACACA; /* Viền ngoài */
+    border-collapse: separate; /* BẮT BUỘC */
+    border-spacing: 0;
+    width: 100%;
+    /* QUAN TRỌNG: Đặt màu nền mặc định là trắng
+      Điều này ngăn Bootstrap tự động thêm màu xen kẽ (striped)
+    */
+    background-color: #fff;
+}
+
+    /* === Header (<th>) === */
+    .rounded-table thead th {
+        background-color: #f8f9fa; /* Màu nền xám nhạt cho header */
+        font-weight: 600;
+        border: none; /* Bỏ hết viền */
+        border-bottom: 2px solid #CACACA; /* Chỉ giữ viền dưới */
+
+        padding: 22px 8px;
+        vertical-align: middle;
+        text-align: center; /* Sửa lỗi không căn giữa */
+    }
+
+    /* === Body (<td>) === */
+    .rounded-table tbody td {
+        border: none; /* Bỏ hết viền */
+        padding: 22px 8px;
+        vertical-align: middle;
+        text-align: center; /* Sửa lỗi không căn giữa */
+        /* Mặc định, các ô <td> phải TRONG SUỐT */
+        background-color: transparent;
+    }
+
+    /* === Đường kẻ ngăn cách === */
+    .rounded-table tbody tr:not(:first-child) td {
+        /* Chỉ thêm viền TOP cho các hàng KHÔNG phải hàng đầu tiên */
+        border-top: 1px solid #CACACA;
+    }
+
+    /* === ĐÂY LÀ PHẦN SỬA LỖI MÀU NỀN === 
+  Quy tắc này nói: "Hãy tìm các <td> NẰM BÊN TRONG một <tr> 
+  có class .bg-danger-subtle, và TÔ MÀU NỀN cho chúng"
+*/
+    .rounded-table tbody tr.tr-inactive td {
+        background-color: #DDDDDD; /* Màu xám siêu nhạt (nhạt hơn <th>) */
+    }

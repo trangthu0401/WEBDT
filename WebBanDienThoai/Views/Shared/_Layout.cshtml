@@ -1,49 +1,233 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@{
+    Layout = null; // Không lồng layout vào layout khác
+}
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WebBanDienThoai</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/WebBanDienThoai.styles.css" asp-append-version="true" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Rabit Store</title>
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome cho icon -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="~/css/master.css" rel="stylesheet" />
+    <link href="~/css/tableStyle.css?v=7" rel="stylesheet" />
 </head>
 <body>
+
+    <!-- HEADER -->
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">WebBanDienThoai</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+        <div class="header-left">
+            <img src="~/images/logo.png" alt="Rabit Store Logo" class="logo" />
+        </div>
+
+        <div class="header-right">
+            <div class="header-search">
+                <input type="text" placeholder="Tìm kiếm..." />
             </div>
-        </nav>
+
+            <div class="header-icons">
+                <i class="fa-regular fa-bell"></i>
+                <i class="fa-solid fa-gear"></i>
+                <img src="https://i.pravatar.cc/100" alt="avatar" />
+            </div>
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <!-- SIDEBAR + CONTENT -->
+    <div class="main-container">
+        <!-- Sidebar bên trái -->
+        <nav class="sidebar">
+            <a href="#" class="active"><i class="fa-solid fa-chart-line"></i> Tổng quan</a>
+            <a href="#"><i class="fa-solid fa-box"></i> Sản phẩm</a>
+            <a href="~/Customer/Index"><i class="fa-solid fa-user"></i> Khách hàng</a>
+            <a href="~/Order/Index"><i class="fa-solid fa-cube"></i> Đơn hàng</a>
+        </nav>
+
+        <!-- Khu nội dung chính -->
+        <main class="content">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - WebBanDienThoai - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <!-- ============================================== -->
+    <!-- MODAL XÁC NHẬN (CONFIRMATION) ĐA DỤNG -->
+    <!-- ============================================== -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1"
+         aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="confirmationModalHeader">
+                    <h5 class="modal-title" id="confirmationModalLabel">Xác nhận</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmationModalBody">
+                    <!-- Nội dung câu hỏi (vd: Bạn có chắc...?) -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+
+                    <!-- Nút này sẽ thực hiện hành động (submit form) -->
+                    <button type="button" class="btn btn-primary" id="confirmModalConfirmButton">
+                        <span id="confirmModalActionButtonText">Xác nhận</span>
+                    </button>
+                </div>
+            </div>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    </div>
+
+    <div class="modal fade" id="reusableModal" tabindex="-1"
+         aria-labelledby="reusableModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            @* Căn giữa *@
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reusableModalLabel">Thông báo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="reusableModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đã hiểu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @{
+        // Đọc TempData từ server
+        var successMessage = TempData["SuccessMessage"] as string;
+        var errorMessage = TempData["ErrorMessage"] as string;
+    }
+
+    <script>
+        // Chờ cho toàn bộ trang tải xong
+        document.addEventListener('DOMContentLoaded', function () {
+
+            var message = null;
+            var isError = false;
+            var title = 'Thông báo';
+
+            // 1. Kiểm tra xem có thông báo nào không
+            @if (!string.IsNullOrEmpty(successMessage))
+            @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                            <text>
+                                message = @Html.Raw(Json.Serialize(successMessage));
+                                title = 'Thành công';
+                            </text>
+                    }
+                    else if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                            <text>
+                                message = @Html.Raw(Json.Serialize(errorMessage));
+                                title = 'Có lỗi xảy ra';
+                                isError = true;
+                            </text>
+                    }
+
+            // 2. Nếu có thông báo -> Kích hoạt Modal
+            if (message) {
+                var modalElement = document.getElementById('reusableModal');
+                var modalTitle = document.getElementById('reusableModalLabel');
+                var modalBody = document.getElementById('reusableModalBody');
+                var modalHeader = modalElement.querySelector('.modal-header');
+
+                // 3. Cập nhật nội dung và tiêu đề
+                modalTitle.innerText = title;
+                modalBody.innerText = message;
+
+                // 4. Đổi màu header tùy theo thành công hay lỗi
+                // Xóa các class cũ (nếu có)
+                modalHeader.classList.remove('bg-success', 'bg-danger', 'text-white');
+
+                if (isError) {
+                    modalHeader.classList.add('bg-danger', 'text-white');
+                } else {
+                    modalHeader.classList.add('bg-success', 'text-white');
+                }
+
+                // 5. Mở Modal
+                var myModal = new bootstrap.Modal(modalElement);
+                myModal.show();
+            }
+        });
+    </script>
+    <!-- ============================================== -->
+    <!-- SCRIPT KÍCH HOẠT MODAL XÁC NHẬN (CONFIRMATION) -->
+    <!-- ============================================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const confirmModalElement = document.getElementById('confirmationModal');
+
+            // Chỉ chạy nếu modal này tồn tại trên trang
+            if (confirmModalElement) {
+                const confirmModal = new bootstrap.Modal(confirmModalElement);
+                const confirmModalTitle = document.getElementById('confirmationModalLabel');
+                const confirmModalBody = document.getElementById('confirmationModalBody');
+                const confirmModalConfirmButton = document.getElementById('confirmModalConfirmButton');
+                const confirmModalActionButtonText = document.getElementById('confirmModalActionButtonText');
+                const confirmModalHeader = document.getElementById('confirmationModalHeader');
+
+                let formToSubmit = null; // Biến tạm để giữ form cần submit
+
+                // 1. Tìm tất cả các form có thuộc tính 'data-confirm="true"'
+                const formsToConfirm = document.querySelectorAll('form[data-confirm="true"]');
+
+                // 2. Gắn 1 trình nghe sự kiện 'submit' cho mỗi form đó
+                formsToConfirm.forEach(form => {
+                    form.addEventListener('submit', function (event) {
+                        // DỪNG form lại, không cho submit ngay
+                        event.preventDefault();
+
+                        // Lưu lại form này
+                        formToSubmit = form;
+
+                        // 3. Lấy thông điệp tùy chỉnh từ thuộc tính data- của form
+                        const message = form.getAttribute('data-confirm-message') || 'Bạn có chắc chắn muốn thực hiện hành động này?';
+                        const title = form.getAttribute('data-confirm-title') || 'Xác nhận';
+                        const buttonText = form.getAttribute('data-confirm-button-text') || 'Xác nhận';
+                        const buttonClass = form.getAttribute('data-confirm-button-class') || 'btn-primary'; // vd: 'btn-danger' cho nút xóa
+                        const headerClass = form.getAttribute('data-confirm-header-class') || ''; // vd: 'bg-danger text-white'
+
+                        // 4. Cập nhật nội dung cho modal
+                        confirmModalTitle.innerText = title;
+                        confirmModalBody.innerText = message;
+                        confirmModalActionButtonText.innerText = buttonText;
+
+                        // 5. Cập nhật màu nút (Reset class cũ, thêm class mới)
+                        confirmModalConfirmButton.className = "btn"; // Reset
+                        confirmModalConfirmButton.classList.add(buttonClass);
+
+                        // 6. Cập nhật màu header (Reset class cũ, thêm class mới)
+                        confirmModalHeader.className = "modal-header"; // Reset
+                        if(headerClass) {
+                            headerClass.split(' ').forEach(cls => confirmModalHeader.classList.add(cls));
+                        }
+
+                        // 7. Mở modal
+                        confirmModal.show();
+                    });
+                });
+
+                // 8. Gắn 1 trình nghe sự kiện 'click' VĨNH VIỄN cho nút "Xác nhận"
+                confirmModalConfirmButton.addEventListener('click', function () {
+                    if (formToSubmit) {
+                        // Đây là chìa khóa: submit form đã được lưu
+                        formToSubmit.submit();
+                    }
+                    // Tự động đóng modal
+                    confirmModal.hide();
+                    formToSubmit = null; // Reset
+                });
+            }
+        });
+    </script>
 </body>
 </html>

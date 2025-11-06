@@ -1,0 +1,86 @@
+﻿/* =========================================
+   THANH TRẠNG THÁI TIẾN TRÌNH ĐƠN HÀNG
+   ========================================= */
+
+.progress-track {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    max-width: 600px; /* Giới hạn chiều rộng */
+    margin: 30px auto;
+}
+
+    /* Đường kẻ ngang màu xám */
+    .progress-track::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: #e0e0e0;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+
+/* Đường kẻ màu xanh lá (tiến trình) */
+.progress-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 3px;
+    background-color: #28a745; /* Màu xanh lá */
+    transform: translateY(-50%);
+    z-index: 2;
+    transition: width 0.5s ease;
+}
+
+/* Kiểu chung cho các bước (hình tròn) */
+.progress-step {
+    position: relative;
+    z-index: 3;
+    width: 40px;
+    height: 40px;
+    background-color: #fff;
+    border: 3px solid #e0e0e0; /* Viền xám mặc định */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.5s ease;
+}
+
+    /* Icon bên trong hình tròn */
+    .progress-step i {
+        font-size: 18px;
+        color: #e0e0e0; /* Màu xám mặc định */
+        transition: color 0.5s ease;
+    }
+
+    /* Chữ mô tả (Chờ xác nhận, Đang giao...) */
+    .progress-step .step-label {
+        position: absolute;
+        bottom: -30px; /* Nằm bên dưới hình tròn */
+        width: 150px; /* Đủ rộng để không vỡ chữ */
+        text-align: center;
+        font-size: 14px;
+        color: #999; /* Màu xám chữ */
+        transition: color 0.5s ease;
+    }
+
+    /* === TRẠNG THÁI ACTIVE === */
+
+    /* Khi một bước đã "active" (hoàn thành) */
+    .progress-step.active {
+        border-color: #28a745; /* Viền xanh lá */
+    }
+
+        .progress-step.active i {
+            color: #28a745; /* Icon xanh lá */
+        }
+
+        .progress-step.active .step-label {
+            color: #000; /* Chữ đen, rõ ràng */
+            font-weight: 600;
+        }

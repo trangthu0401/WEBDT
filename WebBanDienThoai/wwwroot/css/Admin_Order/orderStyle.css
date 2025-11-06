@@ -1,0 +1,48 @@
+﻿/* =========================================
+   STYLE CHO BỘ LỌC VÀ TRẠNG THÁI ĐƠN HÀNG
+   ========================================= */
+
+/* 1. Bố cục thanh filter */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap; /* Tự xuống hàng trên di động */
+    gap: 16px; /* Khoảng cách giữa các mục */
+    margin-bottom: 24px;
+}
+
+/* 2. Huy hiệu (badge) trạng thái */
+.badge-status {
+    display: inline-block;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 20px; /* Bo tròn */
+    letter-spacing: 0.5px;
+    text-align: center;
+    min-width: 120px; /* Giữ độ rộng đồng đều */
+    border: none; /* BỎ VIỀN CHO TẤT CẢ */
+}
+
+/* Đã giao*/
+.status-delivered {
+    background-color: #d1e7dd; /* bg-success-subtle */
+    color: #0f5132; /* text-success */
+}
+
+/* Đang giao*/
+.status-shipping {
+    background-color: #FFCCFF;
+    color: #7b5aff;
+}
+
+/* Chờ xác nhận & Đang xử lý*/
+.status-processing {
+    background-color: #CCCCCC; /* bg-secondary-subtle (xám nhạt) */
+    color: #000; /* Chữ đen */
+}
+
+/* Đã hủy (Đỏ)*/
+.status-canceled {
+    background-color: #f8d7da; /* bg-danger-subtle */
+    color: #842029; /* text-danger */
+}
