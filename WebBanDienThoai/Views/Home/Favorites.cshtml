@@ -2,7 +2,6 @@
 
 @{
     Layout = null;
-    // Lấy giá trị sortOrder hiện tại từ Controller
     var currentSort = ViewData["CurrentSort"] as string;
 }
 <!DOCTYPE html>
@@ -74,6 +73,7 @@
                     Giá cao -> thấp
                 </a>
             </div>
+
             <div class="product-grid">
                 @if (Model.FavoriteProducts != null && Model.FavoriteProducts.Any())
                 {
@@ -103,36 +103,48 @@
             </div>
         </div>
 
-        <a href="#" class="fab-contact">
+        <button class="fab-contact" id="fabContactButton">
             <span>Liên hệ</span>
             <img src="~/images/lienhe.png" alt="Contact Icon">
-        </a>
+        </button>
+
+        <div class="contact-popup" id="contactPopup">
+            <div class="contact-option">
+                <a href="https://zalo.me/0999999999" target="_blank">
+                    <img src="~/images/zalo-icon.png" alt="Zalo">
+                    <span>Zalo: 0999999999</span>
+                </a>
+            </div>
+            <div class="contact-option">
+                <a href="tel:0999999999">
+                    <img src="~/images/phone-icon.png" alt="Phone">
+                    <span>Call: 0999999999</span>
+                </a>
+            </div>
+        </div>
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const removeButtons = document.querySelectorAll('.remove-favorite-button');
 
+            // --- CODE XỬ LÝ NÚT XÓA YÊU THÍCH (Giữ nguyên) ---
+            const removeButtons = document.querySelectorAll('.remove-favorite-button');
             removeButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
-
                     const productId = this.dataset.productid;
                     const buttonElement = this;
                     const cardElement = buttonElement.closest('.product-card');
 
-                    fetch('/Home/RemoveFromFavorites/' + productId, {
-                        method: 'POST'
-                    })
+                    fetch('/Home/RemoveFromFavorites/' + productId, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
                         if(data.success) {
-                            if (cardElement) {
-                                cardElement.remove();
-                            }
+                            if (cardElement) cardElement.remove();
                             const remainingCards = document.querySelectorAll('.product-card');
                             if (remainingCards.length === 0) {
-                                document.getElementById('empty-favorites-message').style.display = 'block';
+                                const msg = document.getElementById('empty-favorites-message');
+                                if(msg) msg.style.display = 'block';
                             }
                         } else {
                             alert(data.message);
@@ -141,6 +153,23 @@
                     .catch(error => console.error('Error:', error));
                 });
             });
+
+            // --- THÊM JAVASCRIPT CHO POPUP LIÊN HỆ ---
+            const fabContactButton = document.getElementById('fabContactButton');
+            const contactPopup = document.getElementById('contactPopup');
+
+            fabContactButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                contactPopup.classList.toggle('active');
+            });
+
+            document.addEventListener('click', function(e) {
+                if (fabContactButton.contains(e.target) || contactPopup.contains(e.target)) {
+                    return;
+                }
+                contactPopup.classList.remove('active');
+            });
+
         });
     </script>
 </body>

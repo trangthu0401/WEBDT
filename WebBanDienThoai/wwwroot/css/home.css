@@ -449,15 +449,15 @@ img {
     .wishlist-button img {
         width: 18px;
         height: 18px;
-        /* Thêm transition để trái tim chuyển màu mượt hơn */
         transition: filter 0.2s ease-in-out;
     }
 
+/* === SỬA NÚT LIÊN HỆ === */
 .fab-contact {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    z-index: 200;
+    z-index: 201; /* Đặt z-index cao hơn popup */
     background-color: var(--primary-red);
     color: var(--text-light);
     display: flex;
@@ -497,47 +497,13 @@ img {
     }
 }
 
-/* === BẮT ĐẦU PHẦN CSS MỚI === */
+/* === BẮT ĐẦU PHẦN CSS ĐÃ SỬA === */
 
 /* 1. Sửa lỗi màu xanh ở sidebar, đổi sang màu đỏ */
 .category-sidebar li.active a {
     font-weight: bold;
-    color: var(--primary-red-solid); /* Đổi thành màu đỏ */
-    background-color: rgba(255, 0, 0, 0.05); /* Đổi thành màu nền đỏ nhạt */
-}
-
-.category-sidebar li.active .badge {
-    background-color: var(--primary-red-solid);
-    color: white;
-}
-
-/* 2. Thêm style cho nút "Đã thích" (chữ đỏ, tim đỏ) */
-.wishlist-button.liked {
     color: var(--primary-red-solid) !important;
-}
-
-    .wishlist-button.liked img {
-        /* Filter CSS để đổi ảnh 'tym.png' (màu đen) sang màu đỏ (#ff2626) */
-        filter: invert(24%) sepia(91%) saturate(5451%) hue-rotate(347deg) brightness(101%) contrast(102%);
-    }
-
-/* 3. Style cho nút "Xóa" (dấu trừ) trên trang Yêu thích */
-.remove-favorite-button {
-    color: #555 !important;
-    font-weight: 600;
-}
-
-    .remove-favorite-button:hover {
-        background-color: #f0f0f0;
-    }
-
-/* === DÁN TOÀN BỘ CODE NÀY VÀO CUỐI FILE home.css === */
-
-/* 1. Sửa lỗi màu xanh ở sidebar, đổi sang màu đỏ */
-.category-sidebar li.active a {
-    font-weight: bold;
-    color: var(--primary-red-solid) !important; /* Đổi thành màu đỏ */
-    background-color: rgba(255, 0, 0, 0.05) !important; /* Đổi thành màu nền đỏ nhạt */
+    background-color: rgba(255, 0, 0, 0.05) !important;
 }
 
 .category-sidebar li.active .badge {
@@ -551,7 +517,6 @@ img {
 }
 
     .wishlist-button.liked img {
-        /* Filter CSS để đổi ảnh 'tym.png' (màu đen) sang màu đỏ (#ff2626) */
         filter: invert(24%) sepia(91%) saturate(5451%) hue-rotate(347deg) brightness(101%) contrast(102%);
     }
 
@@ -572,7 +537,7 @@ img {
     justify-content: flex-start;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap; /* Cho responsive */
+    flex-wrap: wrap;
 }
 
     .sort-buttons span {
@@ -597,10 +562,60 @@ img {
         border-color: var(--border-medium);
     }
 
-    /* Style cho nút đang được chọn */
     .sort-btn.active {
         background-color: var(--primary-red-solid);
         color: var(--text-light);
         border-color: var(--primary-red-solid);
         font-weight: 600;
     }
+
+/* === THÊM CSS MỚI CHO POPUP LIÊN HỆ === */
+.contact-popup {
+    position: fixed;
+    bottom: 90px; /* Nằm ngay trên nút .fab-contact (ở 30px + 50px chiều cao) */
+    right: 30px;
+    z-index: 199; /* Nằm dưới nút .fab-contact */
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 1px solid var(--border-light);
+    padding: 10px;
+    display: none; /* Ẩn mặc định */
+    flex-direction: column;
+    gap: 8px;
+    /* Animation */
+    transform: translateY(10px);
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+    /* Lớp 'active' để JS hiển thị */
+    .contact-popup.active {
+        display: flex;
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+.contact-option a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+    .contact-option a:hover {
+        background-color: #f0f0f0;
+    }
+
+.contact-option img {
+    width: 24px;
+    height: 24px;
+}
+
+.contact-option span {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-dark);
+}

@@ -2,7 +2,6 @@
 
 @{
     Layout = null;
-    // Lấy giá trị sortOrder hiện tại từ Controller
     var currentSort = ViewData["CurrentSort"] as string;
 }
 <!DOCTYPE html>
@@ -118,6 +117,7 @@
                     Giá cao -> thấp
                 </a>
             </div>
+
             <div class="product-grid">
                 @if (Model.Products != null && Model.Products.Any())
                 {
@@ -155,31 +155,42 @@
                 }
             </div>
         </div>
-        <a href="#" class="fab-contact">
+
+        <button class="fab-contact" id="fabContactButton">
             <span>Liên hệ</span>
             <img src="~/images/lienhe.png" alt="Contact Icon">
-        </a>
+        </button>
+
+        <div class="contact-popup" id="contactPopup">
+            <div class="contact-option">
+                <a href="https://zalo.me/0999999999" target="_blank">
+                    <img src="~/images/zalo-icon.png" alt="Zalo">
+                    <span>Zalo: 0999999999</span>
+                </a>
+            </div>
+            <div class="contact-option">
+                <a href="tel:0999999999">
+                    <img src="~/images/phone-icon.png" alt="Phone">
+                    <span>Call: 0999999999</span>
+                </a>
+            </div>
+        </div>
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const wishlistButtons = document.querySelectorAll('.wishlist-button');
 
+            // --- CODE XỬ LÝ NÚT YÊU THÍCH (Giữ nguyên) ---
+            const wishlistButtons = document.querySelectorAll('.wishlist-button');
             wishlistButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
-
                     const productId = this.dataset.productid;
                     const buttonElement = this;
                     const isFavorited = buttonElement.classList.contains('liked');
                     const url = isFavorited ? '/Home/RemoveFromFavorites/' + productId : '/Home/AddToFavorites/' + productId;
 
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            // 'RequestVerificationToken': ...
-                        }
-                    })
+                    fetch(url, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
                         if(data.success) {
@@ -197,6 +208,29 @@
                     .catch(error => console.error('Error:', error));
                 });
             });
+
+            // --- XÓA CODE JAVASCRIPT CỦA CHATBOT ---
+
+            // --- THÊM JAVASCRIPT CHO POPUP LIÊN HỆ ---
+            const fabContactButton = document.getElementById('fabContactButton');
+            const contactPopup = document.getElementById('contactPopup');
+
+            // 1. Mở/Đóng popup khi nhấn nút Liên hệ
+            fabContactButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                contactPopup.classList.toggle('active');
+            });
+
+            // 2. (Tùy chọn) Đóng popup khi nhấn ra bên ngoài
+            document.addEventListener('click', function(e) {
+                // Nếu click vào (contains) nút Liên hệ hoặc (contains) Popup -> thì KHÔNG LÀM GÌ CẢ
+                if (fabContactButton.contains(e.target) || contactPopup.contains(e.target)) {
+                    return;
+                }
+                // Nếu click ra ngoài -> đóng popup
+                contactPopup.classList.remove('active');
+            });
+
         });
     </script>
 </body>
