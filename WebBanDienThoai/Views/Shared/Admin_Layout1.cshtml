@@ -1,3 +1,6 @@
+@* GHI CHÚ: Thêm TagHelper để asp-controller và asp-action hoạt động *@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
     Layout = null; // Đây là layout gốc, không lồng layout khác
     string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
@@ -12,54 +15,48 @@
     <title>@ViewData["Title"] - Rabit Store</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-    <link href="~/css/master.css" rel="stylesheet" />
+    <!-- GHI CHÚ: Đảm bảo file master.css đã được cập nhật ?v=... -->
+    <link href="~/css/master.css?v=14" rel="stylesheet" />
 
-    @* ========================================================== *@
-    @* === 1. PHẦN CSS THÊM VÀO (ĐỂ TÙY CHỈNH DROPDOWN) === *@
-    @* ========================================================== *@
+    @* Style cho dropdown (giữ nguyên) *@
     <style>
         .header-icons .dropdown-toggle {
             cursor: pointer;
-            width: 40px; /* Kích thước avatar */
+            width: 40px;
             height: 40px;
-            border-radius: 50%; /* Đảm bảo hình tròn */
+            border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #f0f0f0; /* Thêm viền nhẹ cho avatar */
+            border: 2px solid #f0f0f0;
         }
 
-        /* Ẩn mũi tên (caret) mặc định của Bootstrap dropdown */
-        .header-icons .dropdown-toggle::after {
-            display: none;
-        }
+            .header-icons .dropdown-toggle::after {
+                display: none;
+            }
 
-        /* Định dạng hộp thoại dropdown */
         .header-icons .dropdown-menu {
-            /* Dịch chuyển hộp thoại cho khớp */
             margin-top: 10px !important;
             border: 1px solid #eee;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            min-width: 220px; /* Đặt chiều rộng tối thiểu cho hộp thoại */
+            min-width: 220px;
         }
 
-        /* Căn chỉnh icon trong dropdown */
         .header-icons .dropdown-item i {
-            width: 20px; /* Giữ icon căn đều */
+            width: 20px;
             text-align: center;
         }
 
-        /* Định dạng item Đăng xuất màu đỏ (THEO YÊU CẦU) */
         .header-icons .dropdown-item-danger {
-            color: #dc3545; /* Màu đỏ của Bootstrap */
+            color: #dc3545;
             font-weight: 500;
         }
-        .header-icons .dropdown-item-danger:hover,
-        .header-icons .dropdown-item-danger:focus {
-            color: #fff;
-            background-color: #dc3545;
-        }
+
+            .header-icons .dropdown-item-danger:hover,
+            .header-icons .dropdown-item-danger:focus {
+                color: #fff;
+                background-color: #dc3545;
+            }
     </style>
 </head>
 <body>
@@ -74,9 +71,6 @@
                 <input type="text" placeholder="Tìm kiếm..." />
             </div>
 
-            @* ========================================================== *@
-            @* === 2. PHẦN HTML ĐÃ SỬA (SỬ DỤNG BOOTSTRAP DROPDOWN) === *@
-            @* ========================================================== *@
             <div class="header-icons">
                 <i class="fa-regular fa-bell"></i>
                 <i class="fa-solid fa-gear"></i>
@@ -106,24 +100,38 @@
                     </ul>
                 </div>
             </div>
-            @* ========================================================== *@
-            @* === KẾT THÚC PHẦN SỬA === *@
-            @* ========================================================== *@
         </div>
     </header>
 
     <div class="main-container">
+
+        <!-- ========================================================== -->
+        <!-- === SIDEBAR ĐÃ ĐƯỢC SỬA (DÙNG asp-controller) === -->
+        <!-- ========================================================== -->
         <nav class="sidebar">
-            <a href="/Admin/Index" class="@(currentController == "Admin" && currentAction == "Index" ? "active" : "")">
+
+            <!-- Link đến DashboardController -->
+            <a asp-controller="Dashboard" asp-action="Index"
+               class="@(currentController == "Dashboard" ? "active" : "")">
                 <i class="fa-solid fa-chart-line"></i> Tổng quan
             </a>
-            <a href="/Admin/ManageProducts" class="@(currentController == "Admin" && (currentAction == "ManageProducts" || currentAction == "ProductDetails") ? "active" : "")">
+
+            <!-- Link đến ProductController -->
+            <!-- GHI CHÚ: Sẽ active khi ở ProductController HOẶC ProductVariantController -->
+            <a asp-controller="Product" asp-action="Index"
+               class="@((currentController == "Product" || currentController == "ProductVariant") ? "active" : "")">
                 <i class="fa-solid fa-box"></i> Sản phẩm
             </a>
-            <a href="/Admin/ManageCustomers" class="@(currentController == "Admin" && currentAction == "ManageCustomers" ? "active" : "")">
+
+            <!-- Link đến CustomerController -->
+            <a asp-controller="Customer" asp-action="Index"
+               class="@(currentController == "Customer" ? "active" : "")">
                 <i class="fa-solid fa-user"></i> Khách hàng
             </a>
-            <a href="/Admin/ManageOrders" class="@(currentController == "Admin" && currentAction == "ManageOrders" ? "active" : "")">
+
+            <!-- Link đến OrderController -->
+            <a asp-controller="Order" asp-action="Index"
+               class="@(currentController == "Order" ? "active" : "")">
                 <i class="fa-solid fa-cube"></i> Đơn hàng
             </a>
         </nav>
@@ -133,10 +141,162 @@
         </main>
     </div>
 
+    <!-- ========================================================== -->
+    <!-- === DI CHUYỂN MODAL RA KHỎI @RenderBody() === -->
+    <!-- ========================================================== -->
+    <!-- MODAL THÔNG BÁO (SUCCESS/ERROR) -->
+    <div class="modal fade" id="reusableModal" tabindex="-1"
+         aria-labelledby="reusableModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="reusableModalHeader">
+                    <h5 class="modal-title" id="reusableModalLabel">Thông báo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="reusableModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đã hiểu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL XÁC NHẬN (CONFIRMATION) -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1"
+         aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="confirmationModalHeader">
+                    <h5 class="modal-title" id="confirmationModalLabel">Xác nhận</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmationModalBody">
+                    <!-- Nội dung câu hỏi (vd: Bạn có chắc...?) -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalConfirmButton">
+                        <span id="confirmModalActionButtonText">Xác nhận</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================== -->
+    <!-- === SCRIPTS (ĐẶT Ở CUỐI TRƯỚC </body>) === -->
+    <!-- ========================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    @* === ĐÂY LÀ DÒNG CODE ĐỂ SỬA LỖI === *@
-    @* Nó tạo ra một "chỗ giữ" cho các script từ trang con (như validation) *@
+    @{
+        // Đọc TempData từ server
+        var successMessage = TempData["SuccessMessage"] as string;
+        var errorMessage = TempData["ErrorMessage"] as string;
+    }
+
+    <!-- Script cho Modal THÔNG BÁO -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var message = null;
+            var isError = false;
+            var title = 'Thông báo';
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                    <text>
+                        message = @Html.Raw(Json.Serialize(successMessage));
+                        title = 'Thành công';
+                    </text>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                    <text>
+                        message = @Html.Raw(Json.Serialize(errorMessage));
+                        title = 'Có lỗi xảy ra';
+                        isError = true;
+                    </text>
+            }
+
+            if (message) {
+                var modalElement = document.getElementById('reusableModal');
+                var modalTitle = document.getElementById('reusableModalLabel');
+                var modalBody = document.getElementById('reusableModalBody');
+                var modalHeader = modalElement.querySelector('.modal-header');
+
+                modalTitle.innerText = title;
+                modalBody.innerText = message;
+
+                modalHeader.classList.remove('bg-success', 'bg-danger', 'text-white');
+                if (isError) {
+                    modalHeader.classList.add('bg-danger', 'text-white');
+                } else {
+                    modalHeader.classList.add('bg-success', 'text-white');
+                }
+
+                var myModal = new bootstrap.Modal(modalElement);
+                myModal.show();
+            }
+        });
+    </script>
+
+    <!-- Script cho Modal XÁC NHẬN -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const confirmModalElement = document.getElementById('confirmationModal');
+
+            if (confirmModalElement) {
+                const confirmModal = new bootstrap.Modal(confirmModalElement);
+                const confirmModalTitle = document.getElementById('confirmationModalLabel');
+                const confirmModalBody = document.getElementById('confirmationModalBody');
+                const confirmModalConfirmButton = document.getElementById('confirmModalConfirmButton');
+                const confirmModalActionButtonText = document.getElementById('confirmModalActionButtonText');
+                const confirmModalHeader = document.getElementById('confirmationModalHeader');
+
+                let formToSubmit = null;
+
+                const formsToConfirm = document.querySelectorAll('form[data-confirm="true"]');
+
+                formsToConfirm.forEach(form => {
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        formToSubmit = form;
+
+                        const message = form.getAttribute('data-confirm-message') || 'Bạn có chắc chắn muốn thực hiện hành động này?';
+                        const title = form.getAttribute('data-confirm-title') || 'Xác nhận';
+                        const buttonText = form.getAttribute('data-confirm-button-text') || 'Xác nhận';
+                        const buttonClass = form.getAttribute('data-confirm-button-class') || 'btn-primary';
+                        const headerClass = form.getAttribute('data-confirm-header-class') || '';
+
+                        confirmModalTitle.innerText = title;
+                        confirmModalBody.innerText = message;
+                        confirmModalActionButtonText.innerText = buttonText;
+
+                        confirmModalConfirmButton.className = "btn";
+                        confirmModalConfirmButton.classList.add(buttonClass);
+
+                        confirmModalHeader.className = "modal-header";
+                        if(headerClass) {
+                            headerClass.split(' ').forEach(cls => confirmModalHeader.classList.add(cls));
+                        }
+
+                        confirmModal.show();
+                    });
+                });
+
+                confirmModalConfirmButton.addEventListener('click', function () {
+                    if (formToSubmit) {
+                        formToSubmit.submit();
+                    }
+                    confirmModal.hide();
+                    formToSubmit = null;
+                });
+            }
+        });
+    </script>
+
+    @* Dùng để render các script (@section Scripts) từ các View con *@
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

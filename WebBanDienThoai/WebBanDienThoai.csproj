@@ -7,6 +7,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\Admin\**" />
+    <Compile Remove="Views\Home\**" />
+    <Content Remove="Views\Admin\**" />
+    <Content Remove="Views\Home\**" />
+    <EmbeddedResource Remove="Views\Admin\**" />
+    <EmbeddedResource Remove="Views\Home\**" />
+    <None Remove="Views\Admin\**" />
+    <None Remove="Views\Home\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\AdminController.cs" />
+    <Compile Remove="Models\ViewModels\CreateProductViewModel.cs" />
+    <Compile Remove="Models\ViewModels\ProductDetailViewModel.cs" />
+    <Compile Remove="Models\ViewModels\ProductListViewModel.cs" />
+    <Compile Remove="Models\ViewModels\ProductVariantCreateViewModel.cs" />
+    <Compile Remove="Models\ViewModels\ProductVariantEditViewModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="wwwroot\images\Admin\linhvatcau 3.png" />
   </ItemGroup>
 
