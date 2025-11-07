@@ -29,6 +29,9 @@ header {
     height: 70px;
     background: #fff;
     border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 0 24px;
     /* Cố định trên cùng */
     position: fixed;
@@ -41,6 +44,7 @@ header {
     align-items: center;
     gap: 24px; /* Khoảng cách hợp lý, thay vì 400px */
 }
+/* DẤU } THỪA ĐÃ BỊ XÓA Ở ĐÂY */
 
 /* Header-left (Logo) */
 .header-left {
@@ -65,6 +69,7 @@ header {
     gap: 16px;
 }
 
+/* Nhóm bên trái của header-right (search box) */
 .header-search {
     flex: 1; /* Ưu tiên co giãn search box */
     display: flex;
@@ -151,28 +156,28 @@ header {
 /* =========================================
    4. SIDEBAR MENU
    ========================================= */
-.sidebar a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #555;
-    text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    transition: 0.15s;
-}
-
-    .sidebar a:hover, .sidebar a.active {
-        background: #fff3f3;
-        color: #e63737;
-        font-weight: 600;
+    .sidebar a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #555;
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        transition: 0.15s;
     }
 
-.sidebar i {
-    width: 20px;
-    text-align: center;
-}
+        .sidebar a:hover, .sidebar a.active {
+            background: #fff3f3;
+            color: #e63737;
+            font-weight: 600;
+        }
+
+    .sidebar i {
+        width: 20px;
+        text-align: center;
+    }
 
 /* =========================================
    5. TÙY CHỌN: Tối ưu thanh cuộn
@@ -194,4 +199,5 @@ header {
 
     ::-webkit-scrollbar-thumb:hover {
         background: #aaa;
-    }
+}
+/* DẤU } THỪA ĐÃ BỊ XÓA Ở ĐÂY */

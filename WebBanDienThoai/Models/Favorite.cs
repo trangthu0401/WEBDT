@@ -9,7 +9,7 @@ namespace WebBanDienThoai.Models
     public class Favorite
     {
         [Key]
-        public int FavoriteId { get; set; }
+    public int FavoriteId { get; set; }
 
         [ForeignKey("Customer")]
         public int CustomerID { get; set; }

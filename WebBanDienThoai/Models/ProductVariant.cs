@@ -9,10 +9,10 @@ namespace WebBanDienThoai.Models
     public class ProductVariant
     {
         [Key]
-        public int VariantId { get; set; }
+    public int VariantId { get; set; }
 
         [ForeignKey("Product")]
-        public int ProductId { get; set; }
+    public int ProductId { get; set; }
 
         [MaxLength(30)]
         public string Color { get; set; }
@@ -27,7 +27,7 @@ namespace WebBanDienThoai.Models
         public decimal Price { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal? DiscountPrice { get; set; }
+    public decimal? DiscountPrice { get; set; }
 
         public int Stock { get; set; } = 0;
 
@@ -38,7 +38,7 @@ namespace WebBanDienThoai.Models
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        public DateTime? UpdatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; }
 
         // Navigation
         public Product Product { get; set; }

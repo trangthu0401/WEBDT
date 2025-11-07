@@ -8,7 +8,7 @@ namespace WebBanDienThoai.Models
     public class OrderDetail
     {
         [Key]
-        public int OrderDetailId { get; set; }
+    public int OrderDetailId { get; set; }
 
         [ForeignKey("Order")]
         public int OrderId { get; set; }
@@ -16,10 +16,10 @@ namespace WebBanDienThoai.Models
         [ForeignKey("ProductVariant")]
         public int VariantId { get; set; }
 
-        public int? Quantity { get; set; }
+    public int? Quantity { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal? UnitPrice { get; set; }
+    public decimal? UnitPrice { get; set; }
 
         // Navigation
         public Order Order { get; set; }

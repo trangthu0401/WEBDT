@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+Ôªøusing Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,17 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. L?y chu?i k?t n?i t? appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// 2. ??ng k˝ DbContext (Service)
-// ??m b?o b?n ?„ c‡i NuGet package: Microsoft.EntityFrameworkCore.SqlServer
+// 2. ??ng k√Ω DbContext (Service)
+// ??m b?o b?n ?√£ c√†i NuGet package: Microsoft.EntityFrameworkCore.SqlServer
 builder.Services.AddDbContext<DemoWebBanDienThoaiDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 3. ??ng k˝ c·c service kh·c (vÌ d?: Controllers, Views)
+// 3. ??ng k√Ω c√°c service kh√°c (v√≠ d?: Controllers, Views)
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// 4. C?u hÏnh HTTP request pipeline
+// 4. C?u h√¨nh HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -32,11 +32,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication(); // N·∫øu d√πng Identity
 app.UseAuthorization();
 
-// 5. C?u hÏnh route (???ng d?n) m?c ??nh
+// 5. C?u h√¨nh route (???ng d?n) m?c ??nh
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
 app.Run();

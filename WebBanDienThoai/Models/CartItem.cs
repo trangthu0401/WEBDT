@@ -7,7 +7,7 @@ namespace WebBanDienThoai.Models
     public class CartItem
     {
         [Key]
-        public int CartItemId { get; set; }
+    public int CartItemId { get; set; }
 
         [ForeignKey("Customer")]
         public int CustomerID { get; set; }
@@ -15,7 +15,7 @@ namespace WebBanDienThoai.Models
         [ForeignKey("ProductVariant")]
         public int VariantId { get; set; }
 
-        public int Quantity { get; set; }
+    public int Quantity { get; set; }
 
         // Navigation
         public Customer Customer { get; set; }

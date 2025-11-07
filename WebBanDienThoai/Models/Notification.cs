@@ -8,7 +8,7 @@ namespace WebBanDienThoai.Models
     public class Notification
     {
         [Key]
-        public int NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
         [ForeignKey("Account")]
         public int AccountID { get; set; }

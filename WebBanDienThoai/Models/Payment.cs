@@ -9,7 +9,7 @@ namespace WebBanDienThoai.Models
     public class Payment
     {
         [Key]
-        public int PaymentId { get; set; }
+    public int PaymentId { get; set; }
 
         [ForeignKey("Order")]
         public int OrderId { get; set; }
@@ -17,7 +17,7 @@ namespace WebBanDienThoai.Models
         [MaxLength(50)]
         public string PaymentMethod { get; set; }
 
-        public DateTime? PaymentDate { get; set; }
+    public DateTime? PaymentDate { get; set; }
 
         [MaxLength(50)]
         public string PaymentStatus { get; set; }

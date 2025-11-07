@@ -9,13 +9,13 @@ namespace WebBanDienThoai.Models
     public class Product
     {
         [Key]
-        public int ProductId { get; set; }
+    public int ProductId { get; set; }
 
         [Required, MaxLength(100)]
         public string Name { get; set; }
 
         [ForeignKey("Brand")]
-        public int BrandId { get; set; }
+    public int BrandId { get; set; }
 
         [MaxLength(50)]
         public string Chipset { get; set; }
@@ -23,17 +23,17 @@ namespace WebBanDienThoai.Models
         [MaxLength(30)]
         public string OperatingSystem { get; set; }
 
-        public short? BatteryCapacity { get; set; }
+    public short? BatteryCapacity { get; set; }
 
         public bool ChargerIncluded { get; set; } = true;
 
         [Column(TypeName = "decimal(4, 2)")]
-        public decimal? ScreenSize { get; set; }
+    public decimal? ScreenSize { get; set; }
 
         [MaxLength(40)]
         public string ScreenTech { get; set; }
 
-        public short? RefreshRate { get; set; }
+    public short? RefreshRate { get; set; }
 
         [MaxLength(100)]
         public string RearCamera { get; set; }
@@ -42,7 +42,7 @@ namespace WebBanDienThoai.Models
         public string FrontCamera { get; set; }
 
         [Column(TypeName = "decimal(5, 2)")]
-        public decimal? Weight { get; set; }
+    public decimal? Weight { get; set; }
 
         [MaxLength(50)]
         public string Dimensions { get; set; }
@@ -58,7 +58,7 @@ namespace WebBanDienThoai.Models
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        public DateTime? UpdatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; }
 
         // Navigation
         public Brand Brand { get; set; }

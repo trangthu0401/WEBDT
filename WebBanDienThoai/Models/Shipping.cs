@@ -9,7 +9,7 @@ namespace WebBanDienThoai.Models
     public class Shipping
     {
         [Key]
-        public int ShippingId { get; set; }
+    public int ShippingId { get; set; }
 
         [ForeignKey("Order")]
         public int OrderId { get; set; }
@@ -20,11 +20,11 @@ namespace WebBanDienThoai.Models
         [MaxLength(100)]
         public string TrackingNumber { get; set; }
 
-        public DateTime? ShippedDate { get; set; }
+    public DateTime? ShippedDate { get; set; }
 
-        public DateTime? EstimatedDelivery { get; set; }
+    public DateTime? EstimatedDelivery { get; set; }
 
-        public DateTime? DeliveredDate { get; set; }
+    public DateTime? DeliveredDate { get; set; }
 
         [MaxLength(50)]
         public string Status { get; set; }

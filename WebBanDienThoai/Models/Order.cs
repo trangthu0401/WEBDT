@@ -9,18 +9,18 @@ namespace WebBanDienThoai.Models
     public class Order
     {
         [Key]
-        public int OrderId { get; set; }
+    public int OrderId { get; set; }
 
         [ForeignKey("Customer")]
         public int CustomerID { get; set; }
 
-        public DateTime? OrderDate { get; set; }
+    public DateTime? OrderDate { get; set; }
 
         [MaxLength(50)]
         public string Status { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal? TotalAmount { get; set; }
+    public decimal? TotalAmount { get; set; }
 
         // ======================================================
         // CÁC CỘT ĐỊA CHỈ "ĐÓNG BĂNG" TẠI THỜI ĐIỂM ĐẶT HÀNG
