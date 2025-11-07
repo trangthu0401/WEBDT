@@ -156,25 +156,35 @@
             </div>
         </div>
 
-        <button class="fab-contact" id="fabContactButton">
-            <span>Liên hệ</span>
+        <button class="fab-contact" id="fabChatButton">
+            <span>Liên hệ & AI</span>
             <img src="~/images/lienhe.png" alt="Contact Icon">
         </button>
 
-        <div class="contact-popup" id="contactPopup">
-            <div class="contact-option">
-                <a href="https://zalo.me/0999999999" target="_blank">
-                    <img src="~/images/zalo-icon.png" alt="Zalo">
-                    <span>Zalo: 0999999999</span>
-                </a>
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <span>Rabit AI & Liên hệ</span>
+                <button class="chat-close" id="chatCloseButton">&times;</button>
             </div>
-            <div class="contact-option">
+            <div class="chat-body" id="chatBody">
+                <div class="chat-message bot-message">
+                    <p>Xin chào! Tôi là tư vấn viên của sốp, bạn cần tôi hẫu trợ gì nè ?</p>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Nhập tin nhắn...">
+                <button id="chatSendButton">Gửi</button>
+            </div>
+            <div class="contact-links-bar">
+                <a href="https://zalo.me/0999999999" target="_blank">
+                    <img src="~/images/zalo-icon.png" alt="Zalo"> Zalo
+                </a>
                 <a href="tel:0999999999">
-                    <img src="~/images/phone-icon.png" alt="Phone">
-                    <span>Call: 0999999999</span>
+                    <img src="~/images/phone-icon.png" alt="Phone"> Gọi điện
                 </a>
             </div>
         </div>
+
     </section>
 
     <script>
@@ -209,27 +219,72 @@
                 });
             });
 
-            // --- XÓA CODE JAVASCRIPT CỦA CHATBOT ---
+            // --- CODE JAVASCRIPT CHO CHATBOT ---
 
-            // --- THÊM JAVASCRIPT CHO POPUP LIÊN HỆ ---
-            const fabContactButton = document.getElementById('fabContactButton');
-            const contactPopup = document.getElementById('contactPopup');
+            const fabChatButton = document.getElementById('fabChatButton');
+            const chatWindow = document.getElementById('chatWindow');
+            const chatCloseButton = document.getElementById('chatCloseButton');
+            const chatBody = document.getElementById('chatBody');
+            const chatInput = document.getElementById('chatInput');
+            const chatSendButton = document.getElementById('chatSendButton');
 
-            // 1. Mở/Đóng popup khi nhấn nút Liên hệ
-            fabContactButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                contactPopup.classList.toggle('active');
+            fabChatButton.addEventListener('click', () => {
+                chatWindow.classList.toggle('active');
+            });
+            chatCloseButton.addEventListener('click', () => {
+                chatWindow.classList.remove('active');
             });
 
-            // 2. (Tùy chọn) Đóng popup khi nhấn ra bên ngoài
-            document.addEventListener('click', function(e) {
-                // Nếu click vào (contains) nút Liên hệ hoặc (contains) Popup -> thì KHÔNG LÀM GÌ CẢ
-                if (fabContactButton.contains(e.target) || contactPopup.contains(e.target)) {
-                    return;
+            chatSendButton.addEventListener('click', handleUserMessage);
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    handleUserMessage();
                 }
-                // Nếu click ra ngoài -> đóng popup
-                contactPopup.classList.remove('active');
             });
+
+            function handleUserMessage() {
+                const userInput = chatInput.value.trim();
+                if (userInput === "") return;
+
+                appendMessage(userInput, 'user-message');
+                chatInput.value = "";
+
+                appendMessage("...", 'bot-message loading'); // Bot đang gõ...
+
+                fetch('/Home/GetAiResponse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: userInput })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const loadingMessage = chatBody.querySelector('.loading');
+                    if (loadingMessage) loadingMessage.remove();
+
+                    appendMessage(data.message, 'bot-message');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const loadingMessage = chatBody.querySelector('.loading');
+                    if (loadingMessage) loadingMessage.remove();
+                    appendMessage("Xin lỗi, tôi gặp lỗi kết nối.", 'bot-message');
+                });
+            }
+
+            // === HÀM ĐÃ SỬA LỖI (DÒNG 286 CŨ) ===
+            function appendMessage(text, className) {
+                const messageDiv = document.createElement('div');
+
+                // SỬA LỖI: Tách 'className' (ví dụ: 'bot-message loading') thành 2 class
+                // và thêm chúng vào cùng với 'chat-message' bằng toán tử 'spread' (...)
+                messageDiv.classList.add('chat-message', ...className.split(' '));
+
+                messageDiv.innerHTML = `<p>${text}</p>`;
+                chatBody.appendChild(messageDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
 
         });
     </script>
