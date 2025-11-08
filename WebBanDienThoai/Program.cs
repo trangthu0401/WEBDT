@@ -18,6 +18,18 @@ builder.Services.AddDbContext<DemoWebBanDienThoaiDbContext>(options =>
 // 3. ??ng ký các service khác (ví d?: Controllers, Views)
 builder.Services.AddControllersWithViews();
 
+// ??ng k� d?ch v? Authentication (x�c th?c) b?ng Cookie
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login"; // ???ng d?n ??n trang ??ng nh?p
+        options.AccessDeniedPath = "/Home/AccessDenied"; // (T�y ch?n) Trang t? ch?i
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
+    });
+
+
+// --- 3. X�y d?ng ?ng d?ng (app) ---
 var app = builder.Build();
 
 // 4. C?u hình HTTP request pipeline
@@ -28,9 +40,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(); // Cho ph�p d�ng file CSS, JS, Images...
 
-app.UseRouting();
+app.UseRouting(); // B?t t�nh n?ng ??nh tuy?n (Routing)
 
 app.UseAuthentication(); // Nếu dùng Identity
 app.UseAuthorization();
