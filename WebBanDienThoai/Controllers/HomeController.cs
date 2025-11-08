@@ -1,6 +1,7 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using WebBanDienThoai.Models;
 
 namespace WebBanDienThoai.Controllers
@@ -14,13 +15,18 @@ namespace WebBanDienThoai.Controllers
             _logger = logger;
             
         }
-
+        [Authorize(Roles = "Customer")]
         public IActionResult Index()
         {
             return View();
         }
 
         public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        public IActionResult AccessDenied()
         {
             return View();
         }

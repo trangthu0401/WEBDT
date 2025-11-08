@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Truy cập bị từ chối";
+    // GHI CHÚ: Trang này nên dùng Layout công khai (public)
+    // của người dùng, KHÔNG phải _Admin_Layout1.cshtml
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Cần link đến Bootstrap Icons (nếu Layout của bạn chưa có) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+    .access-denied-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 60px 20px;
+        min-height: 60vh; /* Chiều cao tối thiểu */
+    }
+
+    .access-denied-icon {
+        font-size: 80px;
+        color: #dc3545; /* Màu đỏ (danger) */
+    }
+</style>
+
+<div class="container">
+    <div class="access-denied-container">
+
+        <!-- Icon (Khóa) -->
+        <div class="access-denied-icon mb-3">
+            <i class="bi bi-lock-fill"></i>
+        </div>
+
+        <!-- Tiêu đề -->
+        <h1 class="display-5 fw-bold">Truy cập bị từ chối</h1>
+
+        <!-- Giải thích -->
+        <p class="lead text-muted mb-4">
+            Rất tiếc, bạn không có quyền truy cập vào trang này.
+        </p>
+
+        <!-- Hành động (Nút quay lại) -->
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">
+            <i class="bi bi-house-door-fill me-2"></i>
+            Quay về Trang chủ
+        </a>
+
+    </div>
+</div>

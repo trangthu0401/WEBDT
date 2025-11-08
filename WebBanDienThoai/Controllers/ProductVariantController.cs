@@ -1,4 +1,5 @@
 ﻿// Thêm các using cần thiết
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ using WebBanDienThoai.Models.ViewModels;
 namespace WebBanDienThoai.Controllers
 {
     // GHI CHÚ: Tên Controller đã được đổi thành "ProductVariant"
+    [Authorize(Roles = "Admin")]
     public class ProductVariantController : Controller
     {
         // GHI CHÚ: Sửa lại tên DbContext cho đúng

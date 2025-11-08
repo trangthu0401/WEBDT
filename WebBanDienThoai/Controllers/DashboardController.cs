@@ -1,4 +1,5 @@
 ﻿// Thêm các using cần thiết
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -12,6 +13,7 @@ using WebBanDienThoai.Models.ViewModels; // <-- Cần tạo các ViewModel này
 namespace WebBanDienThoai.Controllers
 {
     // Ghi chú: Đây là Controller mới, tách từ AdminController
+    [Authorize(Roles = "Admin")]
     public class DashboardController : Controller
     {
         // Ghi chú: Đổi tên từ DemoWebBanDienThoaiContext -> DemoWebBanDienThoaiDbContext

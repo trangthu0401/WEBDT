@@ -7,6 +7,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Controllers\AccountController.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="DocuSign.eSign.dll" Version="8.5.0" />
 
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />

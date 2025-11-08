@@ -1,4 +1,5 @@
 ﻿// Thêm các using cần thiết
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ using WebBanDienThoai.Models.ViewModels; // Cần ViewModels
 
 namespace WebBanDienThoai.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class ProductController : Controller
     {
         private readonly DemoWebBanDienThoaiDbContext _context;
