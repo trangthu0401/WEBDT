@@ -12,9 +12,9 @@ namespace WebBanDienThoai.Models
     public int BrandId { get; set; }
 
         [Required, MaxLength(100)]
-        public string BrandName { get; set; }
+        public string BrandName { get; set; } = null!;
 
         // Navigation
-        public ICollection<Product> Products { get; set; }
+        public virtual ICollection<Product> Products { get; set; } = new List<Product>();
     }
 }

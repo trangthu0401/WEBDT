@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WebBanDienThoai.Data;
 using WebBanDienThoai.Models; // Cần Models
 using WebBanDienThoai.Models.ViewModels; // Cần ViewModels
 
@@ -16,10 +17,10 @@ namespace WebBanDienThoai.Controllers
 {
     public class ProductController : Controller
     {
-        private readonly DemoWebBanDienThoaiContext _context;
+        private readonly DemoWebBanDienThoaiDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ProductController(DemoWebBanDienThoaiContext context, IWebHostEnvironment webHostEnvironment)
+        public ProductController(DemoWebBanDienThoaiDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
@@ -58,19 +59,19 @@ namespace WebBanDienThoai.Controllers
                         BrandId = p.BrandId,
                         BrandName = p.Brand != null ? (p.Brand.BrandName ?? "N/A") : "N/A",
 
-                        CreatedDate = p.CreatedDate.GetValueOrDefault(),
+                        CreatedDate = p.CreatedDate,
 
                         IsActive = p.IsActive,
 
                         FirstVariantPrice = (p.ProductVariants != null && p.ProductVariants.Any())
-                                            ? p.ProductVariants.OrderBy(v => v.VariantId).First().DiscountPrice.GetValueOrDefault(p.ProductVariants.OrderBy(v => v.VariantId).First().Price.GetValueOrDefault())
+                                            ? p.ProductVariants.OrderBy(v => v.VariantId).First().DiscountPrice.GetValueOrDefault(p.ProductVariants.OrderBy(v => v.VariantId).First().Price)
                                             : 0m,
 
                         LowestPrice = (p.ProductVariants != null && p.ProductVariants.Any())
-                                            ? p.ProductVariants.Min(v => v.DiscountPrice.GetValueOrDefault(v.Price.GetValueOrDefault()))
+                                            ? p.ProductVariants.Min(v => v.DiscountPrice.GetValueOrDefault(v.Price))
                                             : 0m,
 
-                        TotalStock = p.ProductVariants.Sum(v => v.Stock).GetValueOrDefault()
+                        TotalStock = p.ProductVariants.Sum(v => v.Stock)
                     })
                     .ToListAsync();
                 // ====================================================================

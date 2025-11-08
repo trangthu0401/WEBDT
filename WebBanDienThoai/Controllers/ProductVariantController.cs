@@ -8,6 +8,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WebBanDienThoai.Data;
 using WebBanDienThoai.Models;
 using WebBanDienThoai.Models.ViewModels;
 
@@ -17,11 +18,11 @@ namespace WebBanDienThoai.Controllers
     public class ProductVariantController : Controller
     {
         // GHI CHÚ: Sửa lại tên DbContext cho đúng
-        private readonly DemoWebBanDienThoaiContext _context;
+        private readonly DemoWebBanDienThoaiDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
         // GHI CHÚ: Sửa lại tên DbContext cho đúng
-        public ProductVariantController(DemoWebBanDienThoaiContext context, IWebHostEnvironment webHostEnvironment)
+        public ProductVariantController(DemoWebBanDienThoaiDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;

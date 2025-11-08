@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WebBanDienThoai.Models.ViewModels; // <-- Cần tạo các ViewModel này
+using WebBanDienThoai.Data;
 using WebBanDienThoai.Models; // Cần Models
+using WebBanDienThoai.Models.ViewModels; // <-- Cần tạo các ViewModel này
 
 namespace WebBanDienThoai.Controllers
 {
@@ -14,9 +15,9 @@ namespace WebBanDienThoai.Controllers
     public class DashboardController : Controller
     {
         // Ghi chú: Đổi tên từ DemoWebBanDienThoaiContext -> DemoWebBanDienThoaiDbContext
-        private readonly DemoWebBanDienThoaiContext _context;
+        private readonly DemoWebBanDienThoaiDbContext _context;
 
-        public DashboardController(DemoWebBanDienThoaiContext context)
+        public DashboardController(DemoWebBanDienThoaiDbContext context)
         {
             _context = context;
         }
@@ -72,10 +73,10 @@ namespace WebBanDienThoai.Controllers
         private async Task<List<BestSellingProductViewModel>> GetTopSellingProducts(int topN = 5)
         {
             var topVariantsInfo = await _context.OrderDetails
-                .Where(od => od.VariantId != null) // Ghi chú: Code gốc là 'HasValue'
+                .Where(od => od.VariantId != null)
                 .GroupBy(od => od.VariantId)
                 .Select(g => new {
-                    VariantId = g.Key.Value, // Ghi chú: Code gốc là 'g.Key!.Value'
+                    VariantId = g.Key, 
                     TotalQuantity = g.Sum(od => od.Quantity ?? 0)
                 })
                 .OrderByDescending(x => x.TotalQuantity)
@@ -103,8 +104,8 @@ namespace WebBanDienThoai.Controllers
                                       (!string.IsNullOrEmpty(variant.Storage) ? $" - {variant.Storage})" : (!string.IsNullOrEmpty(variant.Color) ? ")" : "")),
                         ImageUrl = variant.ImageUrl ?? variant.Product.MainImage,
                         QuantitySold = topInfo.TotalQuantity,
-                        Price = variant.DiscountPrice ?? variant.Price, // Ghi chú: Code gốc có '?? 0m'
-                        Stock = variant.Stock ?? 0
+                        Price = variant.DiscountPrice ?? variant.Price,
+                        Stock = variant.Stock
                     });
                 }
             }

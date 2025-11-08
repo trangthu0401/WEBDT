@@ -2,7 +2,6 @@
 
 @{
     // GHI CHÚ: Đã đổi Model
-    Layout = "~/Views/Shared/Admin_Layout1.cshtml";
     ViewData["Title"] = "Chi tiết: " + Model.Product.Name;
 }
 
@@ -41,7 +40,7 @@
                         <dt class="col-sm-4">Màn hình:</dt>
                         <dd class="col-sm-8">@Model.Product.ScreenSize" - @Model.Product.ScreenTech</dd>
                         <dt class="col-sm-4">Ngày nhập:</dt>
-                        <dd class="col-sm-8">@(Model.Product.CreatedDate.GetValueOrDefault().ToString("dd/MM/yyyy h:mm tt") ?? "N/A")</dd>
+                        <dd class="col-sm-8">@(Model.Product.CreatedDate.ToString("dd/MM/yyyy h:mm tt") ?? "N/A")</dd>
                         <dt class="col-sm-4">Trạng thái:</dt>
                         <dd class="col-sm-8">
                             <span class="status-chip @(Model.Product.IsActive == true ? "available" : "hidden")">
