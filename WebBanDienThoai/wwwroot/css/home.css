@@ -492,7 +492,7 @@ img {
     }
 }
 
-/* === CSS CHUNG CHO TÍNH NĂNG (Giữ nguyên) === */
+/* === CSS CHUNG CHO TÍNH NĂNG (Đã gộp) === */
 .category-sidebar li.active a {
     font-weight: bold;
     color: var(--primary-red-solid) !important;
@@ -559,13 +559,9 @@ img {
         font-weight: 600;
     }
 
-/* === XÓA CSS POPUP LIÊN HỆ CŨ === */
-/* (Đã xóa .contact-popup và .contact-option) */
+/* === BẮT ĐẦU CSS MỚI CHO CHATBOT === */
 
-
-/* === THÊM CSS MỚI CHO CHATBOT (Thay thế) === */
-
-/* 1. Cửa sổ Chat (Thay thế .contact-popup) */
+/* 1. Cửa sổ Chat */
 .chat-window {
     position: fixed;
     bottom: 90px; /* Nằm trên nút "Liên hệ" */
