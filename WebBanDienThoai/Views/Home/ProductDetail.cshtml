@@ -1,0 +1,316 @@
+﻿@model WebBanDienThoai.Models.modelView.ProductDetailViewModel
+
+@{
+    Layout = null; // Không dùng layout
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@Model.ProductDetail.Product.Name - Rabit Store</title>
+
+    <link rel="stylesheet" href="~/css/home.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-top">
+            <div class="container header-top-container">
+                <a asp-controller="Home" asp-action="Index" class="logo">
+                    <h1 class="logo-text">Rabit</h1>
+                    <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
+                    <h1 class="logo-text">Store</h1>
+                </a>
+
+                <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
+                    <input type="text" name="searchString" placeholder="Tìm kiếm" class="search-input" id="mainSearchInput" autocomplete="off">
+                    <button type="submit" class="search-button">
+                        <img src="~/images/search.png" alt="Search Icon">
+                    </button>
+                    <div class="search-suggestions" id="mainSearchSuggestions"></div>
+                </form>
+
+                <div class="header-actions">
+                    <a href="#" class="cart-link">
+                        <span>Giỏ hàng</span>
+                        <img src="~/images/giohang.png" alt="Cart Icon">
+                    </a>
+                    <a href="#" class="user-profile">
+                        <span>Trung</span>
+                        <img src="~/images/user.png" alt="User Icon">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container nav-container">
+                <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                <a asp-controller="Home" asp-action="Favorites">Yêu thích</a>
+                <a href="#" class="dropdown-link">
+                    Danh mục
+                    <img src="~/images/chevron-down.png" alt="Dropdown arrow">
+                </a>
+            </div>
+        </nav>
+    </header>
+    <main id="section-product" class="product-section">
+        <div class="container">
+            <h1 class="product-main-title">@Model.ProductDetail.Product.Name (@Model.ProductDetail.Color) | @Model.ProductDetail.Product.Brand.BrandName</h1>
+
+            <div class="product-layout">
+                <div class="product-gallery">
+                    <img src="@(Model.ProductDetail.ImageUrl ?? Model.ProductDetail.Product.MainImage)" alt="@Model.ProductDetail.Product.Name" class="product-image">
+                </div>
+                <div class="product-details">
+                    <div class="price-card">
+                        <p class="price-label">Giá sản phẩm</p>
+
+                        @{
+                            // SỬA: Phải xử lý Price bị null (dựa theo CSDL của bạn)
+                            var price = Model.ProductDetail.Price ?? 0;
+                            var discountPrice = Model.ProductDetail.DiscountPrice;
+                        }
+                        @if (discountPrice.HasValue && discountPrice.Value < price)
+                        {
+                            <p class="price-amount">@discountPrice.Value.ToString("N0")đ</p>
+                            <p class="text-muted text-decoration-line-through small">@price.ToString("N0")đ</p>
+                        }
+                        else
+                        {
+                            <p class="price-amount">@price.ToString("N0")đ</p>
+                        }
+                    </div>
+                    <div class="option-group">
+                        <h3 class="option-title">Phiên bản</h3>
+                        <div class="option-buttons">
+                            @{
+                                var uniqueConfigs = Model.AllVariants
+                                .GroupBy(v => new { v.Ram, v.Storage })
+                                .Select(g => g.First())
+                                .OrderBy(v => v.Ram);
+                            }
+
+                            @foreach (var variant in uniqueConfigs)
+                            {
+                                var isActive = (variant.Ram == Model.ProductDetail.Ram && variant.Storage == Model.ProductDetail.Storage) ? "active" : "";
+                                <button class="option-btn @isActive">
+                                    @variant.Ram / @variant.Storage
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <h3 class="option-title">Màu sắc</h3>
+                        <div class="color-grid">
+                            @{
+                                var uniqueColors = Model.AllVariants
+                                .GroupBy(v => v.Color)
+                                .Select(g => g.First());
+                            }
+
+                            @foreach (var variant in uniqueColors)
+                            {
+                                var isActive = (variant.Color == Model.ProductDetail.Color) ? "active" : "";
+
+                                // SỬA: Dùng asp-action (MVC) thay vì asp-page
+                                <a asp-controller="Home" asp-action="ProductDetail"
+                                   asp-route-id="@variant.VariantId"
+                                   class="color-option @isActive">
+
+                                    <div class="color-info">
+                                        <span class="color-name">@variant.Color</span>
+                                        <span class="color-price">@(variant.Price != null ? variant.Price.Value.ToString("N0") : "0")đ</span>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" style="display: flex;
+                                align-items: center;
+                                justify-content: center;">
+                            Mua ngay
+                        </button>
+                        <button class="btn btn-primary btn-contact">
+                            Liên hệ
+                            <img src="~/images/lienhe.png" alt="Contact Icon">
+                        </button>
+                        <button class="btn btn-icon">
+                            <img src="~/images/Cart.png" alt="Add to cart icon">
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="section-specs" class="specs-section">
+        <div class="container">
+            <h2 class="section-title">Thông số kỹ thuật</h2>
+            <div class="specs-grid">
+
+                <div class="spec-item spec-label">Kích thước màn hình</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.ScreenSize inches
+                </div>
+
+                <div class="spec-item spec-label">Công nghệ màn hình</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.ScreenTech
+                </div>
+
+                <div class="spec-item spec-label">Chipset</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.Chipset
+                </div>
+
+                <div class="spec-item spec-label">Hệ điều hành</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.OperatingSystem
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="description-section container">
+        <h2 class="section-title">Mô tả Sản phẩm</h2>
+        <div class="product-description-content">
+            @Html.Raw(Model.ProductDetail.Product.Description)
+        </div>
+    </section>
+
+    <section id="section-related" class="related-section">
+        <div class="container">
+            <h2 class="section-title">Sản phẩm Tương tự</h2>
+
+            @if (Model.RelatedProducts.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-4 g-4">
+                    @foreach (var variant in Model.RelatedProducts)
+                    {
+                        <div class="col">
+                            <div class="product-card-list h-100">
+                                <div class="card-img-container">
+                                    <img src="@(variant.ImageUrl ?? variant.Product.MainImage)" class="card-img-top" alt="@variant.Product.Name">
+                                </div>
+                                <div class="product-info-list">
+                                    <p class="product-brand">@variant.Product.Brand.BrandName</p>
+                                    <p class="product-list-title">
+                                        @variant.Product.Name (@variant.Color)
+                                    </p>
+                                    <p class="product-spec-line">
+                                        @variant.Ram / @variant.Storage
+                                    </p>
+
+                                    @{
+                                        var displayPrice = (variant.DiscountPrice ?? variant.Price) ?? 0;
+                                    }
+                                    <p class="product-price-amount">@displayPrice.ToString("N0")₫</p>
+
+                                    <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@variant.VariantId" class="btn-list-action">
+                                        XEM CHI TIẾT
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>Không tìm thấy sản phẩm tương tự cùng hãng.</p>
+            }
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // --- JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM ---
+            const searchInput = document.getElementById('mainSearchInput');
+            const suggestionsContainer = document.getElementById('mainSearchSuggestions');
+            const searchForm = document.getElementById('mainSearchForm');
+
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const term = this.value;
+
+                    if (term.length < 2) {
+                        suggestionsContainer.innerHTML = '';
+                        suggestionsContainer.style.display = 'none';
+                        return;
+                    }
+
+                    fetch('/Home/SearchSuggestions?term=' + term)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsContainer.innerHTML = '';
+
+                            if (data.length > 0) {
+                                suggestionsContainer.style.display = 'block';
+
+                                const header = document.createElement('div');
+                                header.classList.add('suggestion-header');
+                                header.textContent = 'Sản phẩm gợi ý';
+                                suggestionsContainer.appendChild(header);
+
+                                data.forEach(product => {
+                                    const suggestionLink = document.createElement('a');
+                                    suggestionLink.classList.add('suggestion-item');
+                                    suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
+
+                                    const img = document.createElement('img');
+                                    let imageUrl = product.mainImage;
+                                    if (imageUrl && !imageUrl.startsWith('http')) {
+                                        imageUrl = imageUrl.replace("~", "");
+                                    }
+                                    img.src = imageUrl ? imageUrl : '/images/default-product.png';
+                                    img.alt = product.name;
+
+                                    const infoDiv = document.createElement('div');
+                                    infoDiv.classList.add('suggestion-item-info');
+
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.classList.add('suggestion-item-name');
+                                    nameDiv.textContent = product.name;
+
+                                    const priceDiv = document.createElement('div');
+                                    priceDiv.classList.add('suggestion-item-price');
+                                    priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+                                    infoDiv.appendChild(nameDiv);
+                                    infoDiv.appendChild(priceDiv);
+
+                                    suggestionLink.appendChild(img);
+                                    suggestionLink.appendChild(infoDiv);
+
+                                    suggestionLink.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        searchInput.value = product.name;
+                                        searchForm.submit();
+                                    });
+
+                                    suggestionsContainer.appendChild(suggestionLink);
+                                });
+                            } else {
+                                suggestionsContainer.style.display = 'none';
+                            }
+                        });
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!searchForm.contains(e.target)) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

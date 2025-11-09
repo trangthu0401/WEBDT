@@ -113,6 +113,7 @@ img {
     gap: 6px;
 }
 
+/* === SỬA CSS THANH TÌM KIẾM === */
 .search-form {
     position: relative;
     flex-grow: 1;
@@ -134,13 +135,15 @@ img {
         font-weight: 600;
     }
 
+/* SỬA LỖI LỆCH KÍNH LÚP */
 .search-button {
     position: absolute;
-    right: 5px;
-    top: 5px;
-    bottom: 5px;
-    transform: none;
+    right: 5px; /* Cách lề phải 5px */
+    top: 5px; /* Cách lề trên 5px */
+    bottom: 5px; /* Cách lề dưới 5px */
+    transform: none; /* Bỏ transform */
     width: 80px;
+    /* height: 40px; (Bỏ height để nó tự căn) */
     background-color: var(--primary-red);
     border-radius: 99px;
     display: flex;
@@ -152,6 +155,8 @@ img {
         width: 20px;
         height: 20px;
     }
+/* === KẾT THÚC SỬA CSS TÌM KIẾM === */
+
 
 .header-actions {
     display: flex;
@@ -507,10 +512,7 @@ img {
     color: var(--primary-red-solid) !important;
 }
 
-    /* === SỬA Ở ĐÂY === */
-    /* (Đoạn này sẽ đổi màu ảnh 'tym.png' sang màu đỏ) */
     .wishlist-button.liked img {
-        /* Filter CSS để đổi ảnh 'tym.png' (màu đen) sang màu đỏ (#ff2626) */
         filter: invert(24%) sepia(91%) saturate(5451%) hue-rotate(347deg) brightness(101%) contrast(102%);
     }
 
@@ -716,46 +718,51 @@ img {
         height: 20px;
     }
 
+/* === SỬA CSS CHO ĐỀ XUẤT TÌM KIẾM === */
 .search-suggestions {
     display: none;
     position: absolute;
+    /* SỬA: top: 100% (thay vì calc) để nó dính sát */
     top: 100%;
     left: 0;
     right: 0;
     background-color: #ffffff;
     border: 1px solid var(--border-light);
-    border-top: none;
+    border-top: none; /* Bỏ border top */
+    /* SỬA: bo tròn cho khớp (ảnh 2) */
     border-radius: 0 0 20px 20px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     z-index: 101;
     max-height: 400px;
     overflow-y: auto;
+    /* SỬA: Đệm lót cho khớp ô input */
     padding-left: 20px;
     padding-right: 20px;
     padding-bottom: 10px;
 }
 
 .suggestion-header {
-    padding: 10px 0;
+    padding: 10px 0; /* Sửa padding */
     font-size: 14px;
     font-weight: 600;
     color: #888;
     border-bottom: 1px solid #f0f0f0;
 }
 
+/* Từng sản phẩm (là thẻ <a>) */
 .suggestion-item {
     display: flex;
     align-items: center;
-    padding: 10px 0;
+    padding: 10px 0; /* Sửa padding */
     gap: 12px;
     transition: background-color 0.2s;
     text-decoration: none;
     color: inherit;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0; /* Thêm đường kẻ */
 }
 
     .suggestion-item:last-child {
-        border-bottom: none;
+        border-bottom: none; /* Bỏ đường kẻ ở item cuối */
     }
 
     .suggestion-item:hover {

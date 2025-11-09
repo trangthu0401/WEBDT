@@ -22,7 +22,6 @@
                     <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
                     <h1 class="logo-text">Store</h1>
                 </a>
-
                 <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
                     <input type="text" name="searchString" value="@currentSearch" placeholder="Tìm kiếm" class="search-input" id="mainSearchInput" autocomplete="off">
                     <button type="submit" class="search-button">
@@ -31,7 +30,6 @@
                     <input type="hidden" name="id" value="@Model.BrandId" />
                     <div class="search-suggestions" id="mainSearchSuggestions"></div>
                 </form>
-
                 <div class="header-actions">
                     <a href="#" class="cart-link">
                         <span>Giỏ hàng</span>
@@ -128,7 +126,7 @@
                 {
                     @foreach (var product in Model.Products)
                     {
-                        <article class="product-card">
+                        <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@product.FirstVariantId" class="product-card">
                             <img src="@(string.IsNullOrEmpty(product.MainImage) ? "~/images/default-product.png" : product.MainImage)"
                                  alt="@product.Name" class="product-image">
 
@@ -151,7 +149,7 @@
                                     </button>
                                 }
                             </div>
-                        </article>
+                        </a>
                     }
                 }
                 else
@@ -194,11 +192,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            // --- CODE XỬ LÝ NÚT YÊU THÍCH (Giữ nguyên) ---
+            // --- SỬA CODE NÚT YÊU THÍCH (Thêm stopPropagation) ---
             const wishlistButtons = document.querySelectorAll('.wishlist-button');
             wishlistButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
-                    e.preventDefault();
+                    e.preventDefault(); // Ngăn thẻ <a> cha bị click
+                    e.stopPropagation(); // Ngăn thẻ <a> cha bị click
+
                     const productId = this.dataset.productid;
                     const buttonElement = this;
                     const isFavorited = buttonElement.classList.contains('liked');
@@ -215,35 +215,23 @@
                                 buttonElement.classList.add('liked');
                                 buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Đã thích</span>';
                             }
-                        } else {
-                            alert(data.message);
-                        }
+                        } else { alert(data.message); }
                     })
                     .catch(error => console.error('Error:', error));
                 });
             });
 
-            // --- CODE JAVASCRIPT CHO CHATBOT (Giữ nguyên) ---
+            // --- (Code Chatbot và Tìm kiếm giữ nguyên) ---
             const fabChatButton = document.getElementById('fabChatButton');
             const chatWindow = document.getElementById('chatWindow');
             const chatCloseButton = document.getElementById('chatCloseButton');
             const chatBody = document.getElementById('chatBody');
             const chatInput = document.getElementById('chatInput');
             const chatSendButton = document.getElementById('chatSendButton');
-
-            fabChatButton.addEventListener('click', () => {
-                chatWindow.classList.toggle('active');
-            });
-            chatCloseButton.addEventListener('click', () => {
-                chatWindow.classList.remove('active');
-            });
-
+            fabChatButton.addEventListener('click', () => { chatWindow.classList.toggle('active'); });
+            chatCloseButton.addEventListener('click', () => { chatWindow.classList.remove('active'); });
             chatSendButton.addEventListener('click', handleUserMessage);
-            chatInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    handleUserMessage();
-                }
-            });
+            chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { handleUserMessage(); } });
             function handleUserMessage() {
                 const userInput = chatInput.value.trim();
                 if (userInput === "") return;
@@ -276,81 +264,55 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
 
-
-            // --- SỬA JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM (TẠO HTML SẢN PHẨM) ---
             const searchInput = document.getElementById('mainSearchInput');
             const suggestionsContainer = document.getElementById('mainSearchSuggestions');
             const searchForm = document.getElementById('mainSearchForm');
-
             if (searchInput) {
                 searchInput.addEventListener('keyup', function() {
                     const term = this.value;
-
                     if (term.length < 2) {
-                        suggestionsContainer.innerHTML = ''; // Xóa đề xuất nếu gõ quá ít
+                        suggestionsContainer.innerHTML = '';
                         suggestionsContainer.style.display = 'none';
                         return;
                     }
-
-                    // Gọi Action SearchSuggestions
                     fetch('/Home/SearchSuggestions?term=' + term)
                         .then(response => response.json())
                         .then(data => {
-                            suggestionsContainer.innerHTML = ''; // Xóa đề xuất cũ
-
+                            suggestionsContainer.innerHTML = '';
                             if (data.length > 0) {
                                 suggestionsContainer.style.display = 'block';
-
-                                // Thêm tiêu đề "Sản phẩm gợi ý"
                                 const header = document.createElement('div');
                                 header.classList.add('suggestion-header');
                                 header.textContent = 'Sản phẩm gợi ý';
                                 suggestionsContainer.appendChild(header);
-
-                                // Lặp qua sản phẩm (data là List<ProductSuggestionViewModel>)
                                 data.forEach(product => {
-                                    // Tạo thẻ <a>
                                     const suggestionLink = document.createElement('a');
                                     suggestionLink.classList.add('suggestion-item');
-                                    // SỬA: Link sẽ submit form với tên sản phẩm
                                     suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
-
-                                    // Ảnh
                                     const img = document.createElement('img');
                                     let imageUrl = product.mainImage;
-                                    // Sửa lỗi đường dẫn ảnh (loại bỏ '~')
                                     if (imageUrl && !imageUrl.startsWith('http')) {
                                         imageUrl = imageUrl.replace("~", "");
                                     }
                                     img.src = imageUrl ? imageUrl : '/images/default-product.png';
                                     img.alt = product.name;
-
-                                    // Info (Tên + Giá)
                                     const infoDiv = document.createElement('div');
                                     infoDiv.classList.add('suggestion-item-info');
-
                                     const nameDiv = document.createElement('div');
                                     nameDiv.classList.add('suggestion-item-name');
                                     nameDiv.textContent = product.name;
-
                                     const priceDiv = document.createElement('div');
                                     priceDiv.classList.add('suggestion-item-price');
-                                    // Định dạng tiền tệ
                                     priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-
                                     infoDiv.appendChild(nameDiv);
                                     infoDiv.appendChild(priceDiv);
-
                                     suggestionLink.appendChild(img);
                                     suggestionLink.appendChild(infoDiv);
-
-                                    // SỬA: Khi click vào đề xuất, submit form
                                     suggestionLink.addEventListener('click', function(e) {
-                                        e.preventDefault(); // Ngăn link chuyển trang
-                                        searchInput.value = product.name; // Điền tên vào ô input
-                                        searchForm.submit(); // Gửi form
+                                        e.preventDefault();
+                                        searchInput.value = product.name;
+                                        searchForm.submit();
                                     });
-
                                     suggestionsContainer.appendChild(suggestionLink);
                                 });
                             } else {
@@ -358,15 +320,12 @@
                             }
                         });
                 });
-
-                // Đóng đề xuất khi click ra ngoài
                 document.addEventListener('click', function(e) {
                     if (!searchForm.contains(e.target)) {
                         suggestionsContainer.style.display = 'none';
                     }
                 });
             }
-
         });
     </script>
 </body>
