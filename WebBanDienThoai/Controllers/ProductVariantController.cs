@@ -16,7 +16,7 @@ using WebBanDienThoai.Models.ViewModels;
 namespace WebBanDienThoai.Controllers
 {
     // GHI CHÚ: Tên Controller đã được đổi thành "ProductVariant"
-    [Authorize(Roles = "Admin")]
+    
     public class ProductVariantController : Controller
     {
         // GHI CHÚ: Sửa lại tên DbContext cho đúng

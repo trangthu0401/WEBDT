@@ -16,7 +16,7 @@ using WebBanDienThoai.Models.ViewModels; // Cần ViewModels
 
 namespace WebBanDienThoai.Controllers
 {
-    [Authorize(Roles = "Admin")]
+   // [Authorize(Roles = "Admin")]
     public class ProductController : Controller
     {
         private readonly DemoWebBanDienThoaiDbContext _context;
