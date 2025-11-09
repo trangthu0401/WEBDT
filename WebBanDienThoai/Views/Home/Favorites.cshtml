@@ -2,7 +2,6 @@
 
 @{
     Layout = null;
-    // Lấy giá trị sortOrder hiện tại từ Controller
     var currentSort = ViewData["CurrentSort"] as string;
 }
 <!DOCTYPE html>
@@ -22,12 +21,15 @@
                     <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
                     <h1 class="logo-text">Store</h1>
                 </a>
-                <form class="search-form">
-                    <input type="text" placeholder="Tìm kiếm" class="search-input">
+
+                <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="favSearchForm">
+                    <input type="text" name="searchString" placeholder="Tìm kiếm" class="search-input" id="favSearchInput" autocomplete="off">
                     <button type="submit" class="search-button">
                         <img src="~/images/search.png" alt="Search Icon">
                     </button>
+                    <div class="search-suggestions" id="favSearchSuggestions"></div>
                 </form>
+
                 <div class="header-actions">
                     <a href="#" class="cart-link">
                         <span>Giỏ hàng</span>
@@ -74,6 +76,7 @@
                     Giá cao -> thấp
                 </a>
             </div>
+
             <div class="product-grid">
                 @if (Model.FavoriteProducts != null && Model.FavoriteProducts.Any())
                 {
@@ -108,7 +111,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            // --- CODE XỬ LÝ NÚT XÓA YÊU THÍCH (Code cũ của bạn, giữ nguyên) ---
+            // --- CODE XỬ LÝ NÚT XÓA YÊU THÍCH (Giữ nguyên) ---
             const removeButtons = document.querySelectorAll('.remove-favorite-button');
             removeButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
@@ -135,7 +138,54 @@
                 });
             });
 
-            // --- ĐÃ XÓA JAVASCRIPT CỦA POPUP LIÊN HỆ ---
+            // --- (ĐÃ XÓA JAVASCRIPT CỦA CHATBOT) ---
+
+            // --- THÊM JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM ---
+            const searchInput = document.getElementById('favSearchInput');
+            const suggestionsContainer = document.getElementById('favSearchSuggestions');
+            const searchForm = document.getElementById('favSearchForm');
+
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const term = this.value;
+
+                    if (term.length < 2) {
+                        suggestionsContainer.innerHTML = '';
+                        suggestionsContainer.style.display = 'none';
+                        return;
+                    }
+
+                    // Vẫn gọi Action 'SearchSuggestions'
+                    fetch('/Home/SearchSuggestions?term=' + term)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsContainer.innerHTML = '';
+                            if (data.length > 0) {
+                                suggestionsContainer.style.display = 'block';
+                                data.forEach(suggestionText => {
+                                    const suggestionDiv = document.createElement('div');
+                                    suggestionDiv.classList.add('suggestion-item');
+                                    suggestionDiv.textContent = suggestionText;
+
+                                    suggestionDiv.addEventListener('click', function() {
+                                        searchInput.value = this.textContent;
+                                        suggestionsContainer.style.display = 'none';
+                                        searchForm.submit(); // Submit form (để tìm ở trang Index)
+                                    });
+                                    suggestionsContainer.appendChild(suggestionDiv);
+                                });
+                            } else {
+                                suggestionsContainer.style.display = 'none';
+                            }
+                        });
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!searchForm.contains(e.target)) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
+            }
 
         });
     </script>

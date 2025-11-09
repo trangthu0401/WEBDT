@@ -5,7 +5,6 @@ using WebBanDienThoai.Models.modelView;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
-// === THÊM 4 USING NÀY CHO AI CHATBOT ===
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -24,18 +23,19 @@ namespace WebBanDienThoai.Controllers
             _context = context;
         }
 
-        // === ACTION INDEX (Code của bạn, giữ nguyên) ===
-        public async Task<IActionResult> Index(int? id, string sortOrder)
+        // === ACTION INDEX (Đã thêm searchString) ===
+        public async Task<IActionResult> Index(int? id, string sortOrder, string searchString)
         {
             ViewData["CurrentSort"] = sortOrder;
+            ViewData["CurrentSearch"] = searchString; // Giữ chuỗi tìm kiếm
 
             try
             {
                 int customerId = 1;
                 var favoritedVariantIds = new HashSet<int?>();
                 var customerFavorite = await _context.Favorites
-                                        .Include(f => f.FavoriteDetails)
-                                        .FirstOrDefaultAsync(f => f.CustomerId == customerId);
+                                      .Include(f => f.FavoriteDetails)
+                                      .FirstOrDefaultAsync(f => f.CustomerId == customerId);
 
                 if (customerFavorite != null)
                 {
@@ -46,9 +46,16 @@ namespace WebBanDienThoai.Controllers
                     .AsNoTracking()
                     .Where(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
 
+                // Lọc theo Brand
                 if (id != null && id > 0)
                 {
                     productsQuery = productsQuery.Where(p => p.BrandId == id);
+                }
+
+                // Lọc theo Search
+                if (!String.IsNullOrEmpty(searchString))
+                {
+                    productsQuery = productsQuery.Where(p => p.Name.ToLower().Contains(searchString.ToLower()));
                 }
 
                 var viewModelQuery = productsQuery
@@ -117,7 +124,7 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === ACTION FAVORITES (Code của bạn, giữ nguyên) ===
+        // === ACTION FAVORITES (Giữ nguyên) ===
         public async Task<IActionResult> Favorites(string sortOrder)
         {
             ViewData["CurrentSort"] = sortOrder;
@@ -172,161 +179,100 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === ACTION ADDTOFAVORITES (Code của bạn, giữ nguyên) ===
+        // === ACTION ADDTOFAVORITES (Giữ nguyên) ===
         [HttpPost]
         public async Task<IActionResult> AddToFavorites(int id)
         {
             try
             {
                 int customerId = 1;
-
-                var customerFavorite = await _context.Favorites
-                                        .FirstOrDefaultAsync(f => f.CustomerId == customerId);
-
+                var customerFavorite = await _context.Favorites.FirstOrDefaultAsync(f => f.CustomerId == customerId);
                 if (customerFavorite == null)
                 {
                     customerFavorite = new Favorite { CustomerId = customerId };
                     _context.Favorites.Add(customerFavorite);
                     await _context.SaveChangesAsync();
                 }
-
                 var variantToAdd = await _context.ProductVariants
                     .Where(v => v.ProductId == id && v.IsActive == true)
                     .Select(v => v.VariantId)
                     .FirstOrDefaultAsync();
-
-                if (variantToAdd == 0)
-                {
-                    return Json(new { success = false, message = "Sản phẩm không có biến thể hợp lệ." });
-                }
-
+                if (variantToAdd == 0) { return Json(new { success = false, message = "Sản phẩm không có biến thể hợp lệ." }); }
                 bool alreadyExists = await _context.FavoriteDetails
                     .AnyAsync(fd => fd.FavoriteId == customerFavorite.FavoriteId && fd.VariantId == variantToAdd);
-
                 if (!alreadyExists)
                 {
-                    _context.FavoriteDetails.Add(new FavoriteDetail
-                    {
-                        FavoriteId = customerFavorite.FavoriteId,
-                        VariantId = variantToAdd
-                    });
+                    _context.FavoriteDetails.Add(new FavoriteDetail { FavoriteId = customerFavorite.FavoriteId, VariantId = variantToAdd });
                     await _context.SaveChangesAsync();
                 }
-
                 return Json(new { success = true, message = "Đã thêm vào yêu thích!" });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi thêm vào Favorites.");
-                return Json(new { success = false, message = "Lỗi máy chủ." });
-            }
+            catch (Exception ex) { _logger.LogError(ex, "Lỗi khi thêm vào Favorites."); return Json(new { success = false, message = "Lỗi máy chủ." }); }
         }
 
-        // === ACTION REMOVEFROMFAVORITES (Code của bạn, giữ nguyên) ===
+        // === ACTION REMOVEFROMFAVORITES (Giữ nguyên) ===
         [HttpPost]
         public async Task<IActionResult> RemoveFromFavorites(int id)
         {
             try
             {
                 int customerId = 1;
-
-                var customerFavorite = await _context.Favorites
-                                        .Include(f => f.FavoriteDetails)
-                                        .FirstOrDefaultAsync(f => f.CustomerId == customerId);
-
-                if (customerFavorite == null)
-                {
-                    return Json(new { success = true });
-                }
-
-                var variantIdsToRemove = await _context.ProductVariants
-                    .Where(v => v.ProductId == id)
-                    .Select(v => v.VariantId)
-                    .ToListAsync();
-
-                if (!variantIdsToRemove.Any())
-                {
-                    return Json(new { success = false, message = "Không tìm thấy sản phẩm." });
-                }
-
+                var customerFavorite = await _context.Favorites.Include(f => f.FavoriteDetails).FirstOrDefaultAsync(f => f.CustomerId == customerId);
+                if (customerFavorite == null) { return Json(new { success = true }); }
+                var variantIdsToRemove = await _context.ProductVariants.Where(v => v.ProductId == id).Select(v => v.VariantId).ToListAsync();
+                if (!variantIdsToRemove.Any()) { return Json(new { success = false, message = "Không tìm thấy sản phẩm." }); }
                 var detailToRemove = customerFavorite.FavoriteDetails
-                    .Where(fd => fd.VariantId != null && variantIdsToRemove.Contains(fd.VariantId.Value))
-                    .ToList();
-
+                    .Where(fd => fd.VariantId != null && variantIdsToRemove.Contains(fd.VariantId.Value)).ToList();
                 if (detailToRemove.Any())
                 {
                     _context.FavoriteDetails.RemoveRange(detailToRemove);
                     await _context.SaveChangesAsync();
                 }
-
                 return Json(new { success = true, message = "Đã xóa khỏi yêu thích." });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi xóa khỏi Favorites.");
-                return Json(new { success = false, message = "Lỗi máy chủ." });
-            }
+            catch (Exception ex) { _logger.LogError(ex, "Lỗi khi xóa khỏi Favorites."); return Json(new { success = false, message = "Lỗi máy chủ." }); }
         }
 
+        // === ACTION MỚI CHO ĐỀ XUẤT TÌM KIẾM ===
+        [HttpGet]
+        public async Task<IActionResult> SearchSuggestions(string term)
+        {
+            if (string.IsNullOrEmpty(term) || term.Length < 2)
+            {
+                return Json(new List<string>());
+            }
 
-        // === ACTION MỚI ĐỂ GỌI AI ===
+            var suggestions = await _context.Products
+                .Where(p => p.Name.ToLower().Contains(term.ToLower()) && p.IsActive == true)
+                .Select(p => p.Name)
+                .Take(5) // Giới hạn 5 kết quả
+                .ToListAsync();
+
+            return Json(suggestions);
+        }
+
+        // === ACTION GETAIRESPONSE (Giữ nguyên) ===
         [HttpPost]
         public async Task<IActionResult> GetAiResponse([FromBody] ChatRequest request)
         {
             try
             {
-                // === TÔI ĐÃ DÁN KEY CỦA BẠN VÀO ĐÂY ===
-                var apiKey = "AIzaSyBnUmG9b_K-Q1fTQ0i6loBKulGRNuXU0fg";
-
+                var apiKey = "AIzaSyBnUmG9b_K-Q1fTQ0i6loBKulGRNuXU0fg"; // <-- KEY CỦA BẠN
                 var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
-
                 using (var httpClient = new HttpClient())
                 {
                     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                    // Thông tin "dạy" cho AI
                     var systemInstruction = "Bạn là Rabit AI, trợ lý tư vấn điện thoại của Rabit Store. Hãy trả lời ngắn gọn, thân thiện.";
-
-                    // Tạo nội dung gửi đi
-                    var payload = new
-                    {
-                        contents = new[]
-                        {
-                            new {
-                                role = "user",
-                                parts = new[] { new { text = systemInstruction } }
-                            },
-                            new {
-                                role = "model",
-                                parts = new[] { new { text = "Chào bạn! Tôi có thể giúp gì?" } }
-                            },
-                            new {
-                                role = "user",
-                                parts = new[] { new { text = request.Message } }
-                            }
-                        }
-                    };
-
+                    var payload = new { contents = new[] { new { role = "user", parts = new[] { new { text = systemInstruction } } }, new { role = "model", parts = new[] { new { text = "Chào bạn! Tôi có thể giúp gì?" } } }, new { role = "user", parts = new[] { new { text = request.Message } } } } };
                     var jsonPayload = JsonSerializer.Serialize(payload);
                     var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                    // Gửi request đến Google
                     var response = await httpClient.PostAsync(apiUrl, content);
-
                     if (response.IsSuccessStatusCode)
                     {
                         var responseBody = await response.Content.ReadAsStringAsync();
-
-                        // Phân tích JSON trả về để lấy text
                         using (var jsonDoc = JsonDocument.Parse(responseBody))
                         {
-                            var botText = jsonDoc.RootElement
-                                            .GetProperty("candidates")[0]
-                                            .GetProperty("content")
-                                            .GetProperty("parts")[0]
-                                            .GetProperty("text")
-                                            .GetString();
-
+                            var botText = jsonDoc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
                             return Ok(new { success = true, message = botText });
                         }
                     }
@@ -338,35 +284,15 @@ namespace WebBanDienThoai.Controllers
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi nghiêm trọng khi gọi GetAiResponse.");
-                return Ok(new { success = false, message = "Lỗi kết nối đến máy chủ AI." });
-            }
+            catch (Exception ex) { _logger.LogError(ex, "Lỗi nghiêm trọng khi gọi GetAiResponse."); return Ok(new { success = false, message = "Lỗi kết nối đến máy chủ AI." }); }
         }
 
-        // (Class nhỏ để nhận request từ JavaScript)
-        public class ChatRequest
-        {
-            public string Message { get; set; }
-        }
-
+        public class ChatRequest { public string Message { get; set; } }
 
         // ... (Các Action khác) ...
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        public IActionResult Home()
-        {
-            return View();
-        }
-
+        public IActionResult Privacy() { return View(); }
+        public IActionResult Home() { return View(); }
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        public IActionResult Error() { return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier }); }
     }
 }

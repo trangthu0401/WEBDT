@@ -3,6 +3,7 @@
 @{
     Layout = null;
     var currentSort = ViewData["CurrentSort"] as string;
+    var currentSearch = ViewData["CurrentSearch"] as string;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -21,12 +22,16 @@
                     <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
                     <h1 class="logo-text">Store</h1>
                 </a>
-                <form class="search-form">
-                    <input type="text" placeholder="Tìm kiếm" class="search-input">
+
+                <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
+                    <input type="text" name="searchString" value="@currentSearch" placeholder="Tìm kiếm" class="search-input" id="mainSearchInput" autocomplete="off">
                     <button type="submit" class="search-button">
                         <img src="~/images/search.png" alt="Search Icon">
                     </button>
+                    <input type="hidden" name="id" value="@Model.BrandId" />
+                    <div class="search-suggestions" id="mainSearchSuggestions"></div>
                 </form>
+
                 <div class="header-actions">
                     <a href="#" class="cart-link">
                         <span>Giỏ hàng</span>
@@ -58,7 +63,7 @@
                     @if (Model.BrandCounts != null && Model.BrandCounts.Any())
                     {
                         <li class="@(Model.BrandId == null ? "active" : "")">
-                            <a asp-controller="Home" asp-action="Index" asp-route-id="">
+                            <a asp-controller="Home" asp-action="Index" asp-route-id="" asp-route-searchString="">
                                 <span>Số hãng kinh doanh</span>
                                 <span class="badge">@Model.TotalProductCount</span>
                             </a>
@@ -66,7 +71,7 @@
                         @foreach (var brand in Model.BrandCounts)
                         {
                             <li class="@(Model.BrandId == brand.brandId ? "active" : "")">
-                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId">
+                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId" asp-route-searchString="@currentSearch">
                                     <span>@brand.BrandName</span>
                                     <img src="~/images/next .png" alt="arrow">
                                 </a>
@@ -104,15 +109,15 @@
 
             <div class="sort-buttons">
                 <span>Sắp xếp theo:</span>
-                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder=""
+                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="" asp-route-searchString="@currentSearch"
                    class="sort-btn @(string.IsNullOrEmpty(currentSort) ? "active" : "")">
                     Mới nhất
                 </a>
-                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_asc"
+                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_asc" asp-route-searchString="@currentSearch"
                    class="sort-btn @(currentSort == "price_asc" ? "active" : "")">
                     Giá thấp -> cao
                 </a>
-                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_desc"
+                <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_desc" asp-route-searchString="@currentSearch"
                    class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
                     Giá cao -> thấp
                 </a>
@@ -160,7 +165,6 @@
             <span>Liên hệ & AI</span>
             <img src="~/images/lienhe.png" alt="Contact Icon">
         </button>
-
         <div class="chat-window" id="chatWindow">
             <div class="chat-header">
                 <span>Rabit AI & Liên hệ</span>
@@ -168,7 +172,7 @@
             </div>
             <div class="chat-body" id="chatBody">
                 <div class="chat-message bot-message">
-                    <p>Xin chào! Tôi là tư vấn viên của sốp, bạn cần tôi hẫu trợ gì nè ?</p>
+                    <p>Xin chào! Bạn muốn tôi gợi ý điện thoại (ví dụ: 'iphone') hay muốn liên hệ trực tiếp (ví dụ: 'zalo', 'sđt')?</p>
                 </div>
             </div>
             <div class="chat-input-area">
@@ -219,8 +223,7 @@
                 });
             });
 
-            // --- CODE JAVASCRIPT CHO CHATBOT ---
-
+            // --- CODE JAVASCRIPT CHO CHATBOT (Giữ nguyên) ---
             const fabChatButton = document.getElementById('fabChatButton');
             const chatWindow = document.getElementById('chatWindow');
             const chatCloseButton = document.getElementById('chatCloseButton');
@@ -245,24 +248,18 @@
             function handleUserMessage() {
                 const userInput = chatInput.value.trim();
                 if (userInput === "") return;
-
                 appendMessage(userInput, 'user-message');
                 chatInput.value = "";
-
-                appendMessage("...", 'bot-message loading'); // Bot đang gõ...
-
+                appendMessage("...", 'bot-message loading');
                 fetch('/Home/GetAiResponse', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: userInput })
                 })
                 .then(response => response.json())
                 .then(data => {
                     const loadingMessage = chatBody.querySelector('.loading');
                     if (loadingMessage) loadingMessage.remove();
-
                     appendMessage(data.message, 'bot-message');
                 })
                 .catch(error => {
@@ -272,18 +269,62 @@
                     appendMessage("Xin lỗi, tôi gặp lỗi kết nối.", 'bot-message');
                 });
             }
-
-            // === HÀM ĐÃ SỬA LỖI (DÒNG 286 CŨ) ===
             function appendMessage(text, className) {
                 const messageDiv = document.createElement('div');
-
-                // SỬA LỖI: Tách 'className' (ví dụ: 'bot-message loading') thành 2 class
-                // và thêm chúng vào cùng với 'chat-message' bằng toán tử 'spread' (...)
                 messageDiv.classList.add('chat-message', ...className.split(' '));
-
                 messageDiv.innerHTML = `<p>${text}</p>`;
                 chatBody.appendChild(messageDiv);
                 chatBody.scrollTop = chatBody.scrollHeight;
+            }
+
+
+            // --- THÊM JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM ---
+            const searchInput = document.getElementById('mainSearchInput');
+            const suggestionsContainer = document.getElementById('mainSearchSuggestions');
+            const searchForm = document.getElementById('mainSearchForm');
+
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const term = this.value;
+
+                    if (term.length < 2) {
+                        suggestionsContainer.innerHTML = ''; // Xóa đề xuất nếu gõ quá ít
+                        suggestionsContainer.style.display = 'none';
+                        return;
+                    }
+
+                    // Gọi Action SearchSuggestions
+                    fetch('/Home/SearchSuggestions?term=' + term)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsContainer.innerHTML = ''; // Xóa đề xuất cũ
+                            if (data.length > 0) {
+                                suggestionsContainer.style.display = 'block';
+                                data.forEach(suggestionText => {
+                                    const suggestionDiv = document.createElement('div');
+                                    suggestionDiv.classList.add('suggestion-item');
+                                    suggestionDiv.textContent = suggestionText;
+
+                                    // Khi click vào đề xuất
+                                    suggestionDiv.addEventListener('click', function() {
+                                        searchInput.value = this.textContent; // Điền text vào ô
+                                        suggestionsContainer.style.display = 'none';
+                                        searchForm.submit(); // Tự động tìm kiếm
+                                    });
+                                    suggestionsContainer.appendChild(suggestionDiv);
+                                });
+                            } else {
+                                suggestionsContainer.style.display = 'none';
+                            }
+                        });
+                });
+
+                // Đóng đề xuất khi click ra ngoài
+                document.addEventListener('click', function(e) {
+                    if (!searchForm.contains(e.target)) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
             }
 
         });
