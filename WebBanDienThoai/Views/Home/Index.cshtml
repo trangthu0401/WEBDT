@@ -64,7 +64,7 @@
                     {
                         <li class="@(Model.BrandId == null ? "active" : "")">
                             <a asp-controller="Home" asp-action="Index" asp-route-id="" asp-route-searchString="">
-                                <span>Số hãng kinh doanh</span>
+                                <span>Tất cả hãng</span>
                                 <span class="badge">@Model.TotalProductCount</span>
                             </a>
                         </li>
@@ -244,7 +244,6 @@
                     handleUserMessage();
                 }
             });
-
             function handleUserMessage() {
                 const userInput = chatInput.value.trim();
                 if (userInput === "") return;
@@ -278,7 +277,7 @@
             }
 
 
-            // --- THÊM JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM ---
+            // --- SỬA JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM (TẠO HTML SẢN PHẨM) ---
             const searchInput = document.getElementById('mainSearchInput');
             const suggestionsContainer = document.getElementById('mainSearchSuggestions');
             const searchForm = document.getElementById('mainSearchForm');
@@ -298,20 +297,61 @@
                         .then(response => response.json())
                         .then(data => {
                             suggestionsContainer.innerHTML = ''; // Xóa đề xuất cũ
+
                             if (data.length > 0) {
                                 suggestionsContainer.style.display = 'block';
-                                data.forEach(suggestionText => {
-                                    const suggestionDiv = document.createElement('div');
-                                    suggestionDiv.classList.add('suggestion-item');
-                                    suggestionDiv.textContent = suggestionText;
 
-                                    // Khi click vào đề xuất
-                                    suggestionDiv.addEventListener('click', function() {
-                                        searchInput.value = this.textContent; // Điền text vào ô
-                                        suggestionsContainer.style.display = 'none';
-                                        searchForm.submit(); // Tự động tìm kiếm
+                                // Thêm tiêu đề "Sản phẩm gợi ý"
+                                const header = document.createElement('div');
+                                header.classList.add('suggestion-header');
+                                header.textContent = 'Sản phẩm gợi ý';
+                                suggestionsContainer.appendChild(header);
+
+                                // Lặp qua sản phẩm (data là List<ProductSuggestionViewModel>)
+                                data.forEach(product => {
+                                    // Tạo thẻ <a>
+                                    const suggestionLink = document.createElement('a');
+                                    suggestionLink.classList.add('suggestion-item');
+                                    // SỬA: Link sẽ submit form với tên sản phẩm
+                                    suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
+
+                                    // Ảnh
+                                    const img = document.createElement('img');
+                                    let imageUrl = product.mainImage;
+                                    // Sửa lỗi đường dẫn ảnh (loại bỏ '~')
+                                    if (imageUrl && !imageUrl.startsWith('http')) {
+                                        imageUrl = imageUrl.replace("~", "");
+                                    }
+                                    img.src = imageUrl ? imageUrl : '/images/default-product.png';
+                                    img.alt = product.name;
+
+                                    // Info (Tên + Giá)
+                                    const infoDiv = document.createElement('div');
+                                    infoDiv.classList.add('suggestion-item-info');
+
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.classList.add('suggestion-item-name');
+                                    nameDiv.textContent = product.name;
+
+                                    const priceDiv = document.createElement('div');
+                                    priceDiv.classList.add('suggestion-item-price');
+                                    // Định dạng tiền tệ
+                                    priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+                                    infoDiv.appendChild(nameDiv);
+                                    infoDiv.appendChild(priceDiv);
+
+                                    suggestionLink.appendChild(img);
+                                    suggestionLink.appendChild(infoDiv);
+
+                                    // SỬA: Khi click vào đề xuất, submit form
+                                    suggestionLink.addEventListener('click', function(e) {
+                                        e.preventDefault(); // Ngăn link chuyển trang
+                                        searchInput.value = product.name; // Điền tên vào ô input
+                                        searchForm.submit(); // Gửi form
                                     });
-                                    suggestionsContainer.appendChild(suggestionDiv);
+
+                                    suggestionsContainer.appendChild(suggestionLink);
                                 });
                             } else {
                                 suggestionsContainer.style.display = 'none';

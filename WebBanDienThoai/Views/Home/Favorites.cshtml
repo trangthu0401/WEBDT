@@ -155,24 +155,55 @@
                         return;
                     }
 
-                    // Vẫn gọi Action 'SearchSuggestions'
                     fetch('/Home/SearchSuggestions?term=' + term)
                         .then(response => response.json())
                         .then(data => {
                             suggestionsContainer.innerHTML = '';
                             if (data.length > 0) {
                                 suggestionsContainer.style.display = 'block';
-                                data.forEach(suggestionText => {
-                                    const suggestionDiv = document.createElement('div');
-                                    suggestionDiv.classList.add('suggestion-item');
-                                    suggestionDiv.textContent = suggestionText;
 
-                                    suggestionDiv.addEventListener('click', function() {
-                                        searchInput.value = this.textContent;
-                                        suggestionsContainer.style.display = 'none';
-                                        searchForm.submit(); // Submit form (để tìm ở trang Index)
+                                const header = document.createElement('div');
+                                header.classList.add('suggestion-header');
+                                header.textContent = 'Sản phẩm gợi ý';
+                                suggestionsContainer.appendChild(header);
+
+                                data.forEach(product => {
+                                    const suggestionLink = document.createElement('a');
+                                    suggestionLink.classList.add('suggestion-item');
+                                    suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
+
+                                    const img = document.createElement('img');
+                                    let imageUrl = product.mainImage;
+                                    if (imageUrl && !imageUrl.startsWith('http')) {
+                                        imageUrl = imageUrl.replace("~", ""); // Xóa dấu ~
+                                    }
+                                    img.src = imageUrl ? imageUrl : '/images/default-product.png';
+                                    img.alt = product.name;
+
+                                    const infoDiv = document.createElement('div');
+                                    infoDiv.classList.add('suggestion-item-info');
+
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.classList.add('suggestion-item-name');
+                                    nameDiv.textContent = product.name;
+
+                                    const priceDiv = document.createElement('div');
+                                    priceDiv.classList.add('suggestion-item-price');
+                                    priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+                                    infoDiv.appendChild(nameDiv);
+                                    infoDiv.appendChild(priceDiv);
+
+                                    suggestionLink.appendChild(img);
+                                    suggestionLink.appendChild(infoDiv);
+
+                                    suggestionLink.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        searchInput.value = product.name;
+                                        searchForm.submit();
                                     });
-                                    suggestionsContainer.appendChild(suggestionDiv);
+
+                                    suggestionsContainer.appendChild(suggestionLink);
                                 });
                             } else {
                                 suggestionsContainer.style.display = 'none';

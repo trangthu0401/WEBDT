@@ -36,4 +36,14 @@ namespace WebBanDienThoai.Models.modelView
     {
         public List<ProductListViewModel> FavoriteProducts { get; set; } = new List<ProductListViewModel>();
     }
+
+    // === PHẦN CODE MỚI ĐƯỢC THÊM VÀO ===
+    // (Dùng cho tính năng gợi ý tìm kiếm có ảnh, tên, giá)
+    public class ProductSuggestionViewModel
+    {
+        public int ProductId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? MainImage { get; set; }
+        public decimal Price { get; set; }
+    }
 }

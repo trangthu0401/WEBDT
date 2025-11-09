@@ -23,11 +23,11 @@ namespace WebBanDienThoai.Controllers
             _context = context;
         }
 
-        // === ACTION INDEX (Đã thêm searchString) ===
+        // === ACTION INDEX (Giữ nguyên) ===
         public async Task<IActionResult> Index(int? id, string sortOrder, string searchString)
         {
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["CurrentSearch"] = searchString; // Giữ chuỗi tìm kiếm
+            ViewData["CurrentSearch"] = searchString;
 
             try
             {
@@ -46,13 +46,11 @@ namespace WebBanDienThoai.Controllers
                     .AsNoTracking()
                     .Where(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
 
-                // Lọc theo Brand
                 if (id != null && id > 0)
                 {
                     productsQuery = productsQuery.Where(p => p.BrandId == id);
                 }
 
-                // Lọc theo Search
                 if (!String.IsNullOrEmpty(searchString))
                 {
                     productsQuery = productsQuery.Where(p => p.Name.ToLower().Contains(searchString.ToLower()));
@@ -179,7 +177,7 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === ACTION ADDTOFAVORITES (Giữ nguyên) ===
+        // === (Các Action Add/Remove Favorites giữ nguyên) ===
         [HttpPost]
         public async Task<IActionResult> AddToFavorites(int id)
         {
@@ -209,8 +207,6 @@ namespace WebBanDienThoai.Controllers
             }
             catch (Exception ex) { _logger.LogError(ex, "Lỗi khi thêm vào Favorites."); return Json(new { success = false, message = "Lỗi máy chủ." }); }
         }
-
-        // === ACTION REMOVEFROMFAVORITES (Giữ nguyên) ===
         [HttpPost]
         public async Task<IActionResult> RemoveFromFavorites(int id)
         {
@@ -233,18 +229,28 @@ namespace WebBanDienThoai.Controllers
             catch (Exception ex) { _logger.LogError(ex, "Lỗi khi xóa khỏi Favorites."); return Json(new { success = false, message = "Lỗi máy chủ." }); }
         }
 
-        // === ACTION MỚI CHO ĐỀ XUẤT TÌM KIẾM ===
+        // === SỬA ACTION ĐỀ XUẤT TÌM KIẾM (Trả về ViewModel) ===
         [HttpGet]
         public async Task<IActionResult> SearchSuggestions(string term)
         {
             if (string.IsNullOrEmpty(term) || term.Length < 2)
             {
-                return Json(new List<string>());
+                return Json(new List<ProductSuggestionViewModel>()); // Trả về list rỗng
             }
 
+            // Lấy 5 sản phẩm khớp, bao gồm giá
             var suggestions = await _context.Products
                 .Where(p => p.Name.ToLower().Contains(term.ToLower()) && p.IsActive == true)
-                .Select(p => p.Name)
+                .Select(p => new ProductSuggestionViewModel // Dùng ViewModel mới
+                {
+                    ProductId = p.ProductId,
+                    Name = p.Name,
+                    MainImage = p.MainImage,
+                    Price = p.ProductVariants
+                             .Where(v => v.IsActive == true)
+                             .Select(v => v.DiscountPrice ?? v.Price)
+                             .Min() ?? 0M
+                })
                 .Take(5) // Giới hạn 5 kết quả
                 .ToListAsync();
 
