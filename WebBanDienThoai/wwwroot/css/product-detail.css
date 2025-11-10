@@ -1,15 +1,21 @@
 ﻿/* File: wwwroot/css/product-detail.css */
-/* (Code CSS này chỉ áp dụng cho trang Chi tiết sản phẩm) */
+/* (Code này là SỰ KẾT HỢP của home.css (Header) + product-detail.css (Body)) */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 
 :root {
     --primary-red: rgba(255, 0, 0, 0.85);
     --primary-red-solid: #ff2626;
+    --text-dark: #000000;
+    --text-light: #ffffff;
+    --text-placeholder: #adb5bd;
+    --price-blue: rgba(0, 69, 245, 0.88);
+    --border-light: rgba(0, 0, 0, 0.2);
+    --border-medium: rgba(0, 0, 0, 0.55);
+    /* Thêm các biến từ product-detail.css */
     --text-white: #ffffff;
     --text-black: #000000;
     --text-gray: #adb5bd;
-    --border-light: #d9d9d9;
-    --border-medium: #cbcbcb;
-    --border-dark: #000000;
     --border-active: #ff0000;
     --price-box-bg: rgba(211, 230, 255, 0.36);
     --price-box-border: rgba(48, 127, 255, 0.86);
@@ -18,7 +24,271 @@
     --font-secondary: 'ABeeZee', sans-serif;
 }
 
-/* --- PRODUCT DETAIL STYLES --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-weight: 400;
+    background-color: #ffffff;
+    color: var(--text-dark);
+}
+
+.container {
+    max-width: 1512px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+ul {
+    list-style: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (max-width: 1200px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* === BẮT ĐẦU HEADER (LẤY TỪ home.css) === */
+.site-header {
+    background-color: #fff;
+    position: sticky; /* Sửa: Dùng sticky (giống home) */
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.header-top {
+    padding: 12px 0;
+}
+
+.header-top-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.logo-text {
+    font-weight: 700;
+    font-size: 40px;
+    color: var(--primary-red);
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+}
+
+.logo-mascot {
+    position: absolute;
+    width: 50px;
+    height: 75px;
+    object-fit: contain;
+    position: static;
+    gap: 6px;
+}
+
+/* SỬA: Dùng CSS tìm kiếm của home.css */
+.search-form {
+    position: relative;
+    flex-grow: 1;
+    max-width: 500px;
+}
+
+.search-input {
+    width: 100%;
+    height: 50px;
+    border: 1px solid var(--text-placeholder);
+    border-radius: 99px;
+    padding: 10px 90px 10px 20px;
+    font-size: 20px;
+    color: var(--text-dark);
+    font-weight: 600;
+    background: transparent;
+    outline: none;
+}
+
+    .search-input::placeholder {
+        color: var(--text-placeholder);
+        font-weight: 600;
+    }
+
+/* SỬA: Sửa lỗi lệch kính lúp */
+.search-button {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    bottom: 5px;
+    transform: none;
+    width: 80px;
+    height: auto;
+    background-color: var(--primary-red);
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+    .search-button img {
+        width: 20px;
+        height: 20px;
+    }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.cart-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--primary-red-solid);
+    color: var(--text-light);
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 24px;
+    font-weight: 500;
+    height: 45px;
+}
+
+    .cart-link img {
+        width: 30px;
+        height: 30px;
+    }
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(218, 218, 218, 0.2);
+    border: 1px solid var(--border-light);
+    border-radius: 15px;
+    padding: 7px 15px;
+    font-size: 24px;
+    font-weight: 500;
+    height: 50px;
+}
+
+    .user-profile img {
+        width: 30px;
+        height: 30px;
+    }
+
+/* SỬA: Dùng .main-nav (giống home.css) */
+.main-nav {
+    background-color: var(--primary-red);
+    color: var(--text-light);
+}
+
+/* SỬA: Dùng .nav-container (giống home.css) */
+.nav-container {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    height: 45px;
+}
+
+    .nav-container a {
+        font-size: 20px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+@media (max-width: 1024px) {
+    .header-top-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .search-form {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
+        margin-top: 10px;
+    }
+
+    .logo {
+        order: 1;
+    }
+
+    .header-actions {
+        order: 2;
+    }
+
+    .nav-container {
+        gap: 20px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .logo-text {
+        font-size: 32px;
+    }
+
+    .logo-mascot {
+        left: 78px;
+        width: 40px;
+        height: 60px;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+    }
+
+    .nav-container a {
+        font-size: 18px;
+    }
+}
+/* === KẾT THÚC HEADER === */
+
+
+/* --- PHẦN CODE CHI TIẾT SẢN PHẨM (Lấy từ file của bạn) --- */
 
 .product-section {
     padding-top: 40px;
@@ -206,8 +476,9 @@
     border: none;
 }
 
+/* SỬA: Dùng màu đỏ solid của home.css */
 .btn-primary {
-    background-color: #fa0000;
+    background-color: var(--primary-red-solid);
     color: var(--text-white);
     padding: 0 30px;
 }
@@ -243,8 +514,6 @@
         object-fit: contain;
     }
 
-/* --- MEDIA QUERIES (DETAIL) --- */
-
 @media (max-width: 992px) {
     .product-layout {
         grid-template-columns: 1fr;
@@ -257,6 +526,7 @@
 }
 
 @media (max-width: 768px) {
+    /* ... (Code media query chi tiết của bạn giữ nguyên) ... */
     .product-main-title {
         font-size: 28px;
     }
@@ -294,7 +564,7 @@
 }
 
 /* --- SPECS SECTION STYLES --- */
-
+/* (Toàn bộ code .specs-section, .description-section, .related-section... giữ nguyên) */
 .specs-section {
     padding-top: 0px;
     padding-bottom: 60px;
@@ -344,8 +614,6 @@
 .spec-value:nth-child(4) {
     color: #307fff;
 }
-
-/* --- MEDIA QUERIES (SPECS) --- */
 
 @media (max-width: 768px) {
     .section-title {
@@ -411,7 +679,6 @@
         padding-left: 0;
         margin-bottom: 20px;
     }
-/* --- KHỐI SẢN PHẨM TƯƠNG TỰ (NEW) --- */
 
 .related-section {
     padding-top: 10px;
@@ -424,7 +691,6 @@
         margin-bottom: 20px;
     }
 
-/* --- CARD STYLES (Dùng cho Sản phẩm tương tự) --- */
 .product-card-list {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border-radius: 10px;
@@ -455,10 +721,11 @@
 }
 
 .product-list-title {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
     color: var(--text-black);
     margin-bottom: 5px;
+    text-align: center;
 }
 
 .product-brand {
@@ -484,7 +751,7 @@
 }
 
 .product-price-amount {
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 700;
     color: var(--primary-red-solid);
     line-height: 1.2;
@@ -507,13 +774,85 @@
 .btn-list-action {
     background-color: var(--primary-red-solid);
     color: var(--text-white);
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 600;
-    height: 55px;
+    height: 50px;
     border-radius: 10px;
     margin-top: 15px;
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+/* === THÊM CSS GỢI Ý TÌM KIẾM (Vì nó thiếu trong file này) === */
+.search-suggestions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid var(--border-light);
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 101;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 10px;
+}
+
+.suggestion-header {
+    padding: 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    gap: 12px;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .suggestion-item img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 1px solid #eee;
+    }
+
+.suggestion-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.suggestion-item-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.suggestion-item-price {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--price-blue);
 }
