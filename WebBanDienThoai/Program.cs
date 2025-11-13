@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebBanDienThoai.Models; // Namespace chứa DbContext của bạn
+using Microsoft.AspNetCore.Authentication.Cookies; // <-- THÊM DÒNG NÀY
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,12 +11,25 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<DemoWebBanDienThoaiContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Thêm dịch vụ Controller và View
+// === THÊM CẤU HÌNH DỊCH VỤ XÁC THỰC COOKIE ===
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login"; // Đường dẫn đến trang đăng nhập
+        options.LogoutPath = "/Account/Logout"; // Đường dẫn đăng xuất
+        options.AccessDeniedPath = "/Home/Error"; // Trang khi bị cấm truy cập
+        options.ExpireTimeSpan = TimeSpan.FromDays(30); // Thời gian cookie tồn tại
+        options.SlidingExpiration = true; // Gia hạn cookie nếu truy cập
+    });
+
+// Thêm dịch vụ để có thể truy cập HttpContext (ví dụ: trong Controller)
+builder.Services.AddHttpContextAccessor();
+// === KẾT THÚC PHẦN THÊM MỚI ===
+
+// Thêm dịch vụ Controller và View (Dòng này đã có)
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
-
-// --- PHẦN CẤU HÌNH BỊ THIẾU NẰM Ở ĐÂY ---
 
 // Cấu hình đường ống (pipeline) cho HTTP request
 // Bật trang báo lỗi chi tiết khi đang phát triển (Development)
@@ -33,16 +47,19 @@ else
 // Tự động chuyển http sang https
 app.UseHttpsRedirection();
 
-// DÒNG QUAN TRỌNG: Cho phép tải file tĩnh (CSS, JS, Ảnh)
+// Cho phép tải file tĩnh (CSS, JS, Ảnh)
 app.UseStaticFiles();
 
-// DÒNG QUAN TRỌNG: Kích hoạt hệ thống định tuyến (Routing)
+// Kích hoạt hệ thống định tuyến (Routing)
 app.UseRouting();
 
-// (Tùy chọn) Bật tính năng xác thực/phân quyền (nếu có đăng nhập)
-app.UseAuthorization();
+// === THÊM MIDDLEWARE XÁC THỰC ===
+// (Phải nằm SAU UseRouting và TRƯỚC UseAuthorization)
+app.UseAuthentication();
 
-// --- KẾT THÚC PHẦN BỊ THIẾU ---
+// Bật tính năng xác thực/phân quyền (Dòng này đã có)
+app.UseAuthorization();
+// === KẾT THÚC PHẦN THÊM MỚI ===
 
 
 // Ánh xạ route mặc định của bạn (đặt sau UseRouting)
