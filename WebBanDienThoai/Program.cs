@@ -48,6 +48,7 @@ app.UseRouting(); // B?t t�nh n?ng ??nh tuy?n (Routing)
 app.UseAuthentication(); // Nếu dùng Identity
 app.UseAuthorization();
 
+DbInitializer.Initialize(app);
 // 5. C?u hình route (???ng d?n) m?c ??nh
 app.MapControllerRoute(
     name: "default",

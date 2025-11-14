@@ -1,5 +1,6 @@
 ﻿@{
     Layout = null; // Không lồng layout vào layout khác
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -41,11 +42,22 @@
     <!-- SIDEBAR + CONTENT -->
     <div class="main-container">
         <!-- Sidebar bên trái -->
-        <nav class="sidebar">
-            <a href="~/Dashboard/Index" class="active"><i class="fa-solid fa-chart-line"></i> Tổng quan</a>
-            <a href="~/Product/Index"><i class="fa-solid fa-box"></i> Sản phẩm</a>
-            <a href="~/Customer/Index"><i class="fa-solid fa-user"></i> Khách hàng</a>
-            <a href="~/Order/Index"><i class="fa-solid fa-cube"></i> Đơn hàng</a>
+       <nav class="sidebar">
+            <a href="~/Dashboard/Index" class="@(currentController == "Dashboard" ? "active" : "")">
+                <i class="fa-solid fa-chart-line"></i> Tổng quan
+            </a>
+            
+            <a href="~/Product/Index" class="@((currentController == "Product" || currentController == "ProductVariant") ? "active" : "")">
+                <i class="fa-solid fa-box"></i> Sản phẩm
+            </a>
+            
+            <a href="~/Customer/Index" class="@(currentController == "Customer" ? "active" : "")">
+                <i class="fa-solid fa-user"></i> Khách hàng
+            </a>
+            
+            <a href="~/Order/Index" class="@(currentController == "Order" ? "active" : "")">
+                <i class="fa-solid fa-cube"></i> Đơn hàng
+            </a>
         </nav>
 
         <!-- Khu nội dung chính -->
