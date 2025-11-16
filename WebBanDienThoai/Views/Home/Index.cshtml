@@ -1,5 +1,5 @@
 ﻿@model WebBanDienThoai.Models.modelView.ManageProductsViewModel
-@using System.Security.Claims 
+@using System.Security.Claims
 
 @{
     Layout = null; // Dòng này vẫn giữ nguyên
@@ -80,13 +80,11 @@
         <div class="container hero-container">
             <aside class="category-sidebar">
                 <ul>
-
                     @if (Model.BrandCounts != null && Model.BrandCounts.Any())
                     {
                         <li class="@(Model.BrandId == null ? "active" : "")">
                             <a asp-controller="Home" asp-action="Index" asp-route-id="" asp-route-searchString="">
                                 <span>Tất cả hãng</span>
-
                                 <span class="badge">@Model.TotalProductCount</span>
                             </a>
                         </li>
@@ -94,35 +92,42 @@
                         {
                             <li class="@(Model.BrandId == brand.brandId ? "active" : "")">
                                 <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId" asp-route-searchString="@currentSearch">
-
                                     <span>@brand.BrandName</span>
                                     <img src="~/images/next .png" alt="arrow">
                                 </a>
-
                             </li>
                         }
                     }
                     else
                     {
-
                         <li><a href="#"><span>Chưa có danh mục</span></a></li>
                     }
                 </ul>
             </aside>
-            <div class="hero-carousel">
 
-                <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:90/plain/https://dashboard.cellphones.com.vn/storage/690x300_iPhone_17_Pro_Opensale_v3.png" alt="iPhone Air Banner" class="carousel-image">
-                <button class="carousel-control prev">
+            <div class="hero-carousel" id="heroCarousel">
+                <div class="carousel-track">
+                    <div class="carousel-slide">
+                        <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:90/plain/https://dashboard.cellphones.com.vn/storage/690x300_iPhone_17_Pro_Opensale_v3.png" alt="iPhone Air Banner" class="carousel-image">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://cdn.tgdd.vn/Products/Images/42/329149/Slider/vi-vn-iphone-16-pro-max-1.jpg" alt="iPhone 16 Banner" class="carousel-image">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="https://photo.znews.vn/w660/Uploaded/ygtmvd/2025_10_21/BK6A8220.jpg" alt="New Product Banner" class="carousel-image">
+                    </div>
+                </div>
+
+                <button class="carousel-control prev" id="carouselPrev">
                     <img src="~/images/muitenphai.png" alt="Previous">
                 </button>
-                <button class="carousel-control next">
+                <button class="carousel-control next" id="carouselNext">
                     <img src="~/images/muitenphai.png" alt="Next">
                 </button>
             </div>
             <aside class="ads-sidebar">
                 <a href="#" class="ad-banner">
                     <img src="~/images/poster1.png" alt="Watch Series Ad">
-
                 </a>
                 <a href="#" class="ad-banner">
                     <img src="~/images/poster2.png" alt="S25 Series Ad">
@@ -133,8 +138,6 @@
 
     <section id="products" class="products-section">
         <div class="container">
-
-
             <div class="sort-buttons">
                 <span>Sắp xếp theo:</span>
                 <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="" asp-route-searchString="@currentSearch"
@@ -143,13 +146,11 @@
                 </a>
                 <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_asc" asp-route-searchString="@currentSearch"
                    class="sort-btn @(currentSort == "price_asc" ? "active" : "")">
-
                     Giá thấp -> cao
                 </a>
                 <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_desc" asp-route-searchString="@currentSearch"
                    class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
                     Giá cao -> thấp
-
                 </a>
             </div>
 
@@ -170,17 +171,14 @@
                                 {
                                     <button class="wishlist-button liked" data-productid="@product.ProductId">
                                         <img src="~/images/tym.png" alt="Wishlist heart">
-
                                         <span>Đã thích</span>
                                     </button>
                                 }
                                 else
                                 {
                                     <button class="wishlist-button" data-productid="@product.ProductId">
-
                                         <img src="~/images/tym.png" alt="Wishlist heart">
                                         <span>Yêu thích</span>
-
                                     </button>
                                 }
                             </div>
@@ -190,7 +188,6 @@
                 else
                 {
                     <p>Không tìm thấy sản phẩm nào phù hợp.</p>
-
                 }
             </div>
         </div>
@@ -201,7 +198,6 @@
         </button>
         <div class="chat-window" id="chatWindow">
             <div class="chat-header">
-
                 <span>Rabit AI & Liên hệ</span>
                 <button class="chat-close" id="chatCloseButton">&times;</button>
             </div>
@@ -216,176 +212,216 @@
             <div class="chat-input-area">
                 <input type="text" id="chatInput" placeholder="Nhập tin nhắn...">
                 <button id="chatSendButton">Gửi</button>
-
             </div>
             <div class="contact-links-bar">
                 <a href="https://zalo.me/0999999999" target="_blank">
                     <img src="~/images/zalo-icon.png" alt="Zalo"> Zalo
                 </a>
                 <a href="tel:0999999999">
-
                     <img src="~/images/phone-icon.png" alt="Phone"> Gọi điện
                 </a>
             </div>
         </div>
-
     </section>
 
     <script>
-               document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
 
-                   // --- SỬA CODE NÚT YÊU THÍCH (Thêm stopPropagation) ---
+            // --- CODE NÚT YÊU THÍCH ---
+            const wishlistButtons = document.querySelectorAll('.wishlist-button');
+            wishlistButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Ngăn thẻ <a> cha bị click
+                    e.stopPropagation(); // Ngăn thẻ <a> cha bị click
 
-                const wishlistButtons = document.querySelectorAll('.wishlist-button');
-                   wishlistButtons.forEach(button => {
-                       button.addEventListener('click', function(e) {
-                           e.preventDefault();
-        // Ngăn thẻ <a> cha bị click
-                           e.stopPropagation();
-        // Ngăn thẻ <a> cha bị click
+                    const productId = this.dataset.productid;
+                    const buttonElement = this;
+                    const isFavorited = buttonElement.classList.contains('liked');
+                    const url = isFavorited ? '/Home/RemoveFromFavorites/' + productId : '/Home/AddToFavorites/' + productId;
+                    fetch(url, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            if(isFavorited) {
+                                buttonElement.classList.remove('liked');
+                                buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Yêu thích</span>';
+                            } else {
+                                buttonElement.classList.add('liked');
+                                buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Đã thích</span>';
+                            }
+                        } else { alert(data.message); }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            });
 
-                           const productId = this.dataset.productid;
-        const buttonElement = this;
-                           const isFavorited = buttonElement.classList.contains('liked');
-                           const url = isFavorited ? '/Home/RemoveFromFavorites/' + productId : '/Home/AddToFavorites/' + productId;
-        fetch(url, { method: 'POST' })
-                           .then(response => response.json())
-                           .then(data => {
-                               if(data.success) {
+            // === CODE MỚI CHO CAROUSEL ===
+            const carousel = document.getElementById('heroCarousel');
+            if (carousel) {
+                const track = carousel.querySelector('.carousel-track');
+                const slides = Array.from(track.children);
+                const nextButton = document.getElementById('carouselNext');
+                const prevButton = document.getElementById('carouselPrev');
 
-         if(isFavorited) {
-                                       buttonElement.classList.remove('liked');
-                                       buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Yêu thích</span>';
+                if (slides.length > 0) {
+                    let slideWidth = slides[0].getBoundingClientRect().width;
+                    let currentIndex = 0;
 
-         } else {
-                                       buttonElement.classList.add('liked');
-                                       buttonElement.innerHTML = '<img src="/images/tym.png" alt="Wishlist heart"> <span>Đã thích</span>';
-
-          }
-                               } else { alert(data.message); }
-                           })
-                           .catch(error => console.error('Error:', error));
-        });
-                   });
-
-                   // --- (Code Chatbot và Tìm kiếm giữ nguyên) ---
-                   const fabChatButton = document.getElementById('fabChatButton');
-        const chatWindow = document.getElementById('chatWindow');
-                   const chatCloseButton = document.getElementById('chatCloseButton');
-                   const chatBody = document.getElementById('chatBody');
-                   const chatInput = document.getElementById('chatInput');
-                   const chatSendButton = document.getElementById('chatSendButton');
-        fabChatButton.addEventListener('click', () => { chatWindow.classList.toggle('active'); });
-                   chatCloseButton.addEventListener('click', () => { chatWindow.classList.remove('active'); });
-                   chatSendButton.addEventListener('click', handleUserMessage);
-        chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { handleUserMessage(); } });
-        function handleUserMessage() {
-                       const userInput = chatInput.value.trim();
-        if (userInput === "") return;
-                       appendMessage(userInput, 'user-message');
-                       chatInput.value = "";
-                       appendMessage("...", 'bot-message loading');
-        fetch('/Home/GetAiResponse', {
-                           method: 'POST',
-                           headers: { 'Content-Type': 'application/json' },
-                           body: JSON.stringify({ message: userInput })
-                       })
-
-          .then(response => response.json())
-                       .then(data => {
-                           const loadingMessage = chatBody.querySelector('.loading');
-                           if (loadingMessage) loadingMessage.remove();
-                           appendMessage(data.message, 'bot-message');
-
-            })
-                       .catch(error => {
-                           console.error('Error:', error);
-                           const loadingMessage = chatBody.querySelector('.loading');
-                           if (loadingMessage) loadingMessage.remove();
-
-                appendMessage("Xin lỗi, tôi gặp lỗi kết nối.", 'bot-message');
-                       });
-        }
-                   function appendMessage(text, className) {
-                       const messageDiv = document.createElement('div');
-        messageDiv.classList.add('chat-message', ...className.split(' '));
-                       messageDiv.innerHTML = `<p>${text}</p>`;
-                       chatBody.appendChild(messageDiv);
-                       chatBody.scrollTop = chatBody.scrollHeight;
-        }
-
-                   const searchInput = document.getElementById('mainSearchInput');
-                   const suggestionsContainer = document.getElementById('mainSearchSuggestions');
-        const searchForm = document.getElementById('mainSearchForm');
-                   if (searchInput) {
-                       searchInput.addEventListener('keyup', function() {
-                           const term = this.value;
-                           if (term.length < 2) {
-                               suggestionsContainer.innerHTML = '';
-
-                             suggestionsContainer.style.display = 'none';
-                               return;
-                           }
-                           fetch('/Home/SearchSuggestions?term=' + term)
-
-                     .then(response => response.json())
-                               .then(data => {
-                                   suggestionsContainer.innerHTML = '';
-                                   if
-        (data.length > 0) {
-                                       suggestionsContainer.style.display = 'block';
-                                       const header = document.createElement('div');
-
-            header.classList.add('suggestion-header');
-                                       header.textContent = 'Sản phẩm gợi ý';
-                                       suggestionsContainer.appendChild(header);
-        data.forEach(product => {
-                                           const suggestionLink = document.createElement('a');
-                                           suggestionLink.classList.add('suggestion-item');
-
-                     suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
-                                           const img = document.createElement('img');
-                                           let imageUrl = product.mainImage;
-
-                                     if (imageUrl && !imageUrl.startsWith('http')) {
-                                               imageUrl = imageUrl.replace("~", "");
-
+                    // Hàm di chuyển slide
+                    function moveToSlide(track, targetIndex) {
+                        if (track) {
+                             track.style.transform = 'translateX(-' + (slideWidth * targetIndex) + 'px)';
+                             currentIndex = targetIndex;
+                        }
                     }
-                                           img.src = imageUrl ? imageUrl : '/images/default-product.png';
-                                           img.alt = product.name;
 
+                    // Khi bấm nút Next
+                    nextButton.addEventListener('click', e => {
+                        let nextIndex = currentIndex + 1;
+                        if (nextIndex >= slides.length) {
+                            nextIndex = 0; // Quay về ảnh đầu tiên
+                        }
+                        moveToSlide(track, nextIndex);
+                    });
+
+                    // Khi bấm nút Prev
+                    prevButton.addEventListener('click', e => {
+                        let prevIndex = currentIndex - 1;
+                        if (prevIndex < 0) {
+                            prevIndex = slides.length - 1; // Về ảnh cuối
+                        }
+                        moveToSlide(track, prevIndex);
+                    });
+
+                    // Tự động chuyển slide sau 5 giây (5000ms)
+                    setInterval(() => {
+                        nextButton.click(); // Giả lập hành động bấm nút next
+                    }, 5000);
+
+                    // Cập nhật lại chiều rộng khi resize cửa sổ
+                    window.addEventListener('resize', () => {
+                        if (slides.length > 0) {
+                            slideWidth = slides[0].getBoundingClientRect().width;
+                            moveToSlide(track, currentIndex); // Giữ nguyên vị trí ảnh
+                        }
+                    });
+
+                    // Cần chạy 1 lần khi load để tính slideWidth
+                    if (slides.length > 0) {
+                         slideWidth = slides[0].getBoundingClientRect().width;
+                    }
+                }
+            }
+            // === KẾT THÚC CODE CAROUSEL ===
+
+
+            // --- CODE CHATBOT ---
+            const fabChatButton = document.getElementById('fabChatButton');
+            const chatWindow = document.getElementById('chatWindow');
+            const chatCloseButton = document.getElementById('chatCloseButton');
+            const chatBody = document.getElementById('chatBody');
+            const chatInput = document.getElementById('chatInput');
+            const chatSendButton = document.getElementById('chatSendButton');
+            fabChatButton.addEventListener('click', () => { chatWindow.classList.toggle('active'); });
+            chatCloseButton.addEventListener('click', () => { chatWindow.classList.remove('active'); });
+            chatSendButton.addEventListener('click', handleUserMessage);
+            chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { handleUserMessage(); } });
+            function handleUserMessage() {
+                const userInput = chatInput.value.trim();
+                if (userInput === "") return;
+                appendMessage(userInput, 'user-message');
+                chatInput.value = "";
+                appendMessage("...", 'bot-message loading');
+                fetch('/Home/GetAiResponse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userInput })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const loadingMessage = chatBody.querySelector('.loading');
+                    if (loadingMessage) loadingMessage.remove();
+                    appendMessage(data.message, 'bot-message');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const loadingMessage = chatBody.querySelector('.loading');
+                    if (loadingMessage) loadingMessage.remove();
+                    appendMessage("Xin lỗi, tôi gặp lỗi kết nối.", 'bot-message');
+                });
+            }
+            function appendMessage(text, className) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('chat-message', ...className.split(' '));
+                messageDiv.innerHTML = `<p>${text}</p>`;
+                chatBody.appendChild(messageDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+
+            // --- CODE TÌM KIẾM GỢI Ý ---
+            const searchInput = document.getElementById('mainSearchInput');
+            const suggestionsContainer = document.getElementById('mainSearchSuggestions');
+            const searchForm = document.getElementById('mainSearchForm');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const term = this.value;
+                    if (term.length < 2) {
+                        suggestionsContainer.innerHTML = '';
+                        suggestionsContainer.style.display = 'none';
+                        return;
+                    }
+                    fetch('/Home/SearchSuggestions?term=' + term)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsContainer.innerHTML = '';
+                            if (data.length > 0) {
+                                suggestionsContainer.style.display = 'block';
+                                const header = document.createElement('div');
+                                header.classList.add('suggestion-header');
+                                header.textContent = 'Sản phẩm gợi ý';
+                                suggestionsContainer.appendChild(header);
+                                data.forEach(product => {
+                                    const suggestionLink = document.createElement('a');
+                                    suggestionLink.classList.add('suggestion-item');
+                                    suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
+                                    const img = document.createElement('img');
+                                    let imageUrl = product.mainImage;
+                                    if (imageUrl && !imageUrl.startsWith('http')) {
+                                        imageUrl = imageUrl.replace("~", "");
+                                    }
+                                    img.src = imageUrl ? imageUrl : '/images/default-product.png';
+                                    img.alt = product.name;
                                     const infoDiv = document.createElement('div');
-                                           infoDiv.classList.add('suggestion-item-info');
-        const nameDiv = document.createElement('div');
-                                           nameDiv.classList.add('suggestion-item-name');
-                                           nameDiv.textContent = product.name;
-                                           const priceDiv = document.createElement('div');
-                                           priceDiv.classList.add('suggestion-item-price');
-        priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-                                           infoDiv.appendChild(nameDiv);
-                                           infoDiv.appendChild(priceDiv);
-                                           suggestionLink.appendChild(img);
-                                           suggestionLink.appendChild(infoDiv);
-        suggestionLink.addEventListener('click', function(e) {
-                                               e.preventDefault();
-                                               searchInput.value = product.name;
-
-                                searchForm.submit();
-                                           });
-        suggestionsContainer.appendChild(suggestionLink);
-                                       });
-                                   } else {
-                                       suggestionsContainer.style.display = 'none';
-        }s
-                               });
+                                    infoDiv.classList.add('suggestion-item-info');
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.classList.add('suggestion-item-name');
+                                    nameDiv.textContent = product.name;
+                                    const priceDiv = document.createElement('div');
+                                    priceDiv.classList.add('suggestion-item-price');
+                                    priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                                    infoDiv.appendChild(nameDiv);
+                                    infoDiv.appendChild(priceDiv);
+                                    suggestionLink.appendChild(img);
+                                    suggestionLink.appendChild(infoDiv);
+                                    suggestionLink.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        searchInput.value = product.name;
+                                        searchForm.submit();
+                                    });
+                                    suggestionsContainer.appendChild(suggestionLink);
+                                });
+                            } else {
+                                suggestionsContainer.style.display = 'none';
+                            }
+                        });
+                });
+                document.addEventListener('click', function(e) {
+                    if (!searchForm.contains(e.target)) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
+            }
         });
-                       document.addEventListener('click', function(e) {
-                           if (!searchForm.contains(e.target)) {
-                               suggestionsContainer.style.display = 'none';
-                           }
-                       });
-        }
-               });
     </script>
 </body>
 </html>

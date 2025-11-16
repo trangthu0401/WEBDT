@@ -835,3 +835,28 @@ img {
 .user-profile-dropdown:hover .dropdown-content {
     display: block;
 }
+
+/* CSS mới cho Carousel */
+.hero-carousel {
+    /* overflow: hidden; đã có trong file của bạn */
+    position: relative; /* Đã có, chỉ đảm bảo */
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    height: 100%; /* Đảm bảo track chiếm đủ chiều cao */
+}
+
+.carousel-slide {
+    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.carousel-image {
+    /* Đảm bảo ảnh vừa vặn */
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Đã có, chỉ đảm bảo */
+}
