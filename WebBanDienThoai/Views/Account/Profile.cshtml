@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Thông tin tài khoản";
-    Layout = null; // Không dùng layout chung
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -14,7 +14,6 @@
     <title>@ViewData["Title"] - Rabit Store</title>
 
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
-
     <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,10 +73,28 @@
             <div class="container nav-container">
                 <a asp-controller="Home" asp-action="Index">Trang chủ</a>
                 <a asp-controller="Home" asp-action="Favorites">Yêu thích</a>
-                <a href="#" class="dropdown-link">
-                    Danh mục
-                    <img src="~/images/chevron-down.png" alt="Dropdown arrow">
-                </a>
+
+                <div class="nav-category-dropdown" id="categoryDropdown">
+                    <a href="#" class="dropdown-link" id="categoryDropdownToggle">
+                        Danh mục
+                        <img src="~/images/chevron-down.png" alt="Dropdown arrow">
+                    </a>
+                    <div class="category-popup">
+                        @if (Model.BrandCounts != null && Model.BrandCounts.Any())
+                        {
+                            @foreach (var brand in Model.BrandCounts)
+                            {
+                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId" class="category-popup-item">
+                                    @brand.BrandName
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <span class="category-popup-item">Không có danh mục</span>
+                        }
+                    </div>
+                </div>
             </div>
         </nav>
     </header>
@@ -137,6 +154,24 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+            // === CODE CHO POPUP DANH MỤC ===
+            const categoryDropdown = document.getElementById('categoryDropdown');
+            const categoryToggle = document.getElementById('categoryDropdownToggle');
+            if (categoryToggle) {
+                categoryToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    categoryDropdown.classList.toggle('active');
+                });
+            }
+            document.addEventListener('click', function(e) {
+                if (categoryDropdown && !categoryDropdown.contains(e.target)) {
+                    categoryDropdown.classList.remove('active');
+                }
+            });
+            // === KẾT THÚC CODE POPUP ===
+
+            // --- JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM ---
             const searchInput = document.getElementById('mainSearchInput');
             const suggestionsContainer = document.getElementById('mainSearchSuggestions');
             const searchForm = document.getElementById('mainSearchForm');
@@ -205,7 +240,6 @@
     </script>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-
     <partial name="_ValidationScriptsPartial" />
 
 </body>

@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Collections.Generic; // Thêm dòng này
 
 namespace WebBanDienThoai.Controllers
 {
@@ -23,7 +24,26 @@ namespace WebBanDienThoai.Controllers
             _context = context;
         }
 
-        // === SỬA ACTION INDEX (Thêm FirstVariantId) ===
+        // === HÀM TRỢ GIÚP MỚI ĐỂ LẤY DANH MỤC ===
+        private async Task<(List<BrandCount> Brands, int TotalCount)> GetCategoryDataAsync()
+        {
+            var dsHang = await _context.Brands
+                .AsNoTracking()
+                .Where(b => b.Products.Any(p => p.IsActive == true))
+                .Select(b => new BrandCount
+                {
+                    brandId = b.BrandId,
+                    BrandName = b.BrandName,
+                    Count = b.Products.Count(p => p.IsActive == true)
+                })
+                .ToListAsync();
+
+            var totalProductCount = await _context.Products
+                .CountAsync(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
+
+            return (dsHang, totalProductCount);
+        }
+
         public async Task<IActionResult> Index(int? id, string sortOrder, string searchString)
         {
             ViewData["CurrentSort"] = sortOrder;
@@ -36,7 +56,6 @@ namespace WebBanDienThoai.Controllers
                 var customerFavorite = await _context.Favorites
                                       .Include(f => f.FavoriteDetails)
                                       .FirstOrDefaultAsync(f => f.CustomerId == customerId);
-
                 if (customerFavorite != null)
                 {
                     favoritedVariantIds = customerFavorite.FavoriteDetails.Select(fd => fd.VariantId).ToHashSet();
@@ -50,7 +69,6 @@ namespace WebBanDienThoai.Controllers
                 {
                     productsQuery = productsQuery.Where(p => p.BrandId == id);
                 }
-
                 if (!String.IsNullOrEmpty(searchString))
                 {
                     productsQuery = productsQuery.Where(p => p.Name.ToLower().Contains(searchString.ToLower()));
@@ -58,7 +76,7 @@ namespace WebBanDienThoai.Controllers
 
                 var viewModelQuery = productsQuery
                     .Include(p => p.Brand)
-                    .Include(p => p.ProductVariants) // Thêm Include này
+                    .Include(p => p.ProductVariants)
                     .Select(p => new ProductListViewModel
                     {
                         ProductId = p.ProductId,
@@ -75,9 +93,6 @@ namespace WebBanDienThoai.Controllers
                                  .Where(v => v.IsActive == true)
                                  .Sum(v => v.Stock ?? 0),
                         IsFavorited = p.ProductVariants.Any(v => favoritedVariantIds.Contains(v.VariantId)),
-
-                        // === THÊM DÒNG NÀY ===
-                        // Lấy VariantId đầu tiên của sản phẩm này để làm link
                         FirstVariantId = p.ProductVariants
                                           .Where(v => v.IsActive == true)
                                           .Select(v => v.VariantId)
@@ -99,19 +114,8 @@ namespace WebBanDienThoai.Controllers
 
                 var dsSanPham = await viewModelQuery.ToListAsync();
 
-                var dsHang = await _context.Brands
-                    .AsNoTracking()
-                    .Where(b => b.Products.Any(p => p.IsActive == true))
-                    .Select(b => new BrandCount
-                    {
-                        brandId = b.BrandId,
-                        BrandName = b.BrandName,
-                        Count = b.Products.Count(p => p.IsActive == true)
-                    })
-                    .ToListAsync();
-
-                var totalProductCount = await _context.Products
-                    .CountAsync(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
+                // === SỬA: Dùng hàm trợ giúp ===
+                var (dsHang, totalProductCount) = await GetCategoryDataAsync();
 
                 var viewModel = new ManageProductsViewModel
                 {
@@ -130,49 +134,51 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === THÊM ACTION MỚI CHO TRANG CHI TIẾT SẢN PHẨM ===
-        // 'id' ở đây là VariantId
+        // === SỬA ACTION PRODUCTDETAIL (Để thêm BrandCounts) ===
         public async Task<IActionResult> ProductDetail(int id)
         {
             try
             {
-                // 1. Lấy biến thể chính (variant) mà người dùng click
                 var productDetail = await _context.ProductVariants
                     .AsNoTracking()
-                    .Include(v => v.Product) // Join bảng Product
-                    .Include(v => v.Product.Brand) // Join bảng Brand
+                    .Include(v => v.Product)
+                    .Include(v => v.Product.Brand)
                     .FirstOrDefaultAsync(v => v.VariantId == id);
 
                 if (productDetail == null)
                 {
-                    return NotFound(); // Không tìm thấy
+                    return NotFound();
                 }
 
-                // 2. Lấy TẤT CẢ các biến thể khác CÙNG SẢN PHẨM
                 var allVariants = await _context.ProductVariants
                     .AsNoTracking()
                     .Where(v => v.ProductId == productDetail.ProductId && v.IsActive == true)
                     .ToListAsync();
 
-                // 3. Lấy 4 SẢN PHẨM LIÊN QUAN (cùng hãng, khác sản phẩm này)
                 var relatedProducts = await _context.ProductVariants
                     .AsNoTracking()
                     .Include(v => v.Product.Brand)
                     .Where(v => v.Product.BrandId == productDetail.Product.BrandId &&
                                 v.ProductId != productDetail.ProductId &&
                                 v.IsActive == true)
-                    .Take(4) // Lấy 4 sản phẩm
+                    .Take(4)
                     .ToListAsync();
 
-                // 4. Tạo ViewModel và gán dữ liệu
+                // === THÊM: Lấy dữ liệu danh mục ===
+                var (dsHang, totalProductCount) = await GetCategoryDataAsync();
+
                 var viewModel = new ProductDetailViewModel
                 {
                     ProductDetail = productDetail,
                     AllVariants = allVariants,
-                    RelatedProducts = relatedProducts
+                    RelatedProducts = relatedProducts,
+
+                    // === Gán dữ liệu danh mục ===
+                    BrandCounts = dsHang,
+                    TotalProductCount = totalProductCount
                 };
 
-                return View(viewModel); // Trả về View("ProductDetail.cshtml")
+                return View(viewModel);
             }
             catch (Exception ex)
             {
@@ -182,7 +188,7 @@ namespace WebBanDienThoai.Controllers
         }
 
 
-        // === ACTION FAVORITES (Sửa để thêm BrandCounts) ===
+        // === SỬA ACTION FAVORITES (Để thêm BrandCounts) ===
         public async Task<IActionResult> Favorites(string sortOrder)
         {
             ViewData["CurrentSort"] = sortOrder;
@@ -213,20 +219,8 @@ namespace WebBanDienThoai.Controllers
                 }
                 var favoriteProducts = await favoritesQuery.ToListAsync();
 
-                // Thêm code lấy dsHang và totalProductCount (cho dropdown danh mục)
-                var dsHang = await _context.Brands
-                    .AsNoTracking()
-                    .Where(b => b.Products.Any(p => p.IsActive == true))
-                    .Select(b => new BrandCount
-                    {
-                        brandId = b.BrandId,
-                        BrandName = b.BrandName,
-                        Count = b.Products.Count(p => p.IsActive == true)
-                    })
-                    .ToListAsync();
-
-                var totalProductCount = await _context.Products
-                    .CountAsync(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
+                // === SỬA: Dùng hàm trợ giúp ===
+                var (dsHang, totalProductCount) = await GetCategoryDataAsync();
 
                 var viewModel = new FavoritesViewModel
                 {
@@ -243,7 +237,7 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        // === (Các Action Add/Remove Favorites giữ nguyên) ===
+        // ... (Các Action Add/Remove Favorites, SearchSuggestions, GetAiResponse giữ nguyên) ...
         [HttpPost]
         public async Task<IActionResult> AddToFavorites(int id)
         {
@@ -295,7 +289,6 @@ namespace WebBanDienThoai.Controllers
             catch (Exception ex) { _logger.LogError(ex, "Lỗi khi xóa khỏi Favorites."); return Json(new { success = false, message = "Lỗi máy chủ." }); }
         }
 
-        // === SỬA ACTION ĐỀ XUẤT TÌM KIẾM (Trả về ViewModel) ===
         [HttpGet]
         public async Task<IActionResult> SearchSuggestions(string term)
         {
@@ -322,7 +315,6 @@ namespace WebBanDienThoai.Controllers
             return Json(suggestions);
         }
 
-        // === ACTION GETAIRESPONSE (Giữ nguyên) ===
         [HttpPost]
         public async Task<IActionResult> GetAiResponse([FromBody] ChatRequest request)
         {
@@ -360,7 +352,6 @@ namespace WebBanDienThoai.Controllers
 
         public class ChatRequest { public string Message { get; set; } }
 
-        // ... (Các Action khác) ...
         public IActionResult Privacy() { return View(); }
         public IActionResult Home() { return View(); }
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

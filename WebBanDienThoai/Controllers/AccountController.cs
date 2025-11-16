@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebBanDienThoai.Models;
-using WebBanDienThoai.Models.modelView; // <-- SỬA DÒNG NÀY
+using WebBanDienThoai.Models.modelView;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
-using System.Security.Claims; // <-- Dòng này rất quan trọng
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -22,12 +22,32 @@ namespace WebBanDienThoai.Controllers
             _context = context;
         }
 
+        // === HÀM TRỢ GIÚP MỚI ĐỂ LẤY DANH MỤC ===
+        private async Task<(List<BrandCount> Brands, int TotalCount)> GetCategoryDataAsync()
+        {
+            var dsHang = await _context.Brands
+                .AsNoTracking()
+                .Where(b => b.Products.Any(p => p.IsActive == true))
+                .Select(b => new BrandCount
+                {
+                    brandId = b.BrandId,
+                    BrandName = b.BrandName,
+                    Count = b.Products.Count(p => p.IsActive == true)
+                })
+                .ToListAsync();
+
+            var totalProductCount = await _context.Products
+                .CountAsync(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
+
+            return (dsHang, totalProductCount);
+        }
+
         // GET: /Account/Login
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            return View(); // Trả về Login.cshtml
+            return View();
         }
 
         // POST: /Account/Login
@@ -38,7 +58,6 @@ namespace WebBanDienThoai.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
-                // TODO: Băm mật khẩu (ví dụ: model.Password) trước khi so sánh
                 var account = await _context.Accounts
                     .FirstOrDefaultAsync(a => a.Email == model.EmailOrPhone && a.Password == model.Password && a.IsActive == true);
 
@@ -54,8 +73,8 @@ namespace WebBanDienThoai.Controllers
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, account.Email),
-                        new Claim("FullName", customer.FullName), // Claim để hiển thị tên
-                        new Claim(ClaimTypes.NameIdentifier, customer.CustomerId.ToString()), // Lưu CustomerID
+                        new Claim("FullName", customer.FullName),
+                        new Claim(ClaimTypes.NameIdentifier, customer.CustomerId.ToString()),
                         new Claim(ClaimTypes.Role, account.Role)
                     };
 
@@ -93,7 +112,7 @@ namespace WebBanDienThoai.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            return View(); // Trả về Register.cshtml
+            return View();
         }
 
         // POST: /Account/Register
@@ -110,11 +129,10 @@ namespace WebBanDienThoai.Controllers
                     return View(model);
                 }
 
-                // TODO: Băm mật khẩu (model.Password) trước khi lưu
                 var newAccount = new Account
                 {
                     Email = model.Email,
-                    Password = model.Password, // KHÔNG AN TOÀN - Cần băm mật khẩu
+                    Password = model.Password,
                     Role = "Customer",
                     IsActive = true,
                     CreatedAt = DateTime.Now
@@ -125,7 +143,7 @@ namespace WebBanDienThoai.Controllers
                 var newCustomer = new Customer
                 {
                     AccountId = newAccount.AccountId,
-                    FullName = model.FullName // Lấy tên từ form
+                    FullName = model.FullName
                 };
                 _context.Customers.Add(newCustomer);
                 await _context.SaveChangesAsync();
@@ -164,16 +182,23 @@ namespace WebBanDienThoai.Controllers
                 return NotFound();
             }
 
+            // === THÊM: Lấy dữ liệu danh mục ===
+            var (dsHang, totalProductCount) = await GetCategoryDataAsync();
+
             var model = new ProfileViewModel
             {
                 Email = customer.Account.Email,
                 FullName = customer.FullName,
                 Phone = customer.Phone,
                 BirthDate = customer.BirthDate,
-                Gender = customer.Gender
+                Gender = customer.Gender,
+
+                // === Gán dữ liệu danh mục ===
+                BrandCounts = dsHang,
+                TotalProductCount = totalProductCount
             };
 
-            return View(model); // Trả về Profile.cshtml
+            return View(model);
         }
 
         // POST: /Account/Profile
@@ -182,8 +207,12 @@ namespace WebBanDienThoai.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Profile(ProfileViewModel model)
         {
+            // === THÊM: Tải lại dữ liệu danh mục khi lỗi ===
             if (!ModelState.IsValid)
             {
+                var (dsHangError, totalCountError) = await GetCategoryDataAsync();
+                model.BrandCounts = dsHangError;
+                model.TotalProductCount = totalCountError;
                 return View(model);
             }
 
@@ -220,6 +249,11 @@ namespace WebBanDienThoai.Controllers
             {
                 ModelState.AddModelError("", "Không thể lưu thay đổi. Thử lại sau.");
             }
+
+            // === THÊM: Tải lại dữ liệu danh mục sau khi lưu ===
+            var (dsHang, totalProductCount) = await GetCategoryDataAsync();
+            model.BrandCounts = dsHang;
+            model.TotalProductCount = totalProductCount;
 
             return View(model);
         }

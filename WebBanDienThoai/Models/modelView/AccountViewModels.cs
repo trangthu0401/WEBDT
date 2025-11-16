@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic; // Thêm dòng này
 using System.ComponentModel.DataAnnotations;
+using WebBanDienThoai.Models.modelView; // Thêm dòng này
 
-namespace WebBanDienThoai.Models.modelView // <-- TÔI ĐÃ SỬA DÒNG NÀY
+namespace WebBanDienThoai.Models.modelView
 {
-    // Dùng cho Login.cshtml
     public class LoginViewModel
     {
         [Required(ErrorMessage = "Vui lòng nhập Email")]
@@ -20,14 +21,11 @@ namespace WebBanDienThoai.Models.modelView // <-- TÔI ĐÃ SỬA DÒNG NÀY
         public bool RememberMe { get; set; }
     }
 
-    // Dùng cho Register.cshtml
     public class RegisterViewModel
     {
-        // === DÒNG MỚI THÊM VÀO ===
         [Required(ErrorMessage = "Vui lòng nhập họ tên")]
         [Display(Name = "Họ và Tên")]
         public string FullName { get; set; }
-        // === KẾT THÚC DÒNG MỚI ===
 
         [Required(ErrorMessage = "Vui lòng nhập Email")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ")]
@@ -46,7 +44,6 @@ namespace WebBanDienThoai.Models.modelView // <-- TÔI ĐÃ SỬA DÒNG NÀY
         public string ConfirmPassword { get; set; }
     }
 
-    // Dùng cho Profile.cshtml
     public class ProfileViewModel
     {
         [Display(Name = "Email (Không thể thay đổi)")]
@@ -66,5 +63,9 @@ namespace WebBanDienThoai.Models.modelView // <-- TÔI ĐÃ SỬA DÒNG NÀY
 
         [Display(Name = "Giới tính")]
         public string? Gender { get; set; }
+
+        // === THÊM 2 DÒNG SAU ===
+        public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>();
+        public int TotalProductCount { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 @using System.Security.Claims
 
 @{
-    Layout = null; // Dòng này vẫn giữ nguyên
+    Layout = null;
     var currentSort = ViewData["CurrentSort"] as string;
     var currentSearch = ViewData["CurrentSearch"] as string;
 }
@@ -41,7 +41,6 @@
 
                     @if (User.Identity.IsAuthenticated)
                     {
-                        // ĐÃ ĐĂNG NHẬP: Hiển thị tên và dropdown
                         <div class="user-profile-dropdown">
                             <a href="#" class="user-profile">
                                 <span>@User.FindFirstValue("FullName")</span>
@@ -55,7 +54,6 @@
                     }
                     else
                     {
-                        // CHƯA ĐĂNG NHẬP: Hiển thị nút Đăng nhập
                         <a asp-controller="Account" asp-action="Login" class="user-profile">
                             <span>Đăng nhập</span>
                             <img src="~/images/user.png" alt="User Icon">
@@ -68,16 +66,35 @@
             <div class="container nav-container">
                 <a asp-controller="Home" asp-action="Index">Trang chủ</a>
                 <a asp-controller="Home" asp-action="Favorites">Yêu thích</a>
-                <a href="#" class="dropdown-link">
-                    Danh mục
-                    <img src="~/images/chevron-down.png" alt="Dropdown arrow">
-                </a>
+
+                <div class="nav-category-dropdown" id="categoryDropdown">
+                    <a href="#" class="dropdown-link" id="categoryDropdownToggle">
+                        Danh mục
+                        <img src="~/images/chevron-down.png" alt="Dropdown arrow">
+                    </a>
+                    <div class="category-popup">
+                        @if (Model.BrandCounts != null && Model.BrandCounts.Any())
+                        {
+                            @foreach (var brand in Model.BrandCounts)
+                            {
+                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId" class="category-popup-item">
+                                    @brand.BrandName
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <span class="category-popup-item">Không có danh mục</span>
+                        }
+                    </div>
+                </div>
             </div>
         </nav>
     </header>
 
     <section id="hero" class="hero-section">
         <div class="container hero-container">
+
             <aside class="category-sidebar">
                 <ul>
                     @if (Model.BrandCounts != null && Model.BrandCounts.Any())
@@ -117,14 +134,14 @@
                         <img src="https://photo.znews.vn/w660/Uploaded/ygtmvd/2025_10_21/BK6A8220.jpg" alt="New Product Banner" class="carousel-image">
                     </div>
                 </div>
-
                 <button class="carousel-control prev" id="carouselPrev">
-                    <img src="~/images/muitenphai.png" alt="Previous">
+                    <img asp-src="~/images/muitenphai.png" alt="Previous">
                 </button>
                 <button class="carousel-control next" id="carouselNext">
-                    <img src="~/images/muitenphai.png" alt="Next">
+                    <img asp-src="~/images/muitenphai.png" alt="Next">
                 </button>
             </div>
+
             <aside class="ads-sidebar">
                 <a href="#" class="ad-banner">
                     <img src="~/images/poster1.png" alt="Watch Series Ad">
@@ -231,9 +248,8 @@
             const wishlistButtons = document.querySelectorAll('.wishlist-button');
             wishlistButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Ngăn thẻ <a> cha bị click
-                    e.stopPropagation(); // Ngăn thẻ <a> cha bị click
-
+                    e.preventDefault();
+                    e.stopPropagation();
                     const productId = this.dataset.productid;
                     const buttonElement = this;
                     const isFavorited = buttonElement.classList.contains('liked');
@@ -255,69 +271,65 @@
                 });
             });
 
-            // === CODE MỚI CHO CAROUSEL ===
+            // === CODE CAROUSEL ===
             const carousel = document.getElementById('heroCarousel');
             if (carousel) {
                 const track = carousel.querySelector('.carousel-track');
                 const slides = Array.from(track.children);
                 const nextButton = document.getElementById('carouselNext');
                 const prevButton = document.getElementById('carouselPrev');
-
                 if (slides.length > 0) {
                     let slideWidth = slides[0].getBoundingClientRect().width;
                     let currentIndex = 0;
-
-                    // Hàm di chuyển slide
                     function moveToSlide(track, targetIndex) {
                         if (track) {
                              track.style.transform = 'translateX(-' + (slideWidth * targetIndex) + 'px)';
                              currentIndex = targetIndex;
                         }
                     }
-
-                    // Khi bấm nút Next
                     nextButton.addEventListener('click', e => {
                         let nextIndex = currentIndex + 1;
-                        if (nextIndex >= slides.length) {
-                            nextIndex = 0; // Quay về ảnh đầu tiên
-                        }
+                        if (nextIndex >= slides.length) { nextIndex = 0; }
                         moveToSlide(track, nextIndex);
                     });
-
-                    // Khi bấm nút Prev
                     prevButton.addEventListener('click', e => {
                         let prevIndex = currentIndex - 1;
-                        if (prevIndex < 0) {
-                            prevIndex = slides.length - 1; // Về ảnh cuối
-                        }
+                        if (prevIndex < 0) { prevIndex = slides.length - 1; }
                         moveToSlide(track, prevIndex);
                     });
-
-                    // Tự động chuyển slide sau 5 giây (5000ms)
-                    setInterval(() => {
-                        nextButton.click(); // Giả lập hành động bấm nút next
-                    }, 5000);
-
-                    // Cập nhật lại chiều rộng khi resize cửa sổ
+                    setInterval(() => { nextButton.click(); }, 5000);
                     window.addEventListener('resize', () => {
                         if (slides.length > 0) {
                             slideWidth = slides[0].getBoundingClientRect().width;
-                            moveToSlide(track, currentIndex); // Giữ nguyên vị trí ảnh
+                            moveToSlide(track, currentIndex);
                         }
                     });
-
-                    // Cần chạy 1 lần khi load để tính slideWidth
                     if (slides.length > 0) {
                          slideWidth = slides[0].getBoundingClientRect().width;
                     }
                 }
             }
-            // === KẾT THÚC CODE CAROUSEL ===
 
+            // === CODE CHO POPUP DANH MỤC ===
+            const categoryDropdown = document.getElementById('categoryDropdown');
+            const categoryToggle = document.getElementById('categoryDropdownToggle');
+            if (categoryToggle) {
+                categoryToggle.addEventListener('click', function(e) {
+                    e.preventDefault(); // Ngăn link nhảy lên đầu trang
+                    categoryDropdown.classList.toggle('active');
+                });
+            }
+            document.addEventListener('click', function(e) {
+                if (categoryDropdown && !categoryDropdown.contains(e.target)) {
+                    categoryDropdown.classList.remove('active');
+                }
+            });
+            // === KẾT THÚC CODE POPUP ===
 
             // --- CODE CHATBOT ---
             const fabChatButton = document.getElementById('fabChatButton');
             const chatWindow = document.getElementById('chatWindow');
+            // ... (rest of chatbot code) ...
             const chatCloseButton = document.getElementById('chatCloseButton');
             const chatBody = document.getElementById('chatBody');
             const chatInput = document.getElementById('chatInput');
@@ -361,6 +373,7 @@
             // --- CODE TÌM KIẾM GỢI Ý ---
             const searchInput = document.getElementById('mainSearchInput');
             const suggestionsContainer = document.getElementById('mainSearchSuggestions');
+            // ... (rest of search suggestion code) ...
             const searchForm = document.getElementById('mainSearchForm');
             if (searchInput) {
                 searchInput.addEventListener('keyup', function() {

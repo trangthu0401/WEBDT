@@ -860,3 +860,47 @@ img {
     height: 100%;
     object-fit: cover; /* Đã có, chỉ đảm bảo */
 }
+/* === CSS CHO POPUP DANH MỤC === */
+
+/* Vị trí tương đối cho thẻ <a> cha */
+.nav-category-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Kiểu cho pop-up (ẩn mặc định) */
+.category-popup {
+    display: none;
+    position: absolute;
+    top: 100%; /* Hiện ngay bên dưới */
+    left: 0;
+    background-color: #ffffff;
+    min-width: 220px;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border-radius: 8px;
+    padding: 8px 0;
+    margin-top: 5px; /* Khoảng cách nhỏ */
+}
+
+/* Lớp 'active' (thêm bằng JS) để hiện pop-up */
+.nav-category-dropdown.active .category-popup {
+    display: block;
+}
+
+/* Kiểu cho từng mục (tên hãng) */
+.category-popup-item {
+    display: block;
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+    .category-popup-item:hover {
+        background-color: #f5f5f5;
+        color: var(--primary-red-solid);
+    }
