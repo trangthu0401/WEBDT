@@ -1,66 +1,212 @@
 ﻿@model WebBanDienThoai.Models.modelView.ProfileViewModel
+@using System.Security.Claims
+
 @{
     ViewData["Title"] = "Thông tin tài khoản";
+    Layout = null; // Không dùng layout chung
 }
 
-@section Styles {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - Rabit Store</title>
+
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+
     <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
-}
 
-<div class="profile-container">
-    <h1>@ViewData["Title"]</h1>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert-success">
-            @TempData["SuccessMessage"]
+    <header class="site-header">
+        <div class="header-top">
+            <div class="container header-top-container">
+                <a asp-controller="Home" asp-action="Index" class="logo">
+                    <h1 class="logo-text">Rabit</h1>
+                    <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
+                    <h1 class="logo-text">Store</h1>
+                </a>
+
+                <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
+                    <input type="text" name="searchString"
+                           value="" placeholder="Tìm kiếm" class="search-input" id="mainSearchInput" autocomplete="off">
+                    <button type="submit" class="search-button">
+                        <img src="~/images/search.png" alt="Search Icon">
+                    </button>
+                    <div class="search-suggestions" id="mainSearchSuggestions"></div>
+                </form>
+
+                <div class="header-actions">
+                    <a href="#" class="cart-link">
+                        <span>Giỏ hàng</span>
+                        <img src="~/images/giohang.png" alt="Cart Icon">
+                    </a>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div class="user-profile-dropdown">
+                            <a href="#" class="user-profile">
+                                <span>@User.FindFirstValue("FullName")</span>
+                                <img src="~/images/user.png" alt="User Icon">
+                            </a>
+                            <div class="dropdown-content">
+                                <a asp-controller="Account" asp-action="Profile">Trang cá nhân</a>
+                                <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="user-profile">
+                            <span>Đăng nhập</span>
+                            <img src="~/images/user.png" alt="User Icon">
+                        </a>
+                    }
+                </div>
+            </div>
         </div>
-    }
+        <nav class="main-nav">
+            <div class="container nav-container">
+                <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                <a asp-controller="Home" asp-action="Favorites">Yêu thích</a>
+                <a href="#" class="dropdown-link">
+                    Danh mục
+                    <img src="~/images/chevron-down.png" alt="Dropdown arrow">
+                </a>
+            </div>
+        </nav>
+    </header>
+    <div class="profile-container">
+        <h1>@ViewData["Title"]</h1>
 
-    <form asp-action="Profile" method="post" class="profile-form-grid">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
 
-        <div class="form-group full-width">
-            <label asp-for="Email"></label>
+        <form asp-action="Profile" method="post" class="profile-form-grid">
 
-            <input asp-for="Email" class="form-control" readonly />
-        </div>
+            <div class="form-group full-width">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="form-control" readonly />
+            </div>
 
-        <hr class="full-width" />
+            <hr class="full-width" />
 
-        <div class="form-group">
-            <label asp-for="FullName"></label>
-            <input asp-for="FullName" class="form-control" />
-            <span asp-validation-for="FullName" class="text-danger"></span>
-        </div>
+            <div class="form-group">
+                <label asp-for="FullName"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
 
-        <div class="form-group">
+            <div class="form-group">
+                <label asp-for="Phone"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
 
-            <label asp-for="Phone"></label>
-            <input asp-for="Phone" class="form-control" />
-            <span asp-validation-for="Phone" class="text-danger"></span>
-        </div>
+            <div class="form-group">
+                <label asp-for="BirthDate"></label>
+                <input asp-for="BirthDate" class="form-control" type="date" />
+                <span asp-validation-for="BirthDate" class="text-danger"></span>
+            </div>
 
-        <div class="form-group">
-            <label asp-for="BirthDate"></label>
-            <input asp-for="BirthDate" class="form-control" type="date" />
-            <span asp-validation-for="BirthDate" class="text-danger"></span>
+            <div class="form-group">
+                <label asp-for="Gender"></label>
+                <select asp-for="Gender" class="form-control">
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                </select>
+                <span asp-validation-for="Gender" class="text-danger"></span>
+            </div>
 
-        </div>
+            <div class="form-actions full-width">
+                <button type="submit" class="btn-save-profile">Lưu thay đổi</button>
+            </div>
 
-        <div class="form-group">
-            <label asp-for="Gender"></label>
-            <select asp-for="Gender" class="form-control">
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-                <option value="Khác">Khác</option>
+        </form>
+    </div>
 
-            </select>
-            <span asp-validation-for="Gender" class="text-danger"></span>
-        </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('mainSearchInput');
+            const suggestionsContainer = document.getElementById('mainSearchSuggestions');
+            const searchForm = document.getElementById('mainSearchForm');
 
-        <div class="form-actions full-width">
-            <button type="submit" class="btn-save-profile">Lưu thay đổi</button>
-        </div>
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const term = this.value;
+                    if (term.length < 2) {
+                        suggestionsContainer.innerHTML = '';
+                        suggestionsContainer.style.display = 'none';
+                        return;
+                    }
+                    fetch('/Home/SearchSuggestions?term=' + term)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsContainer.innerHTML = '';
+                            if (data.length > 0) {
+                                suggestionsContainer.style.display = 'block';
+                                const header = document.createElement('div');
+                                header.classList.add('suggestion-header');
+                                header.textContent = 'Sản phẩm gợi ý';
+                                suggestionsContainer.appendChild(header);
+                                data.forEach(product => {
+                                    const suggestionLink = document.createElement('a');
+                                    suggestionLink.classList.add('suggestion-item');
+                                    suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
+                                    const img = document.createElement('img');
+                                    let imageUrl = product.mainImage;
+                                    if (imageUrl && !imageUrl.startsWith('http')) {
+                                        imageUrl = imageUrl.replace("~", "");
+                                    }
+                                    img.src = imageUrl ? imageUrl : '/images/default-product.png';
+                                    img.alt = product.name;
+                                    const infoDiv = document.createElement('div');
+                                    infoDiv.classList.add('suggestion-item-info');
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.classList.add('suggestion-item-name');
+                                    nameDiv.textContent = product.name;
+                                    const priceDiv = document.createElement('div');
+                                    priceDiv.classList.add('suggestion-item-price');
+                                    priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                                    infoDiv.appendChild(nameDiv);
+                                    infoDiv.appendChild(priceDiv);
+                                    suggestionLink.appendChild(img);
+                                    suggestionLink.appendChild(infoDiv);
+                                    suggestionLink.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        searchInput.value = product.name;
+                                        searchForm.submit();
+                                    });
+                                    suggestionsContainer.appendChild(suggestionLink);
+                                });
+                            } else {
+                                suggestionsContainer.style.display = 'none';
+                            }
+                        });
+                });
 
-    </form>
-</div>
+                document.addEventListener('click', function(e) {
+                    if (!searchForm.contains(e.target)) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <partial name="_ValidationScriptsPartial" />
+
+</body>
+</html>
