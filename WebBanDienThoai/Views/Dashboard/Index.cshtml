@@ -1,76 +1,90 @@
-﻿@* BẮT BUỘC: Khai báo Model mà View này sẽ nhận *@
-@model WebBanDienThoai.Models.ViewModels.DashboardViewModel
-
+﻿@model WebBanDienThoai.Models.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = "Tổng quan";
 }
 
 <div class="content-body">
     <h1 class="content-title">Tổng quan</h1>
-    <link href="~/css/Dashboard.css" rel="stylesheet" />
+
     <section class="stats-grid">
         <div class="stat-card">
             <div class="stat-card-info">
                 <p class="stat-card-title">Doanh thu</p>
-                @* LẤY DỮ LIỆU TỪ DB: TotalRevenue *@
-                <p class="stat-card-value">@Model.TotalRevenue.ToString("0") ₫</p>
+                <p class="stat-card-value">@Model.TotalRevenue.ToString("N0") ₫</p>
             </div>
             <div class="stat-card-icon icon-revenue">
                 <img src="~/Images/Admin/Dashboard/admin_money_ic.png" alt="Revenue Icon" />
             </div>
         </div>
+
         <div class="stat-card">
             <div class="stat-card-info">
                 <p class="stat-card-title">Sản phẩm</p>
-                @* LẤY DỮ LIỆU TỪ DB: ProductCount *@
-                <p class="stat-card-value">@Model.ProductCount</p>
+                <p class="stat-card-value">@Model.ProductCount.ToString("N0")</p>
             </div>
             <div class="stat-card-icon icon-products">
                 <img src="~/Images/Admin/Dashboard/admin_product_icon.png" alt="Products Icon" />
             </div>
         </div>
+
         <div class="stat-card">
             <div class="stat-card-info">
                 <p class="stat-card-title">Người dùng</p>
-                @* LẤY DỮ LIỆU TỪ DB: UserCount *@
-                <p class="stat-card-value">@Model.UserCount</p>
+                <p class="stat-card-value">@Model.UserCount.ToString("N0")</p>
             </div>
             <div class="stat-card-icon icon-users">
                 <img src="~/Images/Admin/Dashboard/admin_user_ic.png" alt="Users Icon" />
             </div>
         </div>
+
         <div class="stat-card">
             <div class="stat-card-info">
                 <p class="stat-card-title">Đơn hàng</p>
-                @* LẤY DỮ LIỆU TỪ DB: OrderCount *@
-                <p class="stat-card-value">@Model.OrderCount</p>
+                <p class="stat-card-value">@Model.OrderCount.ToString("N0")</p>
             </div>
             <div class="stat-card-icon icon-orders">
                 <img src="~/Images/Admin/Dashboard/admin_gift_ic.png" alt="Orders Icon" />
             </div>
         </div>
-
     </section>
 
-    @* Phần biểu đồ (giữ nguyên, bạn sẽ làm sau) *@
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Doanh thu chi tiết</h3>
-            <div class="dropdown-selector">
-                <span>Tháng 10</span>
+    <!-- BIỂU ĐỒ DOANH THU -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0">Doanh thu theo tháng</h3>
+            <div class="d-flex gap-2">
+                <select id="monthSelect" class="form-select form-select-sm" style="width: 140px;">
+                    <option value="1">Tháng 1</option>
+                    <option value="2">Tháng 2</option>
+                    <option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option>
+                    <option value="5">Tháng 5</option>
+                    <option value="6">Tháng 6</option>
+                    <option value="7">Tháng 7</option>
+                    <option value="8">Tháng 8</option>
+                    <option value="9">Tháng 9</option>
+                    <option value="10" selected>Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                </select>
+                <select id="yearSelect" class="form-select form-select-sm" style="width: 100px;">
+                    <option value="2023">2023</option>
+                    <option value="2024" selected>2024</option>
+                    <option value="2025">2025</option>
+                </select>
             </div>
         </div>
-
-        <div class="chart-container">
-            <canvas id="revenueChart"></canvas>
+        <div class="card-body">
+            <div class="chart-container" style="position: relative; height: 400px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
         </div>
     </div>
 
-    @* Bảng Sản phẩm bán chạy *@
+    <!-- BẢNG SẢN PHẨM BÁN CHẠY -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h3 class="h5 mb-0">Sản phẩm bán chạy</h3>
-
             <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Tháng 10
@@ -81,7 +95,6 @@
                 </ul>
             </div>
         </div>
-
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
@@ -92,24 +105,20 @@
                         <th scope="col">Trạng thái</th>
                     </tr>
                 </thead>
-
                 <tbody>
-                    @* DÙNG VÒNG LẶP FOREACH ĐỂ HIỂN THỊ DỮ LIỆU THẬT *@
                     @foreach (var product in Model.TopSellingProducts)
                     {
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="@Url.Content(product.ImageUrl ?? "~/images/placeholder.png")" alt="@product.ProductName" style="width: 40px; height: 40px; border-radius: 0%; object-fit: cover; margin-right: 10px;">
+                                    <img src="@Url.Content(product.ImageUrl ?? "/images/placeholder.png")" alt="@product.ProductName"
+                                         style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; margin-right: 10px;">
                                     <span>@product.ProductName</span>
                                 </div>
                             </td>
-
                             <td>@product.QuantitySold</td>
-                            <td>@product.Price?.ToString("C0")</td>
-
+                            <td>@product.Price?.ToString("N0") ₫</td>
                             <td>
-                                @* Logic hiển thị trạng thái dựa vào số lượng tồn kho *@
                                 @if (product.Stock > 20)
                                 {
                                     <span class="badge rounded-pill bg-success">Còn hàng</span>
@@ -130,3 +139,325 @@
         </div>
     </div>
 </div>
+
+<!-- CHART.JS SCRIPT VỚI API THẬT -->
+<script>
+    // Biến toàn cục để lưu chart instance
+    let revenueChart = null;
+
+    // Hàm format tiền tệ
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(value);
+    }
+
+    // Hàm lấy dữ liệu từ API THẬT của bạn
+    async function fetchRevenueData(month, year) {
+        try {
+            console.log(`Fetching revenue data for ${month}/${year}...`);
+
+            const response = await fetch(`/Dashboard/GetRevenueByDay?year=${year}&month=${month}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('API Response:', result);
+
+            return result;
+        } catch (error) {
+            console.error('Lỗi khi fetch dữ liệu:', error);
+
+            // Fallback: trả về dữ liệu mẫu nếu API fail
+            return generateSampleData();
+        }
+    }
+
+    // Hàm tạo dữ liệu mẫu (fallback)
+    function generateSampleData() {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        const labels = Array.from({ length: daysInMonth }, (_, i) => `Ngày ${i + 1}`);
+        const data = Array.from({ length: daysInMonth }, () =>
+            Math.floor(Math.random() * 5000000) + 1000000
+        );
+
+        return { labels, data };
+    }
+
+    // Hàm vẽ biểu đồ với dữ liệu từ API
+    function renderRevenueChart(apiData) {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+
+        // Hủy chart cũ nếu tồn tại
+        if (revenueChart) {
+            revenueChart.destroy();
+        }
+
+        console.log('Rendering chart with data:', apiData);
+
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: apiData.labels,
+                datasets: [{
+                    label: 'Doanh thu (VND)',
+                    data: apiData.data,
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#dc3545',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `Doanh thu: ${formatCurrency(context.parsed.y)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Ngày trong tháng',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Doanh thu (VND)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return (value / 1000000).toFixed(1) + ' tr';
+                                }
+                                return (value / 1000).toFixed(0) + ' k';
+                            }
+                        },
+                        beginAtZero: true
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                elements: {
+                    line: {
+                        tension: 0.4
+                    }
+                }
+            }
+        });
+    }
+
+    // Hàm load dữ liệu và vẽ biểu đồ
+    async function loadRevenueChart() {
+        const month = document.getElementById('monthSelect').value;
+        const year = document.getElementById('yearSelect').value;
+
+        console.log(`Loading chart for: ${month}/${year}`);
+
+        // Hiển thị loading
+        const canvas = document.getElementById('revenueChart');
+        const originalOpacity = canvas.style.opacity;
+        canvas.style.opacity = '0.6';
+
+        try {
+            const data = await fetchRevenueData(month, year);
+            renderRevenueChart(data);
+        } catch (error) {
+            console.error('Lỗi khi load biểu đồ:', error);
+            alert('Không thể tải dữ liệu doanh thu. Vui lòng thử lại sau.');
+        } finally {
+            canvas.style.opacity = originalOpacity;
+        }
+    }
+
+    // Sự kiện khi thay đổi tháng/năm
+    document.getElementById('monthSelect').addEventListener('change', loadRevenueChart);
+    document.getElementById('yearSelect').addEventListener('change', loadRevenueChart);
+
+    // Khởi tạo biểu đồ khi trang load
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Dashboard loaded, initializing chart...');
+        loadRevenueChart();
+    });
+</script>
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #e9ecef;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+
+    .stat-card-title {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    .stat-card-value {
+        color: #2c3e50;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .stat-card-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .icon-revenue {
+        background: rgba(220, 53, 69, 0.1);
+    }
+
+    .icon-products {
+        background: rgba(40, 167, 69, 0.1);
+    }
+
+    .icon-users {
+        background: rgba(0, 123, 255, 0.1);
+    }
+
+    .icon-orders {
+        background: rgba(255, 193, 7, 0.1);
+    }
+
+    .stat-card-icon img {
+        width: 30px;
+        height: 30px;
+    }
+
+    .card {
+        margin-bottom: 30px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .card-header {
+        border-bottom: 1px solid #e9ecef;
+        padding: 20px;
+    }
+
+    .chart-container {
+        background: #fff;
+        border-radius: 8px;
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+        background-color: #f8f9fa;
+        padding: 15px;
+    }
+
+    .table td {
+        padding: 15px;
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+
+    .form-select-sm {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+
+    @@media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .stat-card-value {
+            font-size: 1.5rem;
+        }
+
+        .chart-container {
+            height: 300px !important;
+        }
+
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+            .card-header .d-flex {
+                width: 100%;
+                justify-content: space-between;
+            }
+    }
+</style>

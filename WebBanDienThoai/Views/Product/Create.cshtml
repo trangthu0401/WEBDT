@@ -4,176 +4,218 @@
     ViewData["Title"] = "Thêm Sản phẩm mới";
 }
 
-<div class="container py-4">
+<div class="container-fluid py-4">
     <div class="row justify-content-center">
-        <div class="col-lg-12">
+        <div class="col-xxl-10 col-xl-12">
 
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-1">Thêm Sản phẩm mới</h2>
+                    <p class="text-muted mb-0">Tạo sản phẩm mới và biến thể đầu tiên</p>
+                </div>
+                <a asp-action="Index" asp-controller="Product" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Quay lại
+                </a>
+            </div>
+
+            <!-- Main Form Card -->
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-light py-3">
-                    <h4 class="mb-0">Thêm Sản phẩm mới</h4>
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Thông tin sản phẩm</h5>
                 </div>
 
-                <!-- GHI CHÚ: Đã sửa asp-controller="Product" -->
                 <form asp-action="Create" asp-controller="Product" method="post" enctype="multipart/form-data">
-
-                    @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                    @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
 
                     <div class="card-body p-4">
                         <div class="row g-4">
 
                             <!-- === CỘT 1: THÔNG TIN CHUNG === -->
-                            <div class="col-md-5">
-                                <h5 class="mb-3">1. Thông tin chung</h5>
+                            <div class="col-lg-5">
+                                <div class="section-card">
+                                    <div class="section-header">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <h6 class="mb-0">Thông tin chung</h6>
+                                    </div>
+                                    <div class="section-body">
+                                        <div class="mb-3">
+                                            <label asp-for="Product.Name" class="form-label required">Tên sản phẩm</label>
+                                            <input asp-for="Product.Name" class="form-control form-control-lg" placeholder="Nhập tên sản phẩm" />
+                                            <span asp-validation-for="Product.Name" class="text-danger small"></span>
+                                        </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.Name" class="form-label">Tên sản phẩm</label>
-                                    <input asp-for="Product.Name" class="form-control" />
-                                    <span asp-validation-for="Product.Name" class="text-danger"></span>
-                                </div>
+                                        <div class="mb-3">
+                                            <label asp-for="Product.BrandId" class="form-label required">Hãng sản xuất</label>
+                                            <select asp-for="Product.BrandId" class="form-select" asp-items="@Model.BrandList">
+                                                <option value="">-- Chọn hãng --</option>
+                                            </select>
+                                            <span asp-validation-for="Product.BrandId" class="text-danger small"></span>
+                                        </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.BrandId" class="form-label">Hãng sản xuất</label>
-                                    <select asp-for="Product.BrandId" class="form-select"
-                                            asp-items="@Model.BrandList">
-                                        <option value="">-- Chọn hãng --</option>
-                                    </select>
-                                    <span asp-validation-for="Product.BrandId" class="text-danger"></span>
-                                </div>
+                                        <div class="mb-3">
+                                            <label asp-for="Product.Description" class="form-label">Mô tả sản phẩm</label>
+                                            <textarea asp-for="Product.Description" class="form-control" rows="6" placeholder="Mô tả chi tiết về sản phẩm..."></textarea>
+                                            <span asp-validation-for="Product.Description" class="text-danger small"></span>
+                                        </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.Description" class="form-label">Mô tả</label>
-                                    <textarea asp-for="Product.Description" class="form-control" rows="8"></textarea>
-                                    <span asp-validation-for="Product.Description" class="text-danger"></span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="Product.ReleaseDate" class="form-label">Ngày ra mắt</label>
-                                    <input asp-for="Product.ReleaseDate" type="date" class="form-control" />
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="MainImageFile" class="form-label">Ảnh đại diện sản phẩm (Ảnh chính)</label>
-                                    <input asp-for="MainImageFile" class="form-control" type="file" accept="image/*">
-                                    <span asp-validation-for="MainImageFile" class="text-danger"></span>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="Product.ReleaseDate" class="form-label">Ngày ra mắt</label>
+                                                <input asp-for="Product.ReleaseDate" type="date" class="form-control" />
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="MainImageFile" class="form-label required">Ảnh đại diện</label>
+                                                <input asp-for="MainImageFile" class="form-control" type="file" accept="image/*">
+                                                <span asp-validation-for="MainImageFile" class="text-danger small"></span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- === CỘT 2: THÔNG SỐ KỸ THUẬT === -->
-                            <div class="col-md-3">
-                                <h5 class="mb-3">2. Thông số kỹ thuật</h5>
+                            <div class="col-lg-3">
+                                <div class="section-card">
+                                    <div class="section-header">
+                                        <i class="bi bi-cpu me-2"></i>
+                                        <h6 class="mb-0">Thông số kỹ thuật</h6>
+                                    </div>
+                                    <div class="section-body">
+                                        <div class="row">
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.Chipset" class="form-label">Chipset</label>
+                                                <input asp-for="Product.Chipset" class="form-control" placeholder="VD: Snapdragon 8 Gen 2" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.Chipset" class="form-label">Chipset</label>
-                                    <input asp-for="Product.Chipset" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.OperatingSystem" class="form-label">Hệ điều hành</label>
+                                                <input asp-for="Product.OperatingSystem" class="form-control" placeholder="VD: Android 13" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.OperatingSystem" class="form-label">Hệ điều hành</label>
-                                    <input asp-for="Product.OperatingSystem" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.ScreenSize" class="form-label">Màn hình (inch)</label>
+                                                <input asp-for="Product.ScreenSize" type="number" step="0.1" class="form-control" placeholder="6.7" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.ScreenSize" class="form-label">Màn hình (inch)</label>
-                                    <input asp-for="Product.ScreenSize" type="number" step="0.1" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.ScreenTech" class="form-label">Công nghệ màn hình</label>
+                                                <input asp-for="Product.ScreenTech" class="form-control" placeholder="VD: AMOLED" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.ScreenTech" class="form-label">Công nghệ màn hình</label>
-                                    <input asp-for="Product.ScreenTech" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.RefreshRate" class="form-label">Tần số quét (Hz)</label>
+                                                <input asp-for="Product.RefreshRate" type="number" class="form-control" placeholder="120" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.RefreshRate" class="form-label">Tần số quét (Hz)</label>
-                                    <input asp-for="Product.RefreshRate" type="number" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.BatteryCapacity" class="form-label">Pin (mAh)</label>
+                                                <input asp-for="Product.BatteryCapacity" type="number" class="form-control" placeholder="5000" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.BatteryCapacity" class="form-label">Pin (mAh)</label>
-                                    <input asp-for="Product.BatteryCapacity" type="number" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.RearCamera" class="form-label">Camera sau</label>
+                                                <input asp-for="Product.RearCamera" class="form-control" placeholder="VD: 50MP + 12MP + 5MP" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.RearCamera" class="form-label">Camera sau</label>
-                                    <input asp-for="Product.RearCamera" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.FrontCamera" class="form-label">Camera trước</label>
+                                                <input asp-for="Product.FrontCamera" class="form-control" placeholder="VD: 32MP" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.FrontCamera" class="form-label">Camera trước</label>
-                                    <input asp-for="Product.FrontCamera" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.Weight" class="form-label">Trọng lượng (gram)</label>
+                                                <input asp-for="Product.Weight" type="number" step="0.1" class="form-control" placeholder="196.5" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.Weight" class="form-label">Trọng lượng (gram)</label>
-                                    <input asp-for="Product.Weight" type="number" step="0.1" class="form-control" />
-                                </div>
+                                            <div class="col-12 mb-3">
+                                                <label asp-for="Product.Dimensions" class="form-label">Kích thước (mm)</label>
+                                                <input asp-for="Product.Dimensions" class="form-control" placeholder="VD: 163.4 x 78.1 x 8.9" />
+                                            </div>
 
-                                <div class="mb-3">
-                                    <label asp-for="Product.Dimensions" class="form-label">Kích thước (mm)</label>
-                                    <input asp-for="Product.Dimensions" class="form-control" />
-                                </div>
-
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" asp-for="Product.ChargerIncluded" value="true" checked>
-                                    <label class="form-check-label" asp-for="Product.ChargerIncluded">
-                                        Có kèm sạc
-                                    </label>
+                                            <div class="col-12">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" asp-for="Product.ChargerIncluded" value="true" checked>
+                                                    <label class="form-check-label" asp-for="Product.ChargerIncluded">
+                                                        Có kèm sạc
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- === CỘT 3: BIẾN THỂ ĐẦU TIÊN === -->
-                            <div class="col-md-4">
-                                <h5 class="mb-3">3. Biến thể đầu tiên (SKU)</h5>
-
-                                <div class="alert alert-info p-2 small">
-                                    Bạn phải tạo ít nhất 1 biến thể (SKU) để bán.
-                                    Bạn có thể thêm nhiều biến thể hơn sau.
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label asp-for="VariantColor" class="form-label">Màu sắc</label>
-                                        <input asp-for="VariantColor" class="form-control" placeholder="Vd: Titan Tự Nhiên" required />
-                                        <span asp-validation-for="VariantColor" class="text-danger"></span>
+                            <div class="col-lg-4">
+                                <div class="section-card">
+                                    <div class="section-header">
+                                        <i class="bi bi-layers me-2"></i>
+                                        <h6 class="mb-0">Biến thể đầu tiên</h6>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label asp-for="VariantStorage" class="form-label">Bộ nhớ trong</label>
-                                        <input asp-for="VariantStorage" class="form-control" placeholder="Vd: 256GB" required />
-                                        <span asp-validation-for="VariantStorage" class="text-danger"></span>
+                                    <div class="section-body">
+                                        <div class="alert alert-info alert-sm">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            <small>Bạn phải tạo ít nhất 1 biến thể (SKU) để bán. Có thể thêm nhiều biến thể hơn sau.</small>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="VariantColor" class="form-label required">Màu sắc</label>
+                                                <input asp-for="VariantColor" class="form-control" placeholder="Titan Tự Nhiên" required />
+                                                <span asp-validation-for="VariantColor" class="text-danger small"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="VariantStorage" class="form-label required">Bộ nhớ trong</label>
+                                                <input asp-for="VariantStorage" class="form-control" placeholder="256GB" required />
+                                                <span asp-validation-for="VariantStorage" class="text-danger small"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label asp-for="VariantRam" class="form-label">RAM (Nếu có)</label>
+                                            <input asp-for="VariantRam" class="form-control" placeholder="8GB" />
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="VariantPrice" class="form-label required">Giá bán (VNĐ)</label>
+                                                <input asp-for="VariantPrice" type="number" class="form-control" placeholder="15000000" required />
+                                                <span asp-validation-for="VariantPrice" class="text-danger small"></span>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label asp-for="VariantStock" class="form-label required">Tồn kho</label>
+                                                <input asp-for="VariantStock" type="number" class="form-control" placeholder="50" required />
+                                                <span asp-validation-for="VariantStock" class="text-danger small"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label asp-for="VariantImageFile" class="form-label">Ảnh biến thể</label>
+                                            <input asp-for="VariantImageFile" class="form-control" type="file" accept="image/*">
+                                            <div class="form-text small">Bỏ trống nếu dùng ảnh chính của sản phẩm</div>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="VariantRam" class="form-label">RAM (Nếu có)</label>
-                                    <input asp-for="VariantRam" class="form-control" placeholder="Vd: 8GB" />
-                                    <!-- Không bắt buộc -->
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label asp-for="VariantPrice" class="form-label">Giá bán (VNĐ)</label>
-                                        <input asp-for="VariantPrice" type="number" class="form-control" required />
-                                        <span asp-validation-for="VariantPrice" class="text-danger"></span>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label asp-for="VariantStock" class="form-label">Tồn kho</label>
-                                        <input asp-for="VariantStock" type="number" class="form-control" required />
-                                        <span asp-validation-for="VariantStock" class="text-danger"></span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="VariantImageFile" class="form-label">Ảnh riêng cho biến thể (Bỏ trống nếu dùng ảnh chính)</label>
-                                    <input asp-for="VariantImageFile" class="form-control" type="file" accept="image/*">
-                                </div>
-
                             </div>
                         </div>
                     </div>
 
-                    <div class="card-footer bg-light text-end py-3">
-                        <!-- GHI CHÚ: Đã sửa asp-controller="Product" -->
-                        <a asp-action="Index" asp-controller="Product" class="btn btn-secondary">Hủy bỏ</a>
-                        <button type="submit" class="btn btn-primary">Lưu và Thêm sản phẩm</button>
+                    <div class="card-footer bg-light py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-text">
+                                <i class="bi bi-exclamation-circle me-1"></i>
+                                Các trường có dấu <span class="text-danger">*</span> là bắt buộc
+                            </div>
+                            <div>
+                                <a asp-action="Index" asp-controller="Product" class="btn btn-outline-secondary me-2">
+                                    <i class="bi bi-x-circle me-1"></i>Hủy bỏ
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>Lưu và Thêm sản phẩm
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -181,3 +223,138 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Custom Styles for Product Create Form */
+    .section-card {
+        background: #fff;
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 12px 16px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+        .section-header h6 {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .section-header i {
+            color: #dc3545;
+        }
+
+    .section-body {
+        padding: 20px;
+    }
+
+    .card-header.bg-primary {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 8px 12px;
+        transition: all 0.2s ease;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+
+    .form-control-lg {
+        padding: 12px 16px;
+        font-size: 1rem;
+    }
+
+    .alert-sm {
+        padding: 8px 12px;
+        font-size: 0.875rem;
+        border-radius: 6px;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .btn {
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+
+    .btn-outline-secondary {
+        border: 1px solid #d1d5db;
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: #f8f9fa;
+            border-color: #6c757d;
+        }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .container-fluid {
+            padding: 15px;
+        }
+
+        .card-body {
+            padding: 20px 15px;
+        }
+
+        .section-body {
+            padding: 15px;
+        }
+    }
+
+    /* Custom scroll for long forms */
+    .section-body {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+        .section-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .section-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .section-body::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+            .section-body::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+</style>
+
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">

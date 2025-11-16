@@ -1,8 +1,22 @@
 ﻿/* =========================================
-   1. RESET & THIẾT LẬP CƠ BẢN
+   RABIT STORE - MASTER.CSS
+   Phiên bản hoàn chỉnh - Màu sắc đồng nhất
    ========================================= */
+
+/* =========================================
+   1. VARIABLES & RESET
+   ========================================= */
+:root {
+    --primary-color: #dc3545;
+    --primary-hover: #c82333;
+    --sidebar-width: 220px;
+    --header-height: 70px;
+    --border-radius: 8px;
+    --transition: all 0.3s ease;
+}
+
 html {
-    box-sizing: border-box; /* Kế thừa box-sizing */
+    box-sizing: border-box;
 }
 
 *, *:before, *:after {
@@ -10,15 +24,11 @@ html {
 }
 
 html, body {
-    height: 100%; /* Cho phép các phần tử con dùng % */
+    height: 100%;
     margin: 0;
     padding: 0;
     font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: #f7f7f7;
-    /* QUAN TRỌNG: 
-      Chặn body tự cuộn. Chỉ cho phép các khu vực
-      bên trong (sidebar, content) được cuộn.
-    */
+    background: #f8f9fa;
     overflow: hidden;
 }
 
@@ -26,30 +36,25 @@ html, body {
    2. HEADER
    ========================================= */
 header {
-    height: 70px;
+    height: var(--header-height);
     background: #fff;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid #dee2e6;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 24px;
-    /* Cố định trên cùng */
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    /* Bố cục bên trong header */
-    display: flex;
-    align-items: center;
-    gap: 24px; /* Khoảng cách hợp lý, thay vì 400px */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    gap: 24px;
 }
-/* DẤU } THỪA ĐÃ BỊ XÓA Ở ĐÂY */
 
-/* Header-left (Logo) */
 .header-left {
-    width: 220px;
-    flex-shrink: 0; /* Không co lại khi thu hẹp */
+    width: var(--sidebar-width);
+    flex-shrink: 0;
     display: flex;
     align-items: center;
 }
@@ -58,20 +63,23 @@ header {
         max-width: 160px;
         height: auto;
         object-fit: contain;
+        transition: var(--transition);
     }
 
-/* Header-right (Search + Icons) */
+        .header-left .logo:hover {
+            transform: scale(1.05);
+        }
+
 .header-right {
-    flex: 1; /* Tự động chiếm hết phần còn lại */
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Tách search và icons */
-    gap: 16px;
+    justify-content: space-between;
+    gap: 20px;
 }
 
-/* Nhóm bên trái của header-right (search box) */
 .header-search {
-    flex: 1; /* Ưu tiên co giãn search box */
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -80,124 +88,352 @@ header {
     .header-search input {
         width: 100%;
         max-width: 400px;
-        border-radius: 20px;
-        padding: 6px 14px;
+        border-radius: 25px;
+        padding: 10px 20px;
         border: 1px solid #e0e0e0;
-        background: #fafafa;
+        background: #f8f9fa;
+        transition: var(--transition);
+        font-size: 0.9rem;
     }
 
-/* Nhóm icons bên phải */
+        .header-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+
 .header-icons {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
 }
 
     .header-icons i {
-        font-size: 18px;
-        color: #555;
+        font-size: 1.25rem;
+        color: #6c757d;
         cursor: pointer;
-    }
-
-    .header-icons img {
-        width: 40px;
-        height: 40px;
+        padding: 8px;
         border-radius: 50%;
-        object-fit: cover;
+        transition: var(--transition);
     }
 
-
-/* =========================================
-   3. BỐ CỤC CHÍNH (KEY FIX)
-   ========================================= */
-
-/* Container chính, bắt đầu bên DƯỚI header
-  và chiếm CHÍNH XÁC phần còn lại của màn hình
-*/
-.main-container {
-    display: flex;
-    margin-top: 70px; /* Bắt đầu bên dưới header */
-    /* FIX GỐC LỖI 2 SCROLL:
-      Set chiều cao chính xác cho container này.
-      Nó sẽ là cha của .content
-    */
-    height: calc(100vh - 70px);
-}
-
-/* Sidebar trái (Vẫn giữ fixed) */
-.sidebar {
-    position: fixed;
-    top: 70px;
-    left: 0;
-    bottom: 0;
-    width: 220px;
-    background: #fff;
-    border-right: 1px solid #e5e5e5;
-    padding: 20px 14px;
-    /* Sidebar tự cuộn khi nội dung dài */
-    overflow-y: auto;
-    z-index: 900; /* Dưới header */
-}
-
-/* Khu nội dung bên phải */
-.content {
-    flex: 1; /* Chiếm hết không gian còn lại */
-    margin-left: 220px; /* Tạo khoảng trống cho sidebar */
-    padding: 24px;
-    /* FIX GỐC LỖI 2 SCROLL:
-      Không cần set height nữa. 
-      Nó sẽ tự động cao bằng cha nó (.main-container)
-      Và .content sẽ tự cuộn khi nội dung dài.
-    */
-    overflow-y: auto;
-}
-
-
-/* =========================================
-   4. SIDEBAR MENU
-   ========================================= */
-    .sidebar a {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #555;
-        text-decoration: none;
-        padding: 10px 12px;
-        border-radius: 8px;
-        margin-bottom: 6px;
-        transition: 0.15s;
-    }
-
-        .sidebar a:hover, .sidebar a.active {
-            background: #fff3f3;
-            color: #e63737;
-            font-weight: 600;
+        .header-icons i:hover {
+            background: #f8f9fa;
+            color: var(--primary-color);
+            transform: translateY(-1px);
         }
 
-    .sidebar i {
-        width: 20px;
-        text-align: center;
+    /* =========================================
+   3. DROPDOWN & AVATAR
+   ========================================= */
+    .header-icons .dropdown {
+        display: inline-flex;
+        vertical-align: middle;
     }
 
+    .header-icons .dropdown-toggle {
+        text-decoration: none;
+        padding: 0;
+        border: none;
+        background: none;
+        outline: none !important;
+    }
+
+        .header-icons .dropdown-toggle::after {
+            display: none !important;
+        }
+
+.avatar-initial {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+    .avatar-initial:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+.dropdown-menu {
+    font-size: 0.95rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-top: 10px !important;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: var(--border-radius);
+    min-width: 200px;
+}
+
+    .dropdown-menu .dropdown-header {
+        font-weight: 600;
+        color: #495057;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #f1f1f1;
+        margin-bottom: 0.25rem;
+    }
+
+    .dropdown-menu .dropdown-item {
+        padding: 0.6rem 1rem;
+        display: flex;
+        align-items: center;
+        transition: var(--transition);
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+
+        .dropdown-menu .dropdown-item i {
+            margin-right: 10px;
+            width: 16px;
+            display: inline-block;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+    .dropdown-menu form {
+        margin: 0;
+    }
+
+.dropdown-divider {
+    margin: 0.4rem 0;
+}
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+    background-color: var(--primary-color) !important;
+    color: #ffffff !important;
+    transform: translateX(2px);
+}
+
 /* =========================================
-   5. TÙY CHỌN: Tối ưu thanh cuộn
+   4. MAIN LAYOUT
+   ========================================= */
+.main-container {
+    display: flex;
+    margin-top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+}
+
+.sidebar {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: #fff;
+    border-right: 1px solid #dee2e6;
+    padding: 20px 14px;
+    overflow-y: auto;
+    z-index: 900;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+}
+
+.content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    padding: 30px;
+    overflow-y: auto;
+    background: #fff;
+    margin: 0;
+    margin-left: var(--sidebar-width);
+    border-radius: 12px 0 0 0;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+}
+
+/* =========================================
+   5. SIDEBAR MENU - MÀU ĐỎ ĐẬM ĐỒNG NHẤT
+   ========================================= */
+.sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #495057;
+    text-decoration: none;
+    padding: 12px 14px;
+    border-radius: var(--border-radius);
+    margin-bottom: 8px;
+    transition: var(--transition);
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+    .sidebar a:hover {
+        background: #fff3f3;
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        transform: translateX(4px);
+    }
+
+    .sidebar a.active {
+        background: #dc3545 !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        border-color: #dc3545 !important;
+    }
+
+        .sidebar a.active i {
+            color: #ffffff !important;
+        }
+
+    .sidebar a:hover i {
+        color: #dc3545 !important;
+    }
+
+.sidebar i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+    color: #6c757d;
+    transition: var(--transition);
+}
+
+/* =========================================
+   6. MODAL STYLES
+   ========================================= */
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.modal-header.bg-success {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+}
+
+.modal-header.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #e83e8c) !important;
+}
+
+/* =========================================
+   7. CUSTOM SCROLLBARS
    ========================================= */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #f8f9fa;
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: #ced4da;
     border-radius: 10px;
+    border: 2px solid #f8f9fa;
 }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: #aaa;
+        background: #adb5bd;
+    }
+
+.sidebar::-webkit-scrollbar {
+    width: 4px;
 }
-/* DẤU } THỪA ĐÃ BỊ XÓA Ở ĐÂY */
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f8f9fa;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+}
+
+/* =========================================
+   8. RESPONSIVE DESIGN
+   ========================================= */
+@media (max-width: 768px) {
+    .header-right {
+        gap: 12px;
+    }
+
+    .header-search {
+        display: none;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+        .sidebar.mobile-open {
+            transform: translateX(0);
+        }
+
+    .content {
+        margin-left: 0;
+        padding: 20px 15px;
+    }
+
+    .header-left {
+        width: auto;
+    }
+}
+
+/* =========================================
+   9. ANIMATIONS
+   ========================================= */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-menu {
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+    animation: fadeIn 0.3s ease;
+}
+
+/* =========================================
+   10. UTILITY CLASSES
+   ========================================= */
+.text-primary-custom {
+    color: var(--primary-color) !important;
+}
+
+.bg-primary-custom {
+    background-color: var(--primary-color) !important;
+}
+
+.border-primary-custom {
+    border-color: var(--primary-color) !important;
+}
+
+.shadow-custom {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15) !important;
+}

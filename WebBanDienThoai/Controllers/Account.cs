@@ -90,7 +90,9 @@ namespace WebBanDienThoai.Controllers
                 {
                     new Claim(ClaimTypes.Name, account.Email),
                     new Claim("AccountID", account.AccountID.ToString()),
-                    new Claim(ClaimTypes.Role, account.Role)
+                    new Claim(ClaimTypes.Role, account.Role),
+
+                    new Claim(ClaimTypes.GivenName, account.Customer?.FullName ?? account.Email)
                 };
 
                 await SignInUserAsync(claims, model.RememberMe);

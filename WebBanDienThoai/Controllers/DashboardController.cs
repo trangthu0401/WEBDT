@@ -113,5 +113,53 @@ namespace WebBanDienThoai.Controllers
             }
             return result.OrderByDescending(r => r.QuantitySold).ToList();
         }
-    }
+
+    
+       // GET: /Admin/GetRevenueByDay?year=2025&month=10 (API cho biểu đồ doanh thu)
+        [HttpGet]
+        public async Task<IActionResult> GetRevenueByDay(int year, int month)
+        {
+            try
+            {
+                // 1. Lấy dữ liệu thô từ CSDL
+                var revenueData = await _context.Orders
+                    .Where(o => o.OrderDate.HasValue &&
+                                o.OrderDate.Value.Year == year &&
+                                o.OrderDate.Value.Month == month)
+                    .GroupBy(o => o.OrderDate.Value.Day)
+                    .Select(g => new
+                    {
+                        Day = g.Key,
+                        Total = g.Sum(o => o.TotalAmount)
+                    })
+                    .ToDictionaryAsync(k => k.Day, v => v.Total);
+
+                // 2. Tạo nhãn cho tất cả các ngày trong tháng
+                int daysInMonth = DateTime.DaysInMonth(year, month);
+                var labels = new List<string>();
+                var data = new List<decimal>();
+
+                for (int i = 1; i <= daysInMonth; i++)
+                {
+                    labels.Add("Ngày " + i);
+                    if (revenueData.ContainsKey(i))
+                    {
+                        data.Add(revenueData[i] ?? 0m); // Fix: Convert decimal? to decimal
+                    }
+                    else
+                    {
+                        data.Add(0);
+                    }
+                }
+
+                // 3. Trả về JSON
+                return Json(new { labels, data });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Lỗi máy chủ: " + ex.Message);
+            }
+        }
+
+    } // <-- Đóng class AdminController
 }
