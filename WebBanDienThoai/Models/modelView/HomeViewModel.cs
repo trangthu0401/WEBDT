@@ -28,18 +28,26 @@ namespace WebBanDienThoai.Models.modelView
     public class ManageProductsViewModel
     {
         public List<ProductListViewModel> Products { get; set; } = new List<ProductListViewModel>();
-        public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>(); // Model đã có
+        public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>();
         public int? BrandId { get; set; }
         public int TotalProductCount { get; set; }
+        public string currentSearch { get; set; }
+
+        // === THÊM CÁC BIẾN CHO BỘ LỌC ===
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
+        public string SelectedRam { get; set; }
+        public string SelectedStorage { get; set; }
     }
 
+    // Các class khác giữ nguyên, không đổi
     public class FavoritesViewModel
     {
         public List<ProductListViewModel> FavoriteProducts { get; set; } = new List<ProductListViewModel>();
-
-        // === THÊM 2 DÒNG SAU ===
         public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>();
         public int TotalProductCount { get; set; }
+        public int? BrandId { get; set; }
+        public string currentSearch { get; set; }
     }
 
     public class ProductSuggestionViewModel
@@ -55,9 +63,9 @@ namespace WebBanDienThoai.Models.modelView
         public ProductVariant ProductDetail { get; set; }
         public List<ProductVariant> AllVariants { get; set; }
         public List<ProductVariant> RelatedProducts { get; set; }
-
-        // === THÊM 2 DÒNG SAU ===
         public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>();
         public int TotalProductCount { get; set; }
+        public int? BrandId { get; set; }
+        public string currentSearch { get; set; }
     }
 }

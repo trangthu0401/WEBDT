@@ -94,7 +94,6 @@
 
     <section id="hero" class="hero-section">
         <div class="container hero-container">
-
             <aside class="category-sidebar">
                 <ul>
                     @if (Model.BrandCounts != null && Model.BrandCounts.Any())
@@ -169,8 +168,11 @@
                    class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
                     Giá cao -> thấp
                 </a>
-            </div>
 
+                <button id="filterButton" class="sort-btn" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                    Bộ lọc
+                </button>
+            </div>
             <div class="product-grid">
                 @if (Model.Products != null && Model.Products.Any())
                 {
@@ -241,10 +243,57 @@
         </div>
     </section>
 
+    <div class="filter-popup-overlay" id="filterPopup">
+        <div class="filter-popup-content">
+            <div class="filter-header">
+                <h3>Bộ Lọc Sản Phẩm</h3>
+                <span class="close-filter" id="closeFilter">&times;</span>
+            </div>
+            <form asp-controller="Home" asp-action="Index" method="get">
+                <input type="hidden" name="searchString" value="@currentSearch" />
+                <input type="hidden" name="id" value="@Model.BrandId" />
+
+                <div class="filter-group">
+                    <label>Khoảng giá (VNĐ)</label>
+                    <div class="price-range-inputs">
+                        <input type="number" name="minPrice" placeholder="Từ..." value="@Model.MinPrice" />
+                        <span>-</span>
+                        <input type="number" name="maxPrice" placeholder="Đến..." value="@Model.MaxPrice" />
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>RAM</label>
+                    <select name="ram" class="filter-select">
+                        <option value="">Tất cả RAM</option>
+                        <!option value="4GB" @(Model.SelectedRam == "4GB" ? "selected" : "")>4GB</!option>
+                        <!option value="6GB" @(Model.SelectedRam == "6GB" ? "selected" : "")>6GB</!option>
+                        <!option value="8GB" @(Model.SelectedRam == "8GB" ? "selected" : "")>8GB</!option>
+                        <!option value="12GB" @(Model.SelectedRam == "12GB" ? "selected" : "")>12GB</!option>
+                        <!option value="16GB" @(Model.SelectedRam == "16GB" ? "selected" : "")>16GB</!option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Bộ nhớ trong (ROM)</label>
+                    <select name="storage" class="filter-select">
+                        <option value="">Tất cả bộ nhớ</option>
+                        <!option value="64GB" @(Model.SelectedStorage == "64GB" ? "selected" : "")>64GB</!option>
+                        <!option value="128GB" @(Model.SelectedStorage == "128GB" ? "selected" : "")>128GB</!option>
+                        <!option value="256GB" @(Model.SelectedStorage == "256GB" ? "selected" : "")>256GB</!option>
+                        <!option value="512GB" @(Model.SelectedStorage == "512GB" ? "selected" : "")>512GB</!option>
+                        <!option value="1TB" @(Model.SelectedStorage == "1TB" ? "selected" : "")>1TB</!option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-apply-filter">Áp dụng bộ lọc</button>
+            </form>
+        </div>
+    </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            // --- CODE NÚT YÊU THÍCH ---
+            // --- CODE XỬ LÝ NÚT YÊU THÍCH ---
             const wishlistButtons = document.querySelectorAll('.wishlist-button');
             wishlistButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
@@ -315,7 +364,7 @@
             const categoryToggle = document.getElementById('categoryDropdownToggle');
             if (categoryToggle) {
                 categoryToggle.addEventListener('click', function(e) {
-                    e.preventDefault(); // Ngăn link nhảy lên đầu trang
+                    e.preventDefault();
                     categoryDropdown.classList.toggle('active');
                 });
             }
@@ -324,12 +373,36 @@
                     categoryDropdown.classList.remove('active');
                 }
             });
-            // === KẾT THÚC CODE POPUP ===
+
+            // === CODE CHO POPUP BỘ LỌC (FILTER) ===
+            const filterButton = document.getElementById('filterButton');
+            const filterPopup = document.getElementById('filterPopup');
+            const closeFilter = document.getElementById('closeFilter');
+
+            if (filterButton) {
+                filterButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    filterPopup.classList.add('active');
+                });
+            }
+
+            if (closeFilter) {
+                closeFilter.addEventListener('click', function() {
+                    filterPopup.classList.remove('active');
+                });
+            }
+            if (filterPopup) {
+                filterPopup.addEventListener('click', function(e) {
+                    if (e.target === filterPopup) {
+                        filterPopup.classList.remove('active');
+                    }
+                });
+            }
+            // === KẾT THÚC ===
 
             // --- CODE CHATBOT ---
             const fabChatButton = document.getElementById('fabChatButton');
             const chatWindow = document.getElementById('chatWindow');
-            // ... (rest of chatbot code) ...
             const chatCloseButton = document.getElementById('chatCloseButton');
             const chatBody = document.getElementById('chatBody');
             const chatInput = document.getElementById('chatInput');
@@ -373,7 +446,6 @@
             // --- CODE TÌM KIẾM GỢI Ý ---
             const searchInput = document.getElementById('mainSearchInput');
             const suggestionsContainer = document.getElementById('mainSearchSuggestions');
-            // ... (rest of search suggestion code) ...
             const searchForm = document.getElementById('mainSearchForm');
             if (searchInput) {
                 searchInput.addEventListener('keyup', function() {
