@@ -2,7 +2,17 @@
 
 @{
     ViewData["Title"] = "Quản lý Sản phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
     var currentBrandIdStr = ViewContext.RouteData.Values["brandId"]?.ToString();
+
+    // Lấy dữ liệu phân trang từ ViewBag
+    int currentPage = ViewBag.PageIndex ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    string searchId = ViewBag.SearchId;
+    string brandId = currentBrandIdStr; // Sử dụng BrandId hiện tại
+
+    // Helper để tạo URL phân trang, giữ lại các bộ lọc
+    Func<int, string> getUrl = (page) => Url.Action("Index", "Product", new { pageIndex = page, brandId = brandId, searchId = searchId });
 }
 <link href="~/css/Dashboard.css" rel="stylesheet">
 
@@ -11,7 +21,6 @@
     @* --- HEADER (TÌM KIẾM, THÊM MỚI) --- *@
     <div class="products-header">
 
-        <!-- Form tìm kiếm -->
         <form class="product-search-form" method="get" asp-action="Index" asp-controller="Product">
             @if (!string.IsNullOrEmpty(currentBrandIdStr))
             {
@@ -24,7 +33,6 @@
         </form>
 
         <div class="products-actions">
-            <!-- ĐÃ XÓA NÚT LỌC -->
             <a asp-action="Create" asp-controller="Product" class="btn btn-primary">
                 <span>Thêm</span>
                 <img src="/images/Admin/Product/admin_add.png" alt="Add Icon">
@@ -35,16 +43,15 @@
     @* --- THANH LỌC THEO HÃNG - ĐÃ CHỈNH MÀU KHI ACTIVE --- *@
     <nav class="nav nav-pills nav-fill nav-container mb-3">
 
-        <!-- Tất cả sản phẩm -->
         <a class="nav-link @(string.IsNullOrEmpty(currentBrandIdStr) ? "active" : "")"
            aria-current="page"
-           href="@Url.Action("Index", "Product")">
+           href="@Url.Action("Index", "Product", new { searchId = ViewBag.SearchId })">
+            @* Giữ lại searchId khi bấm Tất cả *@
             Tất cả (@Model.TotalProductCount)
         </a>
 
         @foreach (var brand in Model.BrandCounts)
         {
-            <!-- Các hãng -->
             <a class="nav-link @(currentBrandIdStr == brand.brandId.ToString() ? "active" : "")"
                href="@Url.Action("Index", "Product", new { brandId = brand.brandId, searchId = ViewBag.SearchId })">
                 @brand.BrandName (@brand.Count)
@@ -159,15 +166,32 @@
         </table>
     </div>
 
-    @* --- FOOTER (PHÂN TRANG - Tĩnh) --- *@
+    @* --- FOOTER (PHÂN TRANG - ĐỘNG) --- *@
     <footer class="products-footer">
         <nav aria-label="Page navigation example" class="ms-auto">
             <ul class="pagination pagination-sm">
-                <li class="page-item disabled"><a class="page-link" href="#" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a></li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#" aria-label="Next"><span aria-hidden="true">&raquo;</span></a></li>
+
+                @* Previous button *@
+                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                    <a class="page-link" href="@(currentPage > 1 ? getUrl(currentPage - 1) : "#")" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                @* Page numbers *@
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@getUrl(i)">@i</a>
+                    </li>
+                }
+
+                @* Next button *@
+                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@(currentPage<totalPages? getUrl(currentPage + 1) : "#")" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
             </ul>
         </nav>
     </footer>
@@ -177,6 +201,7 @@
 @* ========================== JAVASCRIPT (ĐÃ TỐI ƯU) ============================ *@
 @* ============================================================================== *@
 <script>
+    // Hàm này hiện không cần thiết vì form đã xử lý submit
     function filterSearch() {
         const searchId = document.getElementById("searchId").value;
         const currentUrl = new URL(window.location.href);

@@ -5,9 +5,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Crypto.Generators;
-
-// GHI CHÚ: Xóa using Org.BouncyCastle.Crypto.Generators; (Thừa)
 using System.Security.Claims;
 using System.Threading.Tasks;
 using WebBanDienThoai.Data;
@@ -18,10 +15,8 @@ namespace WebBanDienThoai.Controllers
 {
     public class AccountController : Controller
     {
-        // GHI CHÚ: Sửa lại tên DbContext (bỏ "Db")
         private readonly DemoWebBanDienThoaiDbContext _context;
 
-        // GHI CHÚ: Sửa lại tên DbContext (bỏ "Db")
         public AccountController(DemoWebBanDienThoaiDbContext context)
         {
             _context = context;
@@ -45,13 +40,11 @@ namespace WebBanDienThoai.Controllers
                 _context.Accounts.Update(account);
                 await _context.SaveChangesAsync();
 
-                // GHI CHÚ: Tối ưu lại thông báo (dùng toán tử 3 ngôi)
                 string statusMessage = account.IsActive ? "mở khóa" : "khóa";
                 TempData["SuccessMessage"] = $"Đã {statusMessage} tài khoản '{account.Email}' thành công.";
             }
             catch (DbUpdateException ex)
             {
-                // GHI CHÚ: Nên log lỗi
                 Console.WriteLine(ex.Message);
                 TempData["ErrorMessage"] = "Không thể cập nhật trạng thái tài khoản.";
             }
@@ -62,7 +55,7 @@ namespace WebBanDienThoai.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
 
             return View();
@@ -75,11 +68,8 @@ namespace WebBanDienThoai.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // GHI CHÚ: Sửa lỗi Logic (Login bằng SĐT)
-            // 1. Phải Include(a => a.Customer)
-            // 2. Thêm điều kiện check a.Customer.Phone
             var account = await _context.Accounts
-                .Include(a => a.Customer) // <-- Thêm Include
+                .Include(a => a.Customer)
                 .FirstOrDefaultAsync(a =>
                     (a.Email == model.EmailOrPhone || (a.Customer != null && a.Customer.Phone == model.EmailOrPhone))
                     && a.IsActive == true);
@@ -91,41 +81,26 @@ namespace WebBanDienThoai.Controllers
                     new Claim(ClaimTypes.Name, account.Email),
                     new Claim("AccountID", account.AccountID.ToString()),
                     new Claim(ClaimTypes.Role, account.Role),
-
                     new Claim(ClaimTypes.GivenName, account.Customer?.FullName ?? account.Email)
                 };
 
                 await SignInUserAsync(claims, model.RememberMe);
 
-
-
-                // ==============================================
-                // === SỬA LẠI LOGIC CHUYỂN HƯỚNG ===
-                // ==============================================
-
-                // 1. Người dùng tick vào ô "Đăng nhập với quyền Admin"
                 if (model.LoginAsAdmin)
                 {
-                    // 1a. Kiểm tra xem họ CÓ PHẢI là Admin không
                     if (account.Role == "Admin")
                     {
-                        return RedirectToAction("Index", "Dashboard"); // (ĐÚNG) Admin -> Dashboard
+                        return RedirectToAction("Index", "Dashboard");
                     }
                     else
                     {
-                        // 1b. (SAI) Customer tick ô Admin -> Đăng xuất & Báo lỗi
                         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                         ModelState.AddModelError(string.Empty, "Bạn không có quyền đăng nhập với tư cách Quản trị viên.");
                         return View(model);
                     }
                 }
 
-                // 2. Người dùng KHÔNG tick ô "Admin" (Đăng nhập bình thường)
-                // (Cả Customer và Admin [nếu quên tick] đều sẽ vào trang Home)
                 return RedirectToAction("Index", "Home");
-                // ==============================================
-                // === KẾT THÚC SỬA ===
-                // ==============================================
             }
 
             ModelState.AddModelError(string.Empty, "Email, SĐT hoặc mật khẩu không chính xác.");
@@ -136,7 +111,7 @@ namespace WebBanDienThoai.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
 
             return View();
@@ -156,6 +131,14 @@ namespace WebBanDienThoai.Controllers
                 return View(model);
             }
 
+            // GHI CHÚ: Thêm check SĐT đã tồn tại (nếu bạn muốn SĐT là duy nhất)
+            bool phoneExists = await _context.Customers.AnyAsync(c => c.Phone == model.Phone);
+            if (phoneExists)
+            {
+                ModelState.AddModelError("Phone", "Số điện thoại đã được sử dụng cho tài khoản khác.");
+                return View(model);
+            }
+
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.Password);
 
             var newAccount = new Account
@@ -169,25 +152,27 @@ namespace WebBanDienThoai.Controllers
 
             try
             {
+                // 1. Lưu Account
                 _context.Accounts.Add(newAccount);
                 await _context.SaveChangesAsync();
 
-                // GHI CHÚ: Logic tự động tạo Customer (giống trong Profile)
-                // Điều này giúp Profile (GET) không cần kiểm tra null
+                // 2. Lưu thông tin Customer chi tiết (SỬA LỖI Ở ĐÂY)
                 var newCustomer = new Customer
                 {
                     AccountID = newAccount.AccountID,
-                    FullName = model.Email.Split('@')[0], // Tên mặc định
-                    Gender = "Khác",
+                    FullName = model.FullName, // Lấy từ form
+                    Phone = model.Phone,       // Lấy từ form
+                    Gender = model.Gender,     // Lấy từ form
+                    BirthDate = model.BirthDate, // Lấy từ form
                     CustomerType = "Thường"
                 };
+
                 _context.Customers.Add(newCustomer);
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Đăng ký thành công. Vui lòng đăng nhập.";
                 return RedirectToAction("Login");
             }
-            // GHI CHÚ: Sửa (Exception) -> (DbUpdateException) để bắt lỗi CSDL cụ thể hơn
             catch (DbUpdateException ex)
             {
                 Console.WriteLine(ex.Message); // Log lỗi
@@ -211,13 +196,9 @@ namespace WebBanDienThoai.Controllers
             var account = await _context.Accounts.FindAsync(accountId);
             if (account == null) return Unauthorized();
 
-            // GHI CHÚ: Đã sửa logic.
-            // Nhờ logic mới trong Register (POST), customer sẽ luôn tồn tại.
-            // Bỏ khối "if (customer == null)"
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.AccountID == accountId);
             if (customer == null)
             {
-                // Dự phòng (nếu tài khoản được tạo trước khi sửa logic Register)
                 return NotFound("Lỗi: Không tìm thấy hồ sơ. Vui lòng liên hệ hỗ trợ.");
             }
 
@@ -240,7 +221,7 @@ namespace WebBanDienThoai.Controllers
         public async Task<IActionResult> Profile(ProfileViewModel model)
         {
             // GHI CHÚ: Gán lại Email (vì nó là readonly và không được post về)
-            model.Email = User.Identity.Name;
+            model.Email = User.Identity?.Name;
 
             if (!ModelState.IsValid)
             {
@@ -298,9 +279,5 @@ namespace WebBanDienThoai.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         }
-
-        
-
-        
     }
 }

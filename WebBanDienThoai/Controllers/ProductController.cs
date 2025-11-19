@@ -16,7 +16,7 @@ using WebBanDienThoai.Models.ViewModels; // Cần ViewModels
 
 namespace WebBanDienThoai.Controllers
 {
-   // [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class ProductController : Controller
     {
         private readonly DemoWebBanDienThoaiDbContext _context;
@@ -28,16 +28,17 @@ namespace WebBanDienThoai.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-        // --- 2. QUẢN LÝ SẢN PHẨM (Trang chính) ---
-        public async Task<IActionResult> Index(int? brandId, string searchId)
+        // --- 2. QUẢN LÝ SẢN PHẨM (Trang chính) - ĐÃ THÊM LOGIC PHÂN TRANG ---
+        public async Task<IActionResult> Index(int? brandId, string searchId, int pageIndex = 1)
         {
             try
             {
                 var productsQuery = _context.Products
-                                        .Include(p => p.Brand)
-                                        .Include(p => p.ProductVariants)
-                                        .AsQueryable();
+                                                .Include(p => p.Brand)
+                                                .Include(p => p.ProductVariants)
+                                                .AsQueryable();
 
+                // 1. Áp dụng Lọc và Tìm kiếm
                 if (!string.IsNullOrEmpty(searchId))
                 {
                     productsQuery = productsQuery.Where(o => o.ProductId.ToString().Contains(searchId) || o.Name.Contains(searchId));
@@ -48,11 +49,23 @@ namespace WebBanDienThoai.Controllers
                     productsQuery = productsQuery.Where(p => p.BrandId == brandId.Value);
                 }
 
-                // ====================================================================
-                // SỬA LẠI KHỐI .Select() DƯỚI ĐÂY
-                // ====================================================================
+                // 2. Logic Phân trang
+                int pageSize = 10;
+                int totalItems = await productsQuery.CountAsync();
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+                // Đảm bảo pageIndex hợp lệ
+                pageIndex = Math.Max(1, pageIndex);
+                if (pageIndex > totalPages && totalPages > 0)
+                {
+                    pageIndex = totalPages;
+                }
+
+                // 3. Thực hiện truy vấn với phân trang
                 var productList = await productsQuery
                     .OrderBy(p => p.Name)
+                    .Skip((pageIndex - 1) * pageSize) // Bỏ qua các mục của trang trước
+                    .Take(pageSize)                   // Chỉ lấy số mục của trang hiện tại
                     .Select(p => new ProductListViewModel
                     {
                         ProductId = p.ProductId,
@@ -60,25 +73,18 @@ namespace WebBanDienThoai.Controllers
                         MainImage = p.MainImage,
                         BrandId = p.BrandId,
                         BrandName = p.Brand != null ? (p.Brand.BrandName ?? "N/A") : "N/A",
-
                         CreatedDate = p.CreatedDate,
-
                         IsActive = p.IsActive,
 
-                        FirstVariantPrice = (p.ProductVariants != null && p.ProductVariants.Any())
-                                            ? p.ProductVariants.OrderBy(v => v.VariantId).First().DiscountPrice.GetValueOrDefault(p.ProductVariants.OrderBy(v => v.VariantId).First().Price)
-                                            : 0m,
-
+                        // Lấy giá thấp nhất (DiscountPrice nếu có, ngược lại là Price)
                         LowestPrice = (p.ProductVariants != null && p.ProductVariants.Any())
-                                            ? p.ProductVariants.Min(v => v.DiscountPrice.GetValueOrDefault(v.Price))
-                                            : 0m,
+                                    ? p.ProductVariants.Min(v => v.DiscountPrice.GetValueOrDefault(v.Price))
+                                    : 0m,
 
+                        // Tính tổng tồn kho
                         TotalStock = p.ProductVariants.Sum(v => v.Stock)
                     })
                     .ToListAsync();
-                // ====================================================================
-                // KẾT THÚC SỬA
-                // ====================================================================
 
                 var brandCounts = await _context.Brands
                     .Select(b => new BrandCountViewModel
@@ -100,7 +106,11 @@ namespace WebBanDienThoai.Controllers
                     TotalProductCount = totalProductCount
                 };
 
+                // 4. Gửi dữ liệu phân trang và lọc qua ViewBag
+                ViewBag.PageIndex = pageIndex;
+                ViewBag.TotalPages = totalPages;
                 ViewBag.SearchId = searchId;
+                ViewBag.BrandId = brandId; // Giữ BrandId cho các nút phân trang
 
                 return View(viewModel);
             }
@@ -111,6 +121,8 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
+        // --- CÁC HÀM KHÁC (Delete, Create, Edit) GIỮ NGUYÊN ---
+
         // POST: /Product/Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -119,8 +131,8 @@ namespace WebBanDienThoai.Controllers
             try
             {
                 var productToDelete = await _context.Products
-                                                .Include(p => p.ProductVariants)
-                                                .FirstOrDefaultAsync(p => p.ProductId == id);
+                                                    .Include(p => p.ProductVariants)
+                                                    .FirstOrDefaultAsync(p => p.ProductId == id);
 
                 if (productToDelete == null)
                 {
@@ -146,9 +158,6 @@ namespace WebBanDienThoai.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // --- 3. THÊM SẢN PHẨM MỚI ---
-
         // GET: /Product/Create
         public async Task<IActionResult> Create()
         {
@@ -173,7 +182,6 @@ namespace WebBanDienThoai.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductCreateViewModel viewModel)
         {
-
             if (ModelState.IsValid)
             {
                 try
@@ -229,18 +237,16 @@ namespace WebBanDienThoai.Controllers
 
             // Nếu lỗi, tải lại BrandList
             viewModel.BrandList = await _context.Brands
-                                               .OrderBy(b => b.BrandName)
-                                               .Select(b => new SelectListItem
-                                               {
-                                                   Value = b.BrandId.ToString(),
-                                                   Text = b.BrandName
-                                               })
-                                               .ToListAsync();
+                                                 .OrderBy(b => b.BrandName)
+                                                 .Select(b => new SelectListItem
+                                                 {
+                                                     Value = b.BrandId.ToString(),
+                                                     Text = b.BrandName
+                                                 })
+                                                 .ToListAsync();
 
             return View(viewModel);
         }
-
-        // --- 4. SỬA SẢN PHẨM ---
 
         // GET: /Product/Edit/5
         public async Task<IActionResult> Edit(int id)
@@ -252,14 +258,14 @@ namespace WebBanDienThoai.Controllers
             }
 
             var brandList = await _context.Brands
-                                    .OrderBy(b => b.BrandName)
-                                    .Select(b => new SelectListItem
-                                    {
-                                        Value = b.BrandId.ToString(),
-                                        Text = b.BrandName,
-                                        Selected = (b.BrandId == product.BrandId)
-                                    })
-                                    .ToListAsync();
+                                         .OrderBy(b => b.BrandName)
+                                         .Select(b => new SelectListItem
+                                         {
+                                             Value = b.BrandId.ToString(),
+                                             Text = b.BrandName,
+                                             Selected = (b.BrandId == product.BrandId)
+                                         })
+                                         .ToListAsync();
 
             var viewModel = new ProductEditViewModel
             {
@@ -287,7 +293,7 @@ namespace WebBanDienThoai.Controllers
                 try
                 {
                     var productFromDb = await _context.Products.AsNoTracking()
-                                                  .FirstOrDefaultAsync(p => p.ProductId == id);
+                                                             .FirstOrDefaultAsync(p => p.ProductId == id);
 
                     if (productFromDb == null) return NotFound();
 
@@ -328,16 +334,15 @@ namespace WebBanDienThoai.Controllers
 
             // Nếu Model không hợp lệ, tải lại BrandList
             viewModel.BrandList = await _context.Brands
-                                           .OrderBy(b => b.BrandName)
-                                           .Select(b => new SelectListItem
-                                           {
-                                               Value = b.BrandId.ToString(),
-                                               Text = b.BrandName
-                                           })
-                                           .ToListAsync();
+                                                 .OrderBy(b => b.BrandName)
+                                                 .Select(b => new SelectListItem
+                                                 {
+                                                     Value = b.BrandId.ToString(),
+                                                     Text = b.BrandName
+                                                 })
+                                                 .ToListAsync();
             return View(viewModel);
         }
-
 
         // --- 5. HÀM HỖ TRỢ (PRIVATE) ---
         private async Task<string?> UploadFile(IFormFile file)
@@ -357,6 +362,7 @@ namespace WebBanDienThoai.Controllers
                 await file.CopyToAsync(fileStream);
             }
 
+            // Đường dẫn lưu vào DB là đường dẫn gốc (Root path)
             return "/images/products/" + uniqueFileName;
         }
     }

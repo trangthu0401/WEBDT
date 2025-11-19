@@ -7,6 +7,13 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    @* Thêm link Bootstrap để sử dụng kiểu dáng cơ bản cho form-control và validation (nếu cần) *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
     <link rel="stylesheet" href="~/css/login.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,24 +29,56 @@
 
         <div class="form-section">
             <form asp-action="Register" method="post">
-                <h2>Đăng Ký</h2>
+                <h2>Đăng Ký Tài Khoản</h2>
 
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+                @* =========== THÔNG TIN CÁ NHÂN BỔ SUNG =========== *@
+
                 <div class="form-group">
-                    <label asp-for="Email"></label>
+                    <label asp-for="FullName">Họ tên đầy đủ</label>
+                    <input asp-for="FullName" class="form-control" placeholder="Nguyễn Văn A" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Phone">Số điện thoại</label>
+                    <input asp-for="Phone" class="form-control" type="tel" placeholder="09xxxxxxxx" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Gender">Giới tính</label>
+                    <select asp-for="Gender" class="form-control">
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="BirthDate">Ngày sinh</label>
+                    <input asp-for="BirthDate" class="form-control" type="date" />
+                    <span asp-validation-for="BirthDate" class="text-danger"></span>
+                </div>
+
+                @* =========== THÔNG TIN ĐĂNG NHẬP =========== *@
+
+                <div class="form-group">
+                    <label asp-for="Email">Email</label>
                     <input asp-for="Email" class="form-control" placeholder="vidu@email.com" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="Password"></label>
+                    <label asp-for="Password">Mật khẩu</label>
                     <input asp-for="Password" class="form-control" placeholder="Ít nhất 6 ký tự" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
-                    <label asp-for="ConfirmPassword"></label>
+                    <label asp-for="ConfirmPassword">Xác nhận mật khẩu</label>
                     <input asp-for="ConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu" />
                     <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
@@ -48,11 +87,15 @@
 
                 <p class="signup-link">
                     Bạn đã có tài khoản?
-                    <a asp.controller="Account" asp-action="Login">Đăng Nhập</a>
+                    <a asp-controller="Account" asp-action="Login">Đăng Nhập</a>
                 </p>
             </form>
         </div>
     </div>
 
+    @* Sử dụng Scripts for Validation *@
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 </body>
 </html>

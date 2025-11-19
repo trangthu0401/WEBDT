@@ -1,6 +1,7 @@
 ﻿@model List<WebBanDienThoai.Models.ViewModels.OrderViewModel>
 @{
     ViewData["Title"] = "Quản lý đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
     var page = (int)ViewBag.Page;
     var totalPages = (int)ViewBag.TotalPages;
 
