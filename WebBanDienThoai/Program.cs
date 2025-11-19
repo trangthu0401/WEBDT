@@ -36,10 +36,16 @@ var app = builder.Build();
 // 4. C?u hình HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    // Bật trang báo lỗi thân thiện khi đã phát hành (Production)
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
+// Tự động chuyển http sang https
 app.UseHttpsRedirection();
 app.UseStaticFiles(); // Cho ph�p d�ng file CSS, JS, Images...
 
@@ -47,6 +53,8 @@ app.UseRouting(); // B?t t�nh n?ng ??nh tuy?n (Routing)
 
 app.UseAuthentication(); // Nếu dùng Identity
 app.UseAuthorization();
+// === KẾT THÚC PHẦN THÊM MỚI ===
+
 
 DbInitializer.Initialize(app);
 // 5. C?u hình route (???ng d?n) m?c ??nh

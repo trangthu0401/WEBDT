@@ -1,7 +1,8 @@
-﻿@model WebBanDienThoai.ViewModels.LoginViewModel
+﻿@model WebBanDienThoai.Models.modelView.LoginViewModel
 @{
     ViewData["Title"] = "Đăng Nhập - Rabit Store";
-    Layout = null; // Vô hiệu hóa layout chung để có trang đăng nhập toàn màn hình
+    Layout = null;
+    // Vô hiệu hóa layout chung để có trang đăng nhập toàn màn hình
 }
 
 <!DOCTYPE html>
@@ -10,10 +11,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
-
-    @* Thêm link Bootstrap để hiển thị alert (nếu dự án của bạn sử dụng Bootstrap) *@
-    @* Nếu không dùng Bootstrap, bạn cần thêm CSS tùy chỉnh cho class .alert *@
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 
     <link rel="stylesheet" href="~/css/login.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +22,7 @@
     <div class="login-container">
         <div class="brand-section">
             <img src="~/images/rabit-mascot.png" alt="Rabit Store Mascot" class="mascot" />
+
             <h1>Rabit Store</h1>
         </div>
 
@@ -46,18 +44,21 @@
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                 <div class="form-group">
+
                     <label asp-for="EmailOrPhone"></label>
                     <input asp-for="EmailOrPhone" class="form-control" />
                     <span asp-validation-for="EmailOrPhone" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
+
                     <label asp-for="Password"></label>
                     <input asp-for="Password" class="form-control" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
 
                 <div class="form-options">
+
                     <div class="form-check">
                         <input asp-for="RememberMe" class="form-check-input" />
                         <label asp-for="RememberMe" class="form-check-label"></label>

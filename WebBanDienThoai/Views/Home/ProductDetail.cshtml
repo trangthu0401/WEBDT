@@ -1,24 +1,17 @@
-﻿@model WebBanDienThoai.Models.modelView.ProfileViewModel
+﻿@model WebBanDienThoai.Models.modelView.ProductDetailViewModel
 @using System.Security.Claims
 
 @{
-    ViewData["Title"] = "Thông tin tài khoản";
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"] - Rabit Store</title>
-
-    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>@Model.ProductDetail.Product.Name - Rabit Store</title>
+    <link rel="stylesheet" href="~/css/product-detail.css">
+    <link rel="stylesheet" href="~/css/home.css">
 </head>
 <body>
 
@@ -32,8 +25,7 @@
                 </a>
 
                 <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
-                    <input type="text" name="searchString"
-                           value="" placeholder="Tìm kiếm" class="search-input" id="mainSearchInput" autocomplete="off">
+                    <input type="text" name="searchString" placeholder="Tìm kiếm" class="search-input" id="mainSearchInput" autocomplete="off">
                     <button type="submit" class="search-button">
                         <img src="~/images/search.png" alt="Search Icon">
                     </button>
@@ -98,59 +90,168 @@
             </div>
         </nav>
     </header>
-    <div class="profile-container">
-        <h1>@ViewData["Title"]</h1>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert-success">
-                @TempData["SuccessMessage"]
+    <main id="section-product" class="product-section">
+        <div class="container">
+            <h1 class="product-main-title">
+                @Model.ProductDetail.Product.Name (@Model.ProductDetail.Color) |
+                @Model.ProductDetail.Product.Brand.BrandName
+            </h1>
+
+            <div class="product-layout">
+                <div class="product-gallery">
+                    <img src="@(Model.ProductDetail.ImageUrl ?? Model.ProductDetail.Product.MainImage)" alt="@Model.ProductDetail.Product.Name" class="product-image">
+                </div>
+                <div class="product-details">
+
+                    <div class="price-card">
+                        <p class="price-label">Giá sản phẩm</p>
+                        @{
+                            var price = Model.ProductDetail.Price ?? 0;
+                            var discountPrice = Model.ProductDetail.DiscountPrice;
+                        }
+                        @if (discountPrice.HasValue && discountPrice.Value < price)
+                        {
+                            <p class="price-amount">@discountPrice.Value.ToString("N0")đ</p>
+                            <p class="text-muted text-decoration-line-through small">@price.ToString("N0")đ</p>
+                        }
+                        else
+                        {
+                            <p class="price-amount">@price.ToString("N0")đ</p>
+                        }
+                    </div>
+                    <div class="option-group">
+                        <h3 class="option-title">Phiên bản</h3>
+                        <div class="option-buttons">
+                            @{
+                                var uniqueConfigs = Model.AllVariants
+                                .GroupBy(v => new { v.Ram, v.Storage })
+                                .Select(g => g.First())
+                                .OrderBy(v => v.Ram);
+                            }
+                            @foreach (var variant in uniqueConfigs)
+                            {
+                                var isActive =
+                                (variant.Ram == Model.ProductDetail.Ram && variant.Storage == Model.ProductDetail.Storage) ?
+                                "active" : "";
+                                <button class="option-btn @isActive">
+                                    @variant.Ram / @variant.Storage
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <h3 class="option-title">Màu sắc</h3>
+                        <div class="color-grid">
+                            @{
+                                var uniqueColors = Model.AllVariants
+                                .GroupBy(v => v.Color)
+                                .Select(g => g.First());
+                            }
+                            @foreach (var variant in uniqueColors)
+                            {
+                                var isActive = (variant.Color == Model.ProductDetail.Color) ? "active" : "";
+                                <a asp-controller="Home" asp-action="ProductDetail"
+                                   asp-route-id="@variant.VariantId"
+                                   class="color-option @isActive">
+                                    <div class="color-info">
+                                        <span class="color-name">@variant.Color</span>
+                                        <span class="color-price">@(variant.Price != null ? variant.Price.Value.ToString("N0") : "0")đ</span>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" style="display: flex; align-items: center; justify-content: center;">
+                            Mua ngay
+                        </button>
+                        <button class="btn btn-primary btn-contact">
+                            Liên hệ
+                            <img src="~/images/lienhe.png" alt="Contact Icon">
+                        </button>
+                        <button class="btn btn-icon">
+                            <img src="~/images/Cart.png" alt="Add to cart icon">
+                        </button>
+                    </div>
+
+                </div>
             </div>
-        }
+        </div>
+    </main>
 
-        <form asp-action="Profile" method="post" class="profile-form-grid">
-
-            <div class="form-group full-width">
-                <label asp-for="Email"></label>
-                <input asp-for="Email" class="form-control" readonly />
+    <section id="section-specs" class="specs-section">
+        <div class="container">
+            <h2 class="section-title">Thông số kỹ thuật</h2>
+            <div class="specs-grid">
+                <div class="spec-item spec-label">Kích thước màn hình</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.ScreenSize inches
+                </div>
+                <div class="spec-item spec-label">Công nghệ màn hình</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.ScreenTech
+                </div>
+                <div class="spec-item spec-label">Chipset</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.Chipset
+                </div>
+                <div class="spec-item spec-label">Hệ điều hành</div>
+                <div class="spec-item spec-value">
+                    @Model.ProductDetail.Product.OperatingSystem
+                </div>
             </div>
+        </div>
+    </section>
 
-            <hr class="full-width" />
+    <section class="description-section container">
+        <h2 class="section-title">Mô tả Sản phẩm</h2>
+        <div class="product-description-content">
+            @Html.Raw(Model.ProductDetail.Product.Description)
+        </div>
+    </section>
 
-            <div class="form-group">
-                <label asp-for="FullName"></label>
-                <input asp-for="FullName" class="form-control" />
-                <span asp-validation-for="FullName" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Phone"></label>
-                <input asp-for="Phone" class="form-control" />
-                <span asp-validation-for="Phone" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="BirthDate"></label>
-                <input asp-for="BirthDate" class="form-control" type="date" />
-                <span asp-validation-for="BirthDate" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Gender"></label>
-                <select asp-for="Gender" class="form-control">
-                    <option value="Nam">Nam</option>
-                    <option value="Nữ">Nữ</option>
-                    <option value="Khác">Khác</option>
-                </select>
-                <span asp-validation-for="Gender" class="text-danger"></span>
-            </div>
-
-            <div class="form-actions full-width">
-                <button type="submit" class="btn-save-profile">Lưu thay đổi</button>
-            </div>
-
-        </form>
-    </div>
+    <section id="section-related" class="related-section">
+        <div class="container">
+            <h2 class="section-title">Sản phẩm Tương tự</h2>
+            @if (Model.RelatedProducts.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-4 g-4">
+                    @foreach (var variant in Model.RelatedProducts)
+                    {
+                        <div class="col">
+                            <div class="product-card-list h-100">
+                                <div class="card-img-container">
+                                    <img src="@(variant.ImageUrl ?? variant.Product.MainImage)" class="card-img-top" alt="@variant.Product.Name">
+                                </div>
+                                <div class="product-info-list">
+                                    <p class="product-brand">@variant.Product.Brand.BrandName</p>
+                                    <p class="product-list-title">
+                                        @variant.Product.Name (@variant.Color)
+                                    </p>
+                                    <p class="product-spec-line">
+                                        @variant.Ram / @variant.Storage
+                                    </p>
+                                    @{
+                                        var displayPrice = (variant.DiscountPrice ?? variant.Price) ?? 0;
+                                    }
+                                    <p class="product-price-amount">@displayPrice.ToString("N0")₫</p>
+                                    <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@variant.VariantId" class="btn-list-action">
+                                        XEM CHI TIẾT
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>Không tìm thấy sản phẩm tương tự cùng hãng.</p>
+            }
+        </div>
+    </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -185,8 +286,8 @@
                         return;
                     }
                     fetch('/Home/SearchSuggestions?term=' + term)
-                        .then(response => response.json())
-                        .then(data => {
+                         .then(response => response.json())
+                         .then(data => {
                             suggestionsContainer.innerHTML = '';
                             if (data.length > 0) {
                                 suggestionsContainer.style.display = 'block';
@@ -238,9 +339,6 @@
             }
         });
     </script>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <partial name="_ValidationScriptsPartial" />
 
 </body>
 </html>
