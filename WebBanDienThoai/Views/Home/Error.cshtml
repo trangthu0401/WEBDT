@@ -1,6 +1,38 @@
 ﻿@{
-    Layout = null;
-    ViewData["Title"] = "Lỗi hệ thống";
+    ViewData["Title"] = "Lỗi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<h1>Đã xảy ra lỗi 😥</h1>
-<p>Xin lỗi, hệ thống đang gặp sự cố. Vui lòng thử lại sau.</p>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+            <h1 class="text-danger">💥 Đã xảy ra lỗi!</h1>
+
+            <div class="alert alert-danger mt-4">
+                <h4>Xin lỗi, hệ thống đang gặp sự cố. Vui lòng thử lại sau.</h4>
+
+                @if (ViewBag.ErrorMessage != null && User.IsInRole("Admin"))
+                {
+                    <hr>
+                    <p><strong>Thông tin lỗi (Admin only):</strong></p>
+                    <p>@ViewBag.ErrorMessage</p>
+                    <p><strong>Path:</strong> @ViewBag.Path</p>
+
+                    @if (ViewBag.StackTrace != null)
+                    {
+                        <details>
+                            <summary>Stack Trace</summary>
+                            <pre class="text-start mt-2" style="font-size: 0.8rem;">@ViewBag.StackTrace</pre>
+                        </details>
+                    }
+                }
+            </div>
+
+            <div class="mt-4">
+                <a href="javascript:history.back()" class="btn btn-secondary">← Quay lại</a>
+                <a href="/Home/Index" class="btn btn-primary">🏠 Về trang chủ</a>
+                <a href="/Account/Login" class="btn btn-outline-primary">🔐 Đăng nhập lại</a>
+            </div>
+        </div>
+    </div>
+</div>

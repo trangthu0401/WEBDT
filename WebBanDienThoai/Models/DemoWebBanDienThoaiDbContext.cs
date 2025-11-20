@@ -19,6 +19,7 @@ namespace WebBanDienThoai.Data
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
+
         public DbSet<FavoriteDetail> FavoriteDetails { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<ReviewDetail> ReviewDetails { get; set; }

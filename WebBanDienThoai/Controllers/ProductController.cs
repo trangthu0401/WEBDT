@@ -1,5 +1,4 @@
-﻿// Thêm các using cần thiết
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +10,12 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using WebBanDienThoai.Data;
-using WebBanDienThoai.Models; // Cần Models
-using WebBanDienThoai.Models.ViewModels; // Cần ViewModels
+using WebBanDienThoai.Models;
+using WebBanDienThoai.Models.ViewModels;
 
 namespace WebBanDienThoai.Controllers
 {
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class ProductController : Controller
     {
         private readonly DemoWebBanDienThoaiDbContext _context;
@@ -28,20 +27,23 @@ namespace WebBanDienThoai.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-        // --- 2. QUẢN LÝ SẢN PHẨM (Trang chính) - ĐÃ THÊM LOGIC PHÂN TRANG ---
+        // --- INDEX: QUẢN LÝ SẢN PHẨM ---
         public async Task<IActionResult> Index(int? brandId, string searchId, int pageIndex = 1)
         {
             try
             {
+                // ĐƠN GIẢN HÓA QUERY ĐỂ TEST TRƯỚC
                 var productsQuery = _context.Products
-                                                .Include(p => p.Brand)
-                                                .Include(p => p.ProductVariants)
-                                                .AsQueryable();
+                                            .Include(p => p.Brand)
+                                            .Include(p => p.ProductVariants)
+                                            .AsQueryable();
 
-                // 1. Áp dụng Lọc và Tìm kiếm
+                // 1. Lọc
                 if (!string.IsNullOrEmpty(searchId))
                 {
-                    productsQuery = productsQuery.Where(o => o.ProductId.ToString().Contains(searchId) || o.Name.Contains(searchId));
+                    productsQuery = productsQuery.Where(o =>
+                        o.ProductId.ToString().Contains(searchId) ||
+                        o.Name.Contains(searchId));
                 }
 
                 if (brandId.HasValue && brandId.Value > 0)
@@ -49,43 +51,38 @@ namespace WebBanDienThoai.Controllers
                     productsQuery = productsQuery.Where(p => p.BrandId == brandId.Value);
                 }
 
-                // 2. Logic Phân trang
+                // 2. Phân trang
                 int pageSize = 10;
                 int totalItems = await productsQuery.CountAsync();
                 int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-                // Đảm bảo pageIndex hợp lệ
                 pageIndex = Math.Max(1, pageIndex);
-                if (pageIndex > totalPages && totalPages > 0)
-                {
-                    pageIndex = totalPages;
-                }
+                if (pageIndex > totalPages && totalPages > 0) pageIndex = totalPages;
 
-                // 3. Thực hiện truy vấn với phân trang
+                // 3. Truy vấn đơn giản hóa
                 var productList = await productsQuery
-                    .OrderBy(p => p.Name)
-                    .Skip((pageIndex - 1) * pageSize) // Bỏ qua các mục của trang trước
-                    .Take(pageSize)                   // Chỉ lấy số mục của trang hiện tại
-                    .Select(p => new ProductListViewModel
+                    .OrderByDescending(p => p.CreatedDate)
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(p => new ProducAdmintListViewModel
                     {
                         ProductId = p.ProductId,
                         Name = p.Name ?? "N/A",
                         MainImage = p.MainImage,
                         BrandId = p.BrandId,
-                        BrandName = p.Brand != null ? (p.Brand.BrandName ?? "N/A") : "N/A",
+                        BrandName = p.Brand != null ? p.Brand.BrandName ?? "N/A" : "N/A",
                         CreatedDate = p.CreatedDate,
                         IsActive = p.IsActive,
 
-                        // Lấy giá thấp nhất (DiscountPrice nếu có, ngược lại là Price)
-                        LowestPrice = (p.ProductVariants != null && p.ProductVariants.Any())
-                                    ? p.ProductVariants.Min(v => v.DiscountPrice.GetValueOrDefault(v.Price))
-                                    : 0m,
+                        // Tính giá thấp nhất - đơn giản hóa
+                        LowestPrice = p.ProductVariants.Any() ? p.ProductVariants.Min(v => v.Price) : 0,
 
-                        // Tính tổng tồn kho
+                        // Tính tổng tồn kho - đơn giản hóa
                         TotalStock = p.ProductVariants.Sum(v => v.Stock)
                     })
                     .ToListAsync();
 
+                // 4. Lấy danh sách hãng
                 var brandCounts = await _context.Brands
                     .Select(b => new BrandCountViewModel
                     {
@@ -99,6 +96,7 @@ namespace WebBanDienThoai.Controllers
 
                 var totalProductCount = await _context.Products.CountAsync();
 
+                // 5. Tạo ViewModel
                 var viewModel = new ProductIndexViewModel
                 {
                     Products = productList,
@@ -106,78 +104,35 @@ namespace WebBanDienThoai.Controllers
                     TotalProductCount = totalProductCount
                 };
 
-                // 4. Gửi dữ liệu phân trang và lọc qua ViewBag
                 ViewBag.PageIndex = pageIndex;
                 ViewBag.TotalPages = totalPages;
                 ViewBag.SearchId = searchId;
-                ViewBag.BrandId = brandId; // Giữ BrandId cho các nút phân trang
+                ViewBag.BrandId = brandId;
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi tải danh sách sản phẩm: {ex.Message}");
-                return View("Error", new { message = $"Lỗi tải danh sách sản phẩm: {ex.Message}" });
+                // HIỂN THỊ LỖI CHI TIẾT ĐỂ DEBUG
+                return Content($"🔥 LỖI TRONG Product/Index: {ex.Message}<br><br>" +
+                              $"Stack Trace: {ex.StackTrace}<br><br>" +
+                              $"Inner Exception: {ex.InnerException?.Message}");
             }
         }
 
-        // --- CÁC HÀM KHÁC (Delete, Create, Edit) GIỮ NGUYÊN ---
-
-        // POST: /Product/Delete
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var productToDelete = await _context.Products
-                                                    .Include(p => p.ProductVariants)
-                                                    .FirstOrDefaultAsync(p => p.ProductId == id);
-
-                if (productToDelete == null)
-                {
-                    return NotFound();
-                }
-
-                if (productToDelete.ProductVariants != null && productToDelete.ProductVariants.Any())
-                {
-                    _context.ProductVariants.RemoveRange(productToDelete.ProductVariants);
-                }
-
-                _context.Products.Remove(productToDelete);
-                await _context.SaveChangesAsync();
-
-                TempData["StatusMessage"] = "Đã xóa sản phẩm thành công.";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi khi xóa sản phẩm ID {id}: {ex.Message}");
-                TempData["StatusMessage"] = "Lỗi khi xóa sản phẩm.";
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: /Product/Create
+        // --- CÁC ACTION KHÁC GIỮ NGUYÊN ---
         public async Task<IActionResult> Create()
         {
             var viewModel = new ProductCreateViewModel
             {
-                BrandList = await _context.Brands
-                                         .OrderBy(b => b.BrandName)
-                                         .Select(b => new SelectListItem
-                                         {
-                                             Value = b.BrandId.ToString(),
-                                             Text = b.BrandName
-                                         })
-                                         .ToListAsync(),
+                BrandList = await _context.Brands.OrderBy(b => b.BrandName)
+                                          .Select(b => new SelectListItem { Value = b.BrandId.ToString(), Text = b.BrandName })
+                                          .ToListAsync(),
                 Product = new Product()
             };
-
             return View(viewModel);
         }
 
-        // POST: /Product/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductCreateViewModel viewModel)
@@ -187,16 +142,10 @@ namespace WebBanDienThoai.Controllers
                 try
                 {
                     string? mainImagePath = null;
-                    if (viewModel.MainImageFile != null)
-                    {
-                        mainImagePath = await UploadFile(viewModel.MainImageFile);
-                    }
+                    if (viewModel.MainImageFile != null) mainImagePath = await UploadFile(viewModel.MainImageFile);
 
                     string? variantImagePath = null;
-                    if (viewModel.VariantImageFile != null)
-                    {
-                        variantImagePath = await UploadFile(viewModel.VariantImageFile);
-                    }
+                    if (viewModel.VariantImageFile != null) variantImagePath = await UploadFile(viewModel.VariantImageFile);
 
                     // 1. Lưu Product
                     Product newProduct = viewModel.Product!;
@@ -207,15 +156,14 @@ namespace WebBanDienThoai.Controllers
                     _context.Products.Add(newProduct);
                     await _context.SaveChangesAsync();
 
-                    // 2. Lưu Biến thể đầu tiên
+                    // 2. Lưu Variant
                     var newVariant = new ProductVariant
                     {
                         ProductId = newProduct.ProductId,
-                        Color = viewModel.VariantColor ?? "Mặc định",
-                        Storage = viewModel.VariantStorage ?? "N/A",
+                        Color = viewModel.VariantColor,
+                        Storage = viewModel.VariantStorage,
                         RAM = viewModel.VariantRam,
                         Price = viewModel.VariantPrice,
-                        DiscountPrice = null,
                         Stock = viewModel.VariantStock,
                         ImageUrl = variantImagePath ?? mainImagePath,
                         IsActive = true,
@@ -225,145 +173,125 @@ namespace WebBanDienThoai.Controllers
                     _context.ProductVariants.Add(newVariant);
                     await _context.SaveChangesAsync();
 
-                    TempData["StatusMessage"] = "Thêm sản phẩm mới (và biến thể đầu tiên) thành công.";
+                    TempData["StatusMessage"] = "Thêm sản phẩm thành công.";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Lỗi khi tạo sản phẩm: {ex.Message}");
-                    ModelState.AddModelError("", "Có lỗi xảy ra, không thể lưu sản phẩm.");
+                    ModelState.AddModelError("", "Lỗi lưu: " + ex.Message);
                 }
             }
 
-            // Nếu lỗi, tải lại BrandList
-            viewModel.BrandList = await _context.Brands
-                                                 .OrderBy(b => b.BrandName)
-                                                 .Select(b => new SelectListItem
-                                                 {
-                                                     Value = b.BrandId.ToString(),
-                                                     Text = b.BrandName
-                                                 })
-                                                 .ToListAsync();
-
+            viewModel.BrandList = await _context.Brands.OrderBy(b => b.BrandName)
+                                            .Select(b => new SelectListItem { Value = b.BrandId.ToString(), Text = b.BrandName })
+                                            .ToListAsync();
             return View(viewModel);
         }
 
-        // GET: /Product/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            var brandList = await _context.Brands
-                                         .OrderBy(b => b.BrandName)
-                                         .Select(b => new SelectListItem
-                                         {
-                                             Value = b.BrandId.ToString(),
-                                             Text = b.BrandName,
-                                             Selected = (b.BrandId == product.BrandId)
-                                         })
-                                         .ToListAsync();
+            if (product == null) return NotFound();
 
             var viewModel = new ProductEditViewModel
             {
                 Product = product,
-                BrandList = brandList
+                BrandList = await _context.Brands.OrderBy(b => b.BrandName)
+                                          .Select(b => new SelectListItem { Value = b.BrandId.ToString(), Text = b.BrandName })
+                                          .ToListAsync()
             };
-
             return View(viewModel);
         }
 
-        // POST: /Product/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, ProductEditViewModel viewModel)
         {
-            if (id != viewModel.Product.ProductId)
-            {
-                return NotFound();
-            }
-
+            if (id != viewModel.Product.ProductId) return NotFound();
             ModelState.Remove("MainImageFile");
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var productFromDb = await _context.Products.AsNoTracking()
-                                                             .FirstOrDefaultAsync(p => p.ProductId == id);
-
+                    var productFromDb = await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.ProductId == id);
                     if (productFromDb == null) return NotFound();
 
                     string? mainImagePath = productFromDb.MainImage;
-                    if (viewModel.MainImageFile != null)
-                    {
-                        mainImagePath = await UploadFile(viewModel.MainImageFile);
-                    }
+                    if (viewModel.MainImageFile != null) mainImagePath = await UploadFile(viewModel.MainImageFile);
 
-                    Product productToUpdate = viewModel.Product;
-                    productToUpdate.MainImage = mainImagePath;
-                    productToUpdate.CreatedDate = productFromDb.CreatedDate;
-                    productToUpdate.UpdatedDate = DateTime.Now;
+                    viewModel.Product.MainImage = mainImagePath;
+                    viewModel.Product.CreatedDate = productFromDb.CreatedDate;
+                    viewModel.Product.UpdatedDate = DateTime.Now;
 
-                    _context.Update(productToUpdate);
+                    _context.Update(viewModel.Product);
                     await _context.SaveChangesAsync();
 
-                    TempData["StatusMessage"] = "Cập nhật sản phẩm thành công.";
+                    TempData["StatusMessage"] = "Cập nhật thành công.";
                     return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Products.Any(e => e.ProductId == viewModel.Product.ProductId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Lỗi khi cập nhật sản phẩm: {ex.Message}");
-                    ModelState.AddModelError("", "Có lỗi xảy ra, không thể lưu sản phẩm.");
+                    ModelState.AddModelError("", "Lỗi cập nhật: " + ex.Message);
                 }
             }
 
-            // Nếu Model không hợp lệ, tải lại BrandList
-            viewModel.BrandList = await _context.Brands
-                                                 .OrderBy(b => b.BrandName)
-                                                 .Select(b => new SelectListItem
-                                                 {
-                                                     Value = b.BrandId.ToString(),
-                                                     Text = b.BrandName
-                                                 })
-                                                 .ToListAsync();
+            viewModel.BrandList = await _context.Brands.OrderBy(b => b.BrandName)
+                                            .Select(b => new SelectListItem { Value = b.BrandId.ToString(), Text = b.BrandName })
+                                            .ToListAsync();
             return View(viewModel);
         }
 
-        // --- 5. HÀM HỖ TRỢ (PRIVATE) ---
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var product = await _context.Products.Include(p => p.ProductVariants).FirstOrDefaultAsync(p => p.ProductId == id);
+            if (product != null)
+            {
+                if (product.ProductVariants != null) _context.ProductVariants.RemoveRange(product.ProductVariants);
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+                TempData["StatusMessage"] = "Đã xóa sản phẩm.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // --- ACTION TEST ĐỂ DEBUG ---
+        [AllowAnonymous]
+        public IActionResult Test()
+        {
+            return Content("✅ ProductController đang hoạt động!");
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> TestDb()
+        {
+            try
+            {
+                var productCount = await _context.Products.CountAsync();
+                var brandCount = await _context.Brands.CountAsync();
+                return Content($"✅ Database OK! Products: {productCount}, Brands: {brandCount}");
+            }
+            catch (Exception ex)
+            {
+                return Content($"❌ Lỗi database: {ex.Message}");
+            }
+        }
+
         private async Task<string?> UploadFile(IFormFile file)
         {
             string uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, "images", "products");
+            if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
 
-            if (!Directory.Exists(uploadDir))
+            string fileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+            string filePath = Path.Combine(uploadDir, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                Directory.CreateDirectory(uploadDir);
+                await file.CopyToAsync(stream);
             }
-
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(file.FileName);
-            string filePath = Path.Combine(uploadDir, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(fileStream);
-            }
-
-            // Đường dẫn lưu vào DB là đường dẫn gốc (Root path)
-            return "/images/products/" + uniqueFileName;
+            return "/images/products/" + fileName;
         }
     }
 }

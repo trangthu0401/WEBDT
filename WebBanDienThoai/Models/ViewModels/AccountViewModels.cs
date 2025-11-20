@@ -1,8 +1,31 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace WebBanDienThoai.ViewModels
 {
+    public class AccountViewModels
+    {
+        // Hiển thị, không cho sửa
+        [Display(Name = "Email (Không thể thay đổi)")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập họ tên")]
+        [Display(Name = "Họ và tên")]
+        [StringLength(100)]
+        public string FullName { get; set; }
+
+        [Display(Name = "Số điện thoại")]
+        [DataType(DataType.PhoneNumber)]
+        [StringLength(15)]
+        public string? Phone { get; set; }
+
+        [Required]
+        [Display(Name = "Giới tính")]
+        public string Gender { get; set; }
+
+        [Display(Name = "Ngày sinh")]
+        [DataType(DataType.Date)]
+        public DateTime? BirthDate { get; set; }
+    }
     public class RegisterViewModel
     {
         // ============================
@@ -46,5 +69,23 @@ namespace WebBanDienThoai.ViewModels
         [Display(Name = "Xác nhận mật khẩu")]
         [Compare("Password", ErrorMessage = "Mật khẩu và mật khẩu xác nhận không khớp.")]
         public string ConfirmPassword { get; set; }
+    }
+    public class LoginViewModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập Email hoặc SĐT")]
+        [Display(Name = "Email hoặc Số điện thoại")]
+        public string EmailOrPhone { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Mật khẩu")]
+        public string Password { get; set; }
+
+        [Display(Name = "Ghi nhớ tôi?")]
+        public bool RememberMe { get; set; }
+
+        // === THUỘC TÍNH MỚI ===
+        [Display(Name = "Bạn muốn đăng nhập với quyền Admin?")]
+        public bool LoginAsAdmin { get; set; }
     }
 }

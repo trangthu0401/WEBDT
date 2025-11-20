@@ -1,4 +1,5 @@
-﻿@model WebBanDienThoai.Models.modelView.ProfileViewModel
+﻿@* SỬA 1: Đổi tên Model cho khớp với file AccountViewModels.cs *@
+@model WebBanDienThoai.ViewModels.AccountViewModels
 @using System.Security.Claims
 
 @{
@@ -46,7 +47,7 @@
                         <img src="~/images/giohang.png" alt="Cart Icon">
                     </a>
 
-                    @if (User.Identity.IsAuthenticated)
+                    @if (User.Identity?.IsAuthenticated == true)
                     {
                         <div class="user-profile-dropdown">
                             <a href="#" class="user-profile">
@@ -80,42 +81,41 @@
                         <img src="~/images/chevron-down.png" alt="Dropdown arrow">
                     </a>
                     <div class="category-popup">
-                        @if (Model.BrandCounts != null && Model.BrandCounts.Any())
-                        {
-                            @foreach (var brand in Model.BrandCounts)
-                            {
-                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId" class="category-popup-item">
-                                    @brand.BrandName
-                                </a>
-                            }
-                        }
-                        else
-                        {
-                            <span class="category-popup-item">Không có danh mục</span>
-                        }
+                        @* SỬA 2: Tạm thời ẩn logic BrandCounts vì AccountViewModels không có dữ liệu này.
+                           Nếu muốn hiện danh mục, bạn phải thêm List<BrandCount> BrandCounts vào AccountViewModels.cs
+                           và nạp dữ liệu từ Controller.
+                        *@
+
+                        @* Code cũ bị lỗi: *@
+                        @* @if (Model.BrandCounts?.Count > 0) { ... } *@
+
+                        @* Code thay thế tạm thời: *@
+                        <a asp-controller="Home" asp-action="Index" class="category-popup-item">Tất cả sản phẩm</a>
+                        <span class="category-popup-item" style="font-style:italic; font-size: 0.9em;">(Về trang chủ để xem danh mục đầy đủ)</span>
                     </div>
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="profile-container">
         <h1>@ViewData["Title"]</h1>
 
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert-success">
+            <div class="alert alert-success" style="color: green; background-color: #d4edda; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
                 @TempData["SuccessMessage"]
             </div>
         }
 
         <form asp-action="Profile" method="post" class="profile-form-grid">
-
             <div class="form-group full-width">
                 <label asp-for="Email"></label>
-                <input asp-for="Email" class="form-control" readonly />
+                @* Email readonly *@
+                <input asp-for="Email" class="form-control" readonly style="background-color: #e9ecef;" />
             </div>
 
-            <hr class="full-width" />
+            <hr class="full-width" style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
 
             <div class="form-group">
                 <label asp-for="FullName"></label>
@@ -138,6 +138,7 @@
             <div class="form-group">
                 <label asp-for="Gender"></label>
                 <select asp-for="Gender" class="form-control">
+                    <option value="">-- Chọn giới tính --</option>
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
                     <option value="Khác">Khác</option>
@@ -148,28 +149,27 @@
             <div class="form-actions full-width">
                 <button type="submit" class="btn-save-profile">Lưu thay đổi</button>
             </div>
-
         </form>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
             // === CODE CHO POPUP DANH MỤC ===
             const categoryDropdown = document.getElementById('categoryDropdown');
             const categoryToggle = document.getElementById('categoryDropdownToggle');
+
             if (categoryToggle) {
                 categoryToggle.addEventListener('click', function(e) {
                     e.preventDefault();
                     categoryDropdown.classList.toggle('active');
                 });
             }
+
             document.addEventListener('click', function(e) {
                 if (categoryDropdown && !categoryDropdown.contains(e.target)) {
                     categoryDropdown.classList.remove('active');
                 }
             });
-            // === KẾT THÚC CODE POPUP ===
 
             // --- JAVASCRIPT CHO ĐỀ XUẤT TÌM KIẾM ---
             const searchInput = document.getElementById('mainSearchInput');
@@ -184,49 +184,73 @@
                         suggestionsContainer.style.display = 'none';
                         return;
                     }
-                    fetch('/Home/SearchSuggestions?term=' + term)
-                        .then(response => response.json())
+
+                    fetch('/Home/SearchSuggestions?term=' + encodeURIComponent(term))
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
                         .then(data => {
                             suggestionsContainer.innerHTML = '';
-                            if (data.length > 0) {
+                            if (data && data.length > 0) {
                                 suggestionsContainer.style.display = 'block';
                                 const header = document.createElement('div');
                                 header.classList.add('suggestion-header');
                                 header.textContent = 'Sản phẩm gợi ý';
                                 suggestionsContainer.appendChild(header);
+
                                 data.forEach(product => {
                                     const suggestionLink = document.createElement('a');
                                     suggestionLink.classList.add('suggestion-item');
                                     suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
+
                                     const img = document.createElement('img');
-                                    let imageUrl = product.mainImage;
+                                    let imageUrl = product.mainImage || '';
                                     if (imageUrl && !imageUrl.startsWith('http')) {
                                         imageUrl = imageUrl.replace("~", "");
                                     }
-                                    img.src = imageUrl ? imageUrl : '/images/default-product.png';
-                                    img.alt = product.name;
+                                    img.src = imageUrl || '/images/default-product.png';
+                                    img.alt = product.name || '';
+                                    img.onerror = function() {
+                                        this.src = '/images/default-product.png';
+                                    };
+
                                     const infoDiv = document.createElement('div');
                                     infoDiv.classList.add('suggestion-item-info');
+
                                     const nameDiv = document.createElement('div');
                                     nameDiv.classList.add('suggestion-item-name');
-                                    nameDiv.textContent = product.name;
+                                    nameDiv.textContent = product.name || '';
+
                                     const priceDiv = document.createElement('div');
                                     priceDiv.classList.add('suggestion-item-price');
-                                    priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                                    priceDiv.textContent = (product.price || 0).toLocaleString('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND'
+                                    });
+
                                     infoDiv.appendChild(nameDiv);
                                     infoDiv.appendChild(priceDiv);
                                     suggestionLink.appendChild(img);
                                     suggestionLink.appendChild(infoDiv);
+
                                     suggestionLink.addEventListener('click', function(e) {
                                         e.preventDefault();
-                                        searchInput.value = product.name;
+                                        searchInput.value = product.name || '';
                                         searchForm.submit();
                                     });
+
                                     suggestionsContainer.appendChild(suggestionLink);
                                 });
                             } else {
                                 suggestionsContainer.style.display = 'none';
                             }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching search suggestions:', error);
+                            suggestionsContainer.style.display = 'none';
                         });
                 });
 
@@ -239,8 +263,10 @@
         });
     </script>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <partial name="_ValidationScriptsPartial" />
+    @* Thêm thư viện jQuery để Validation hoạt động *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
 
 </body>
 </html>

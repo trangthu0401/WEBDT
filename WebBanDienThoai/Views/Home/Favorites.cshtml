@@ -1,4 +1,4 @@
-﻿@model WebBanDienThoai.Models.modelView.FavoritesViewModel
+﻿@model WebBanDienThoai.Models.ViewModels.FavoritesViewModel
 @using System.Security.Claims
 
 @{
@@ -75,7 +75,7 @@
                         {
                             @foreach (var brand in Model.BrandCounts)
                             {
-                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.brandId" class="category-popup-item">
+                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.BrandId" class="category-popup-item">
                                     @brand.BrandName
                                 </a>
                             }

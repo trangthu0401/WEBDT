@@ -8,56 +8,60 @@ using WebBanDienThoai.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. L?y chu?i k?t n?i t? appsettings.json
+// 1. Lấy chuỗi kết nối từ appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// 2. ??ng ký DbContext (Service)
-// ??m b?o b?n ?ã cài NuGet package: Microsoft.EntityFrameworkCore.SqlServer
+// 2. Đăng ký DbContext
 builder.Services.AddDbContext<DemoWebBanDienThoaiDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 3. ??ng ký các service khác (ví d?: Controllers, Views)
+// 3. Đăng ký các service khác
 builder.Services.AddControllersWithViews();
 
-// ??ng k� d?ch v? Authentication (x�c th?c) b?ng Cookie
+// === THÊM DÒNG NÀY - QUAN TRỌNG ===
+builder.Services.AddAuthorization();
+
+// Đăng ký dịch vụ Authentication bằng Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account/Login"; // ???ng d?n ??n trang ??ng nh?p
-        options.AccessDeniedPath = "/Home/AccessDenied"; // (T�y ch?n) Trang t? ch?i
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Home/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
     });
 
-
-// --- 3. X�y d?ng ?ng d?ng (app) ---
 var app = builder.Build();
 
-// 4. C?u hình HTTP request pipeline
-if (!app.Environment.IsDevelopment())
+// === CẤU HÌNH XỬ LÝ LỖI ===
+if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
 else
 {
-    // Bật trang báo lỗi thân thiện khi đã phát hành (Production)
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// Tự động chuyển http sang https
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // Cho ph�p d�ng file CSS, JS, Images...
-
-app.UseRouting(); // B?t t�nh n?ng ??nh tuy?n (Routing)
-
-app.UseAuthentication(); // Nếu dùng Identity
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
-// === KẾT THÚC PHẦN THÊM MỚI ===
 
+// === GỌI DBINITIALIZER VỚI TRY-CATCH ===
+try
+{
+    Console.WriteLine("🔄 Đang chạy DbInitializer...");
+    DbInitializer.Initialize(app);
+    Console.WriteLine("✅ DbInitializer hoàn thành");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ DbInitializer bị lỗi nhưng ứng dụng vẫn chạy: {ex.Message}");
+}
 
-DbInitializer.Initialize(app);
-// 5. C?u hình route (???ng d?n) m?c ??nh
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");

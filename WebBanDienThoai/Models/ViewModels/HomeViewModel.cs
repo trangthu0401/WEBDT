@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using WebBanDienThoai.Models;
 
-namespace WebBanDienThoai.Models.modelView
+namespace WebBanDienThoai.Models.ViewModels
 {
     public class BrandCount
     {
-        public int brandId { get; set; }
+        public int BrandId { get; set; }
         public string BrandName { get; set; } = string.Empty;
         public int Count { get; set; }
     }
@@ -23,31 +24,30 @@ namespace WebBanDienThoai.Models.modelView
         public int Stock { get; set; }
         public bool IsFavorited { get; set; } = false;
         public int FirstVariantId { get; set; }
+        public int SoldCount { get; set; }
     }
 
     public class ManageProductsViewModel
     {
-        public List<ProductListViewModel> Products { get; set; } = new List<ProductListViewModel>();
-        public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>();
+        public List<ProductListViewModel> Products { get; set; } = new();
+        public List<ProductListViewModel> TopSellingProducts { get; set; } = new();
+        public List<BrandCount> BrandCounts { get; set; } = new();
         public int? BrandId { get; set; }
         public int TotalProductCount { get; set; }
-        public string currentSearch { get; set; }
-
-        // === THÊM CÁC BIẾN CHO BỘ LỌC ===
+        public string CurrentSearch { get; set; } = string.Empty;
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
-        public string SelectedRam { get; set; }
-        public string SelectedStorage { get; set; }
+        public string? SelectedRam { get; set; }
+        public string? SelectedStorage { get; set; }
     }
 
-    // Các class khác giữ nguyên, không đổi
     public class FavoritesViewModel
     {
-        public List<ProductListViewModel> FavoriteProducts { get; set; } = new List<ProductListViewModel>();
-        public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>();
+        public List<ProductListViewModel> FavoriteProducts { get; set; } = new();
+        public List<BrandCount> BrandCounts { get; set; } = new();
         public int TotalProductCount { get; set; }
         public int? BrandId { get; set; }
-        public string currentSearch { get; set; }
+        public string CurrentSearch { get; set; } = string.Empty;
     }
 
     public class ProductSuggestionViewModel
@@ -60,12 +60,12 @@ namespace WebBanDienThoai.Models.modelView
 
     public class ProductDetailViewModel
     {
-        public ProductVariant ProductDetail { get; set; }
-        public List<ProductVariant> AllVariants { get; set; }
-        public List<ProductVariant> RelatedProducts { get; set; }
-        public List<BrandCount> BrandCounts { get; set; } = new List<BrandCount>();
+        public ProductVariant ProductDetail { get; set; } = null!;
+        public List<ProductVariant> AllVariants { get; set; } = new();
+        public List<ProductVariant> RelatedProducts { get; set; } = new();
+        public List<BrandCount> BrandCounts { get; set; } = new();
         public int TotalProductCount { get; set; }
         public int? BrandId { get; set; }
-        public string currentSearch { get; set; }
+        public string CurrentSearch { get; set; } = string.Empty;
     }
 }

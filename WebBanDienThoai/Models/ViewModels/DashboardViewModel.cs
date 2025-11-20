@@ -1,4 +1,6 @@
-﻿namespace WebBanDienThoai.Models.ViewModels
+﻿using System.Collections.Generic;
+
+namespace WebBanDienThoai.Models.ViewModels
 {
     public class DashboardViewModel
     {
@@ -14,7 +16,18 @@
         // Ngăn 4: Chứa Tổng đơn hàng
         public int OrderCount { get; set; }
 
-        // Ngăn 5: Chứa danh sách SP bán chạy
-        public List<BestSellingProductViewModel> TopSellingProducts { get; set; }
+        // Ngăn 5: Chứa danh sách SP bán chạy (FIX: Khởi tạo để tránh Nullability)
+        public List<BestSellingProductViewModel> TopSellingProducts { get; set; } = new List<BestSellingProductViewModel>();
     }
+
+    // ViewModel cho sản phẩm bán chạy
+    public class BestSellingProductViewModel
+    {
+        public string? ProductName { get; set; }
+        public string? ImageUrl { get; set; }
+        public int QuantitySold { get; set; }
+        public decimal? Price { get; set; }
+        public int Stock { get; set; }
+    }
+
 }

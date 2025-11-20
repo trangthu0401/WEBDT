@@ -1,152 +1,145 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using WebBanDienThoai.Models;
-using WebBanDienThoai.Models.modelView;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using WebBanDienThoai.Data;
+using WebBanDienThoai.Models;
+using WebBanDienThoai.Models.ViewModels;
 
 namespace WebBanDienThoai.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController(ILogger<HomeController> logger, DemoWebBanDienThoaiDbContext context) : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-        private readonly DemoWebBanDienThoaiContext _context;
+        private readonly ILogger<HomeController> _logger = logger;
+        private readonly DemoWebBanDienThoaiDbContext _context = context;
 
-        public HomeController(ILogger<HomeController> logger, DemoWebBanDienThoaiContext context)
-        {
-            _logger = logger;
-            _context = context;
-        }
-
+        // HÀM LẤY DANH SÁCH THƯƠNG HIỆU
         private async Task<List<BrandCount>> GetBrandsAsync()
         {
-            return await _context.Brands
+            var brands = await _context.Brands
                 .AsNoTracking()
-                .Where(b => b.Products.Any(p => p.IsActive == true))
-                .Select(b => new BrandCount
-                {
-                    brandId = b.BrandId,
-                    BrandName = b.BrandName,
-                    Count = b.Products.Count(p => p.IsActive == true)
-                })
+                .Include(b => b.Products)
                 .ToListAsync();
+
+            return brands.Select(b => new BrandCount
+            {
+                BrandId = b.BrandId,
+                BrandName = b.BrandName,
+                Count = b.Products?.Count(p => p.IsActive) ?? 0
+            })
+            .Where(b => b.Count > 0)
+            .ToList();
         }
 
-        // === CẬP NHẬT INDEX ĐỂ XỬ LÝ BỘ LỌC ===
+        // === INDEX (ĐÃ SỬA LỖI) ===
         public async Task<IActionResult> Index(int? id, string sortOrder, string searchString,
-                                               decimal? minPrice, decimal? maxPrice, string ram, string storage)
+                                                 decimal? minPrice, decimal? maxPrice, string ram, string storage)
         {
             ViewData["CurrentSort"] = sortOrder;
             ViewData["CurrentSearch"] = searchString;
 
             try
             {
-                int customerId = 1;
-                var favoritedVariantIds = new HashSet<int?>();
-                var customerFavorite = await _context.Favorites
-                                      .Include(f => f.FavoriteDetails)
-                                      .FirstOrDefaultAsync(f => f.CustomerId == customerId);
-                if (customerFavorite != null)
-                {
-                    favoritedVariantIds = customerFavorite.FavoriteDetails.Select(fd => fd.VariantId).ToHashSet();
-                }
-
+                // 1. Query cơ bản lấy Product
                 var productsQuery = _context.Products
                     .AsNoTracking()
-                    .Where(p => p.IsActive == true && p.ProductVariants.Any(v => v.IsActive == true));
-
-                // 1. Lọc theo Hãng
-                if (id != null && id > 0)
-                {
-                    productsQuery = productsQuery.Where(p => p.BrandId == id);
-                }
-
-                // 2. Lọc theo Tìm kiếm tên
-                if (!String.IsNullOrEmpty(searchString))
-                {
-                    productsQuery = productsQuery.Where(p => p.Name.ToLower().Contains(searchString.ToLower()));
-                }
-
-                // 3. Lọc theo Giá (Dựa trên giá thấp nhất của biến thể)
-                if (minPrice.HasValue)
-                {
-                    productsQuery = productsQuery.Where(p => p.ProductVariants.Any(v => (v.DiscountPrice ?? v.Price) >= minPrice));
-                }
-                if (maxPrice.HasValue)
-                {
-                    productsQuery = productsQuery.Where(p => p.ProductVariants.Any(v => (v.DiscountPrice ?? v.Price) <= maxPrice));
-                }
-
-                // 4. Lọc theo RAM
-                if (!string.IsNullOrEmpty(ram))
-                {
-                    productsQuery = productsQuery.Where(p => p.ProductVariants.Any(v => v.Ram == ram));
-                }
-
-                // 5. Lọc theo ROM (Storage)
-                if (!string.IsNullOrEmpty(storage))
-                {
-                    productsQuery = productsQuery.Where(p => p.ProductVariants.Any(v => v.Storage == storage));
-                }
-
-                var viewModelQuery = productsQuery
                     .Include(p => p.Brand)
                     .Include(p => p.ProductVariants)
-                    .Select(p => new ProductListViewModel
+                    .Where(p => p.IsActive);
+
+                // 2. Áp dụng Filter cơ bản trên SQL
+                if (id.HasValue && id > 0)
+                    productsQuery = productsQuery.Where(p => p.BrandId == id);
+
+                if (!string.IsNullOrEmpty(searchString))
+                    productsQuery = productsQuery.Where(p => p.Name.Contains(searchString));
+
+                // 3. Thực thi Query
+                var rawProducts = await productsQuery.ToListAsync();
+
+                // 4. Xử lý Logic Map sang ViewModel
+                var processedList = rawProducts.Select(p =>
+                {
+                    var activeVariants = p.ProductVariants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
+
+                    var minPriceVariant = activeVariants.OrderBy(v => v.DiscountPrice ?? v.Price).FirstOrDefault();
+                    var minPriceValue = minPriceVariant != null ? (minPriceVariant.DiscountPrice ?? minPriceVariant.Price) : 0;
+
+                    // Tính số lượng đã bán (trong thực tế sẽ lấy từ bảng OrderDetails)
+                    // Tạm thời dùng random để demo
+                    var soldCount = new System.Random().Next(50, 500);
+
+                    return new ProductListViewModel
                     {
                         ProductId = p.ProductId,
                         Name = p.Name,
                         MainImage = p.MainImage,
-                        BrandName = p.Brand.BrandName,
-                        IsActive = p.IsActive ?? false,
-                        CreatedDate = p.CreatedDate ?? DateTime.MinValue,
-                        Price = p.ProductVariants
-                                 .Where(v => v.IsActive == true)
-                                 .Select(v => v.DiscountPrice ?? v.Price)
-                                 .Min() ?? 0M,
-                        Stock = p.ProductVariants
-                                 .Where(v => v.IsActive == true)
-                                 .Sum(v => v.Stock ?? 0),
-                        IsFavorited = p.ProductVariants.Any(v => favoritedVariantIds.Contains(v.VariantId)),
-                        FirstVariantId = p.ProductVariants
-                                          .Where(v => v.IsActive == true)
-                                          .Select(v => v.VariantId)
-                                          .FirstOrDefault()
-                    });
+                        BrandName = p.Brand?.BrandName ?? "Unknown",
+                        IsActive = p.IsActive,
+                        CreatedDate = p.CreatedDate,
+                        Price = minPriceValue,
+                        Stock = activeVariants.Sum(v => v.Stock),
+                        FirstVariantId = minPriceVariant?.VariantId ?? 0,
+                        SoldCount = soldCount
+                    };
+                });
 
-                switch (sortOrder)
+                // 5. Áp dụng Bộ lọc nâng cao
+                if (minPrice.HasValue)
+                    processedList = processedList.Where(p => p.Price >= minPrice.Value);
+
+                if (maxPrice.HasValue)
+                    processedList = processedList.Where(p => p.Price <= maxPrice.Value);
+
+                // 6. Sắp xếp sử dụng switch expression
+                processedList = sortOrder switch
                 {
-                    case "price_desc":
-                        viewModelQuery = viewModelQuery.OrderByDescending(p => p.Price);
-                        break;
-                    case "price_asc":
-                        viewModelQuery = viewModelQuery.OrderBy(p => p.Price);
-                        break;
-                    default:
-                        viewModelQuery = viewModelQuery.OrderByDescending(p => p.CreatedDate);
-                        break;
+                    "price_desc" => processedList.OrderByDescending(p => p.Price),
+                    "price_asc" => processedList.OrderBy(p => p.Price),
+                    _ => processedList.OrderByDescending(p => p.CreatedDate)
+                };
+
+                // 7. Xử lý Yêu thích (Favorites)
+                int customerId = User.Identity?.IsAuthenticated == true &&
+                               int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var idValue) ? idValue : 0;
+
+                var favIds = new HashSet<int>();
+                if (customerId > 0)
+                {
+                    favIds = (await _context.FavoriteDetails
+                        .Where(fd => fd.Favorite != null && fd.Favorite.CustomerID == customerId)
+                        .Select(fd => fd.VariantId)
+                        .ToListAsync()).ToHashSet();
                 }
 
-                var dsSanPham = await viewModelQuery.ToListAsync();
+                // Map lại IsFavorited
+                var finalProducts = processedList.Select(p => {
+                    p.IsFavorited = favIds.Contains(p.FirstVariantId);
+                    return p;
+                }).ToList();
+
+                // 8. Lấy Top bán chạy (5 sản phẩm bán chạy nhất)
+                var topSellingProducts = finalProducts
+                    .OrderByDescending(p => p.SoldCount)
+                    .Take(5)
+                    .ToList();
+
                 var dsHang = await GetBrandsAsync();
-                var totalProductCount = await _context.Products.CountAsync(p => p.IsActive == true);
+                var totalCount = finalProducts.Count;
 
                 var viewModel = new ManageProductsViewModel
                 {
-                    Products = dsSanPham,
+                    Products = finalProducts,
+                    TopSellingProducts = topSellingProducts,
                     BrandCounts = dsHang,
-                    TotalProductCount = totalProductCount,
+                    TotalProductCount = totalCount,
                     BrandId = id,
-                    currentSearch = searchString,
-                    // Truyền lại giá trị lọc để hiện trên View
+                    CurrentSearch = searchString ?? string.Empty,
                     MinPrice = minPrice,
                     MaxPrice = maxPrice,
                     SelectedRam = ram,
@@ -157,39 +150,47 @@ namespace WebBanDienThoai.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi lấy dữ liệu cho trang Home Index.");
+                _logger.LogError(ex, "Lỗi Index Home.");
                 return RedirectToAction("Error");
             }
         }
 
-        // ... (Các Action ProductDetail, Favorites, v.v. giữ nguyên code cũ của bạn) ...
-        // (Tôi lược bớt để ngắn gọn, bạn hãy giữ nguyên các action ProductDetail, Favorites, AddToFavorites... như file cũ tôi đưa)
-
+        // === PRODUCT DETAIL ===
         public async Task<IActionResult> ProductDetail(int id)
         {
-            // ... (Giữ nguyên code ProductDetail cũ) ...
             try
             {
                 var productDetail = await _context.ProductVariants
                     .AsNoTracking()
                     .Include(v => v.Product)
-                    .Include(v => v.Product.Brand)
+                    .ThenInclude(p => p.Brand)
                     .FirstOrDefaultAsync(v => v.VariantId == id);
 
                 if (productDetail == null) return NotFound();
 
+                // Lấy danh sách các biến thể khác cùng ProductId
                 var allVariants = await _context.ProductVariants
                     .AsNoTracking()
-                    .Where(v => v.ProductId == productDetail.ProductId && v.IsActive == true)
+                    .Where(v => v.ProductId == productDetail.ProductId && v.IsActive)
                     .ToListAsync();
 
-                var relatedProducts = await _context.ProductVariants
-                    .AsNoTracking()
-                    .Include(v => v.Product.Brand)
-                    .Where(v => v.Product.BrandId == productDetail.Product.BrandId &&
-                                v.ProductId != productDetail.ProductId &&
-                                v.IsActive == true)
-                    .Take(4).ToListAsync();
+                // Lấy sản phẩm liên quan
+                var brandId = productDetail.Product?.BrandId ?? 0;
+
+                var relatedProducts = new List<ProductVariant>();
+                if (brandId > 0)
+                {
+                    relatedProducts = await _context.ProductVariants
+                        .AsNoTracking()
+                        .Include(v => v.Product)
+                            .ThenInclude(p => p.Brand)
+                        .Where(v => v.Product != null &&
+                                   v.Product.BrandId == brandId &&
+                                   v.ProductId != productDetail.ProductId &&
+                                   v.IsActive)
+                        .Take(4)
+                        .ToListAsync();
+                }
 
                 var dsHang = await GetBrandsAsync();
 
@@ -204,52 +205,64 @@ namespace WebBanDienThoai.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi lấy ProductDetail.");
+                _logger.LogError(ex, "Lỗi ProductDetail.");
                 return RedirectToAction("Error");
             }
         }
 
         public async Task<IActionResult> Favorites(string sortOrder)
         {
-            // ... (Giữ nguyên code Favorites cũ) ...
             ViewData["CurrentSort"] = sortOrder;
             try
             {
-                int customerId = 1;
+                int customerId = User.Identity?.IsAuthenticated == true &&
+                               int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var idValue) ? idValue : 0;
+                if (customerId == 0) return RedirectToAction("Login", "Account");
+
                 var favoritesQuery = _context.FavoriteDetails
                     .AsNoTracking()
-                    .Where(fd => fd.Favorite.CustomerId == customerId && fd.Variant.IsActive == true)
-                    .Include(fd => fd.Variant.Product.Brand)
-                    .Select(fd => fd.Variant)
-                    .Select(v => new ProductListViewModel
-                    {
-                        ProductId = v.ProductId,
-                        Name = v.Product.Name + " (" + v.Color + ", " + v.Storage + ")",
-                        MainImage = v.ImageUrl ?? v.Product.MainImage,
-                        BrandName = v.Product.Brand.BrandName,
-                        IsActive = v.IsActive ?? false,
-                        CreatedDate = v.CreatedDate ?? DateTime.MinValue,
-                        Price = (v.DiscountPrice ?? v.Price) ?? 0M,
-                        Stock = v.Stock ?? 0
-                    });
-                switch (sortOrder)
+                    .Include(fd => fd.Favorite)
+                    .Include(fd => fd.ProductVariant)
+                       .ThenInclude(pv => pv.Product)
+                           .ThenInclude(p => p.Brand)
+                    .Where(fd => fd.Favorite != null && fd.Favorite.CustomerID == customerId &&
+                                fd.ProductVariant != null && fd.ProductVariant.IsActive)
+                    .Select(fd => fd.ProductVariant);
+
+                var rawFavs = await favoritesQuery.ToListAsync();
+
+                var favList = rawFavs.Select(v => new ProductListViewModel
                 {
-                    case "price_desc": favoritesQuery = favoritesQuery.OrderByDescending(p => p.Price); break;
-                    case "price_asc": favoritesQuery = favoritesQuery.OrderBy(p => p.Price); break;
-                    default: favoritesQuery = favoritesQuery.OrderByDescending(p => p.CreatedDate); break;
-                }
-                var favoriteProducts = await favoritesQuery.ToListAsync();
-                var dsHang = await GetBrandsAsync();
+                    ProductId = v.ProductId,
+                    Name = (v.Product?.Name ?? "???") + $" ({v.Color}, {v.Storage})",
+                    MainImage = v.ImageUrl ?? v.Product?.MainImage,
+                    BrandName = v.Product?.Brand?.BrandName ?? "",
+                    IsActive = v.IsActive,
+                    CreatedDate = v.CreatedDate,
+                    Price = v.DiscountPrice ?? v.Price,
+                    Stock = v.Stock,
+                    FirstVariantId = v.VariantId,
+                    IsFavorited = true
+                });
+
+                // Sử dụng switch expression cho sort
+                favList = sortOrder switch
+                {
+                    "price_desc" => favList.OrderByDescending(p => p.Price),
+                    "price_asc" => favList.OrderBy(p => p.Price),
+                    _ => favList.OrderByDescending(p => p.CreatedDate)
+                };
+
                 var viewModel = new FavoritesViewModel
                 {
-                    FavoriteProducts = favoriteProducts,
-                    BrandCounts = dsHang
+                    FavoriteProducts = favList.ToList(),
+                    BrandCounts = await GetBrandsAsync()
                 };
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi lấy dữ liệu cho trang Favorites.");
+                _logger.LogError(ex, "Lỗi Favorites.");
                 return RedirectToAction("Error");
             }
         }
@@ -257,32 +270,106 @@ namespace WebBanDienThoai.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToFavorites(int id)
         {
-            // ... (Giữ nguyên code AddToFavorites cũ) ...
-            try { int customerId = 1; var customerFavorite = await _context.Favorites.FirstOrDefaultAsync(f => f.CustomerId == customerId); if (customerFavorite == null) { customerFavorite = new Favorite { CustomerId = customerId }; _context.Favorites.Add(customerFavorite); await _context.SaveChangesAsync(); } var variantToAdd = await _context.ProductVariants.Where(v => v.ProductId == id && v.IsActive == true).Select(v => v.VariantId).FirstOrDefaultAsync(); if (variantToAdd == 0) { return Json(new { success = false, message = "Sản phẩm không có biến thể hợp lệ." }); } bool alreadyExists = await _context.FavoriteDetails.AnyAsync(fd => fd.FavoriteId == customerFavorite.FavoriteId && fd.VariantId == variantToAdd); if (!alreadyExists) { _context.FavoriteDetails.Add(new FavoriteDetail { FavoriteId = customerFavorite.FavoriteId, VariantId = variantToAdd }); await _context.SaveChangesAsync(); } return Json(new { success = true, message = "Đã thêm vào yêu thích!" }); } catch (Exception ex) { _logger.LogError(ex, "Lỗi khi thêm vào Favorites."); return Json(new { success = false, message = "Lỗi máy chủ." }); }
+            try
+            {
+                int customerId = User.Identity?.IsAuthenticated == true &&
+                               int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var idValue) ? idValue : 0;
+                if (customerId == 0) return Json(new { success = false, message = "Vui lòng đăng nhập." });
+
+                var customerFavorite = await _context.Favorites.FirstOrDefaultAsync(f => f.CustomerID == customerId);
+                if (customerFavorite == null)
+                {
+                    customerFavorite = new Favorite { CustomerID = customerId };
+                    _context.Favorites.Add(customerFavorite);
+                    await _context.SaveChangesAsync();
+                }
+
+                var variantToAdd = await _context.ProductVariants
+                                    .Where(v => v.ProductId == id && v.IsActive)
+                                    .Select(v => v.VariantId)
+                                    .FirstOrDefaultAsync();
+
+                if (variantToAdd == 0) return Json(new { success = false, message = "Sản phẩm tạm hết hàng." });
+
+                bool exists = await _context.FavoriteDetails.AnyAsync(fd =>
+                    fd.FavoriteId == customerFavorite.FavoriteId && fd.VariantId == variantToAdd);
+
+                if (!exists)
+                {
+                    _context.FavoriteDetails.Add(new FavoriteDetail
+                    {
+                        FavoriteId = customerFavorite.FavoriteId,
+                        VariantId = variantToAdd
+                    });
+                    await _context.SaveChangesAsync();
+                }
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false, message = "Lỗi server" });
+            }
         }
+
         [HttpPost]
         public async Task<IActionResult> RemoveFromFavorites(int id)
         {
-            // ... (Giữ nguyên code RemoveFromFavorites cũ) ...
-            try { int customerId = 1; var customerFavorite = await _context.Favorites.Include(f => f.FavoriteDetails).FirstOrDefaultAsync(f => f.CustomerId == customerId); if (customerFavorite == null) { return Json(new { success = true }); } var variantIdsToRemove = await _context.ProductVariants.Where(v => v.ProductId == id).Select(v => v.VariantId).ToListAsync(); if (!variantIdsToRemove.Any()) { return Json(new { success = false, message = "Không tìm thấy sản phẩm." }); } var detailToRemove = customerFavorite.FavoriteDetails.Where(fd => fd.VariantId != null && variantIdsToRemove.Contains(fd.VariantId.Value)).ToList(); if (detailToRemove.Any()) { _context.FavoriteDetails.RemoveRange(detailToRemove); await _context.SaveChangesAsync(); } return Json(new { success = true, message = "Đã xóa khỏi yêu thích." }); } catch (Exception ex) { _logger.LogError(ex, "Lỗi khi xóa khỏi Favorites."); return Json(new { success = false, message = "Lỗi máy chủ." }); }
+            try
+            {
+                int customerId = User.Identity?.IsAuthenticated == true &&
+                               int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var idValue) ? idValue : 0;
+                var fav = await _context.Favorites.Include(f => f.FavoriteDetails).FirstOrDefaultAsync(f => f.CustomerID == customerId);
+                if (fav == null) return Json(new { success = true });
+
+                var variantIds = await _context.ProductVariants.Where(v => v.ProductId == id).Select(v => v.VariantId).ToListAsync();
+
+                var toRemove = fav.FavoriteDetails.Where(fd => variantIds.Contains(fd.VariantId)).ToList();
+                if (toRemove.Count > 0)
+                {
+                    _context.FavoriteDetails.RemoveRange(toRemove);
+                    await _context.SaveChangesAsync();
+                }
+                return Json(new { success = true });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
         }
+
         [HttpGet]
         public async Task<IActionResult> SearchSuggestions(string term)
         {
-            // ... (Giữ nguyên code SearchSuggestions cũ) ...
-            if (string.IsNullOrEmpty(term) || term.Length < 2) { return Json(new List<ProductSuggestionViewModel>()); }
-            var suggestions = await _context.Products.Where(p => p.Name.ToLower().Contains(term.ToLower()) && p.IsActive == true).Select(p => new ProductSuggestionViewModel { ProductId = p.ProductId, Name = p.Name, MainImage = p.MainImage, Price = p.ProductVariants.Where(v => v.IsActive == true).Select(v => v.DiscountPrice ?? v.Price).Min() ?? 0M }).Take(5).ToListAsync(); return Json(suggestions);
+            if (string.IsNullOrEmpty(term) || term.Length < 2) return Json(new List<object>());
+
+            var data = await _context.Products
+                .AsNoTracking()
+                .Where(p => p.Name.Contains(term) && p.IsActive)
+                .Take(5)
+                .Select(p => new {
+                    productId = p.ProductId,
+                    name = p.Name,
+                    mainImage = p.MainImage,
+                    price = p.ProductVariants.Count > 0 ? p.ProductVariants.Min(v => v.DiscountPrice ?? v.Price) : 0
+                })
+                .ToListAsync();
+
+            return Json(data);
         }
+
         [HttpPost]
-        public async Task<IActionResult> GetAiResponse([FromBody] ChatRequest request)
+        public IActionResult GetAiResponse()
         {
-            // ... (Giữ nguyên code GetAiResponse cũ) ...
-            try { var apiKey = "AIzaSyBnUmG9b_K-Q1fTQ0i6loBKulGRNuXU0fg"; var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}"; using (var httpClient = new HttpClient()) { httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json")); var systemInstruction = "Bạn là Rabit AI, trợ lý tư vấn điện thoại của Rabit Store. Hãy trả lời ngắn gọn, thân thiện."; var payload = new { contents = new[] { new { role = "user", parts = new[] { new { text = systemInstruction } } }, new { role = "model", parts = new[] { new { text = "Chào bạn! Tôi có thể giúp gì?" } } }, new { role = "user", parts = new[] { new { text = request.Message } } } } }; var jsonPayload = JsonSerializer.Serialize(payload); var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json"); var response = await httpClient.PostAsync(apiUrl, content); if (response.IsSuccessStatusCode) { var responseBody = await response.Content.ReadAsStringAsync(); using (var jsonDoc = JsonDocument.Parse(responseBody)) { var botText = jsonDoc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString(); return Ok(new { success = true, message = botText }); } } else { var errorBody = await response.Content.ReadAsStringAsync(); _logger.LogError($"Lỗi API Gemini: {errorBody}"); return Ok(new { success = false, message = "Xin lỗi, AI đang bận. Bạn thử lại sau nhé." }); } } } catch (Exception ex) { _logger.LogError(ex, "Lỗi nghiêm trọng khi gọi GetAiResponse."); return Ok(new { success = false, message = "Lỗi kết nối đến máy chủ AI." }); }
+            return Ok(new { success = false, message = "AI chưa cấu hình key." });
         }
-        public class ChatRequest { public string Message { get; set; } }
-        public IActionResult Privacy() { return View(); }
-        public IActionResult Home() { return View(); }
+
+        public IActionResult Privacy() => View();
+        public IActionResult Home() => View();
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error() { return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier }); }
+        public IActionResult Error() => View(new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+        });
     }
 }
