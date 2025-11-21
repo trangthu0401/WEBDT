@@ -164,5 +164,36 @@ namespace WebBanDienThoai.Controllers
         }
 
         // Các Action khác như Profile, ToggleActive bạn giữ nguyên...
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleActive(int accountId, int customerId)
+        {
+            var account = await _context.Accounts.FindAsync(accountId);
+
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            account.IsActive = !account.IsActive;
+
+            try
+            {
+                _context.Accounts.Update(account);
+                await _context.SaveChangesAsync();
+
+                // GHI CHÚ: Tối ưu lại thông báo (dùng toán tử 3 ngôi)
+                string statusMessage = account.IsActive ? "mở khóa" : "khóa";
+                TempData["SuccessMessage"] = $"Đã {statusMessage} tài khoản '{account.Email}' thành công.";
+            }
+            catch (DbUpdateException ex)
+            {
+                // GHI CHÚ: Nên log lỗi
+                Console.WriteLine(ex.Message);
+                TempData["ErrorMessage"] = "Không thể cập nhật trạng thái tài khoản.";
+            }
+
+            return RedirectToAction("Details", "Customer", new { id = customerId });
+        }
     }
 }
