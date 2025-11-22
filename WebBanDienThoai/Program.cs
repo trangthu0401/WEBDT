@@ -62,8 +62,15 @@ catch (Exception ex)
     Console.WriteLine($"⚠️ DbInitializer bị lỗi nhưng ứng dụng vẫn chạy: {ex.Message}");
 }
 
+// === THÊM ROUTE CỤ THỂ CHO PROFILE ===
+app.MapControllerRoute(
+    name: "profile",
+    pattern: "Account/Profile",
+    defaults: new { controller = "Account", action = "Profile" });
+
+// Route mặc định
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

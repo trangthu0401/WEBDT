@@ -35,6 +35,7 @@
                             <span>@User.FindFirstValue("FullName")</span>
                         </a>
                         <div class="dropdown-content">
+                            <!-- QUAN TRỌNG: Đảm bảo có dòng này -->
                             <a asp-controller="Account" asp-action="Profile">Trang cá nhân</a>
                             <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
                         </div>
