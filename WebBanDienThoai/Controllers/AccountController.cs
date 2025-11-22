@@ -36,9 +36,9 @@ namespace WebBanDienThoai.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
+            // Tìm Account + Customer
             var account = await _context.Accounts
                 .Include(a => a.Customer)
                 .FirstOrDefaultAsync(a =>
@@ -47,34 +47,39 @@ namespace WebBanDienThoai.Controllers
 
             if (account != null && BCrypt.Net.BCrypt.Verify(model.Password, account.Password))
             {
-                // TẠO DANH SÁCH QUYỀN HẠN (CLAIM)
                 var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, account.Email),
+        new Claim(ClaimTypes.Role, account.Role),
+    };
+
+                // --- SỬA ĐOẠN NÀY ---
+                if (account.Customer != null)
                 {
-                    new Claim(ClaimTypes.Name, account.Email),
-                    new Claim(ClaimTypes.Role, account.Role),
-                    
-                    // QUAN TRỌNG 1: Để HomeController lấy được ID người dùng
-                    new Claim(ClaimTypes.NameIdentifier, account.Customer?.CustomerID.ToString() ?? account.AccountID.ToString()),
-                    
-                    // QUAN TRỌNG 2: Đặt tên claim là "FullName" để khớp với View @User.FindFirstValue("FullName")
-                    new Claim("FullName", account.Customer?.FullName ?? account.Email),
-                    
-                    // Giữ lại ID tài khoản nếu cần dùng
-                    new Claim("AccountID", account.AccountID.ToString())
-                };
+                    // QUAN TRỌNG: Lưu CUSTOMER_ID (số 7) vào NameIdentifier
+                    // Tuyệt đối không lưu account.AccountID (số 8) vào đây nữa
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, account.Customer.CustomerID.ToString()));
+
+                    claims.Add(new Claim("FullName", account.Customer.FullName));
+                    claims.Add(new Claim("AccountID", account.AccountID.ToString())); // Lưu AccountID sang claim khác để backup
+                }
+                else
+                {
+                    // Nếu là Admin (không có Customer), lưu AccountID
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, account.AccountID.ToString()));
+                    claims.Add(new Claim("FullName", "Quản trị viên"));
+                }
+                // --------------------
 
                 await SignInUserAsync(claims, model.RememberMe);
 
-                // Logic chuyển hướng
                 if (account.Role == "Admin" && model.LoginAsAdmin)
-                {
                     return RedirectToAction("Index", "Dashboard");
-                }
 
                 return RedirectToAction("Index", "Home");
             }
 
-            ModelState.AddModelError(string.Empty, "Email, SĐT hoặc mật khẩu không chính xác.");
+            ModelState.AddModelError(string.Empty, "Sai thông tin đăng nhập.");
             return View(model);
         }
 

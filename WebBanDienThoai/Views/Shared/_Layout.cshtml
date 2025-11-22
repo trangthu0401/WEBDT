@@ -1,80 +1,163 @@
 ﻿@using System.Security.Claims
+@{
+    string displayName = "Tài khoản";
+    string userInitial = "?";
+
+    if (User.Identity.IsAuthenticated)
+    {
+        // Lấy trực tiếp từ Claim "FullName" (Đã lưu ở bước Login)
+        // Không cần query lại DB -> Nhanh và chính xác theo phiên đăng nhập
+        displayName = User.FindFirstValue("FullName") ?? User.Identity.Name;
+
+        if (!string.IsNullOrEmpty(displayName))
+        {
+            userInitial = displayName.Trim().Substring(0, 1).ToUpper();
+            if (displayName.Length > 12) displayName = displayName.Substring(0, 12) + "...";
+        }
+    }
+}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WebBanDienThoai</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/WebBanDienThoai.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - Rabit Store</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+    <link href="~/css/customer-layout.css" rel="stylesheet" />
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">WebBanDienThoai</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+        <div class="header-top">
+            <div class="header-container">
+                <div class="logo-area">
+                    <a asp-controller="Home" asp-action="Index">
+                        <span class="logo-text">Rabit</span>
+                        <img src="~/images/linhvatcau.png" alt="Mascot" class="logo-img" />
+                        <span class="logo-text">Store</span>
+                    </a>
+                </div>
 
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+                <div class="search-area">
+                    <form asp-controller="Product" asp-action="Search" method="get" class="search-form">
+                        <input type="text" name="query" class="search-input" placeholder="Tìm kiếm điện thoại, phụ kiện..." />
+                        <button type="submit" class="search-btn">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </form>
+                </div>
 
-                    <ul class="navbar-nav">
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            // Nếu đã đăng nhập, hiển thị dropdown
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Chào, @User.FindFirstValue("FullName")
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Trang cá nhân</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Đăng xuất</a></li>
-                                </ul>
-                            </li>
-                        }
-                        else
-                        {
-                            // Nếu chưa đăng nhập, hiển thị link Đăng nhập/Đăng ký
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">Đăng ký</a>
-                            </li>
-                        }
-                    </ul>
+                <div class="header-actions">
+                    <a asp-controller="Cart" asp-action="Index" class="btn-cart-red position-relative">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Giỏ hàng</span>
+
+                        <span id="cart-count-badge"
+                              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              style="font-size: 10px; display: none;">
+                            0
+                        </span>
+                    </a>
+
+                    <div class="dropdown">
+                        <button class="btn-user-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-regular fa-user"></i>
+                            <span>@displayName</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end mt-2">
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a></li>
+                                <li><a class="dropdown-item" asp-controller="Order" asp-action="History">Đơn mua</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post">
+                                        <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
+                                    </form>
+                                </li>
+                            }
+                            else
+                            {
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Register">Đăng ký</a></li>
+                            }
+                        </ul>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <nav class="header-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a asp-controller="Home" asp-action="Index">
+                        <i class="fa-solid fa-house"></i> Trang chủ
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-controller="Product" asp-action="Wishlist">
+                        <i class="fa-solid fa-heart"></i> Yêu thích
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#">
+                        <i class="fa-solid fa-gift"></i> Khuyến mãi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-controller="Home" asp-action="Contact">
+                        <i class="fa-solid fa-headset"></i> Hỗ trợ
+                    </a>
+                </li>
+            </ul>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - WebBanDienThoai - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+    <footer class="bg-light text-center py-3 border-top">
+        <div class="container text-muted">
+            &copy; 2025 Rabit Store - Hệ thống bán lẻ điện thoại chính hãng.
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        // Hàm cập nhật số lượng giỏ hàng Global
+        function updateCartCount() {
+            $.ajax({
+                url: '/Cart/GetCartCount',
+                type: 'GET',
+                success: function (res) {
+                    var badge = $('#cart-count-badge');
+                    if (res.count > 0) {
+                        badge.text(res.count);
+                        badge.show(); // Hiện nếu có sản phẩm
+                    } else {
+                        badge.hide(); // Ẩn nếu = 0
+                    }
+                },
+                error: function(err) {
+                    console.log("Lỗi cập nhật giỏ hàng", err);
+                }
+            });
+        }
+
+        // Gọi hàm này ngay khi trang vừa load xong để hiển thị số lượng hiện tại
+        $(document).ready(function() {
+            updateCartCount();
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

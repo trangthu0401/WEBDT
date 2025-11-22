@@ -1,0 +1,209 @@
+﻿@model WebBanDienThoai.Models.ViewModels.CartViewModel
+@{
+    ViewData["Title"] = "Giỏ hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Đảm bảo dùng đúng Layout khách hàng
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/cart-style.css" />
+}
+
+<div class="cart-wrapper">
+    <div class="cart-header-bar">
+        <a href="javascript:history.back()" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+        <span class="cart-title-text">Giỏ hàng của bạn</span>
+        <div style="width: 20px;"></div>
+    </div>
+
+    @if (Model.Items.Any())
+    {
+        <div style="background: #fff; padding: 10px 15px; margin-bottom: 1px; display: flex; align-items: center;">
+            <input type="checkbox" class="custom-checkbox" id="checkAll" onchange="toggleAll(this)" checked />
+            <label for="checkAll" style="font-weight: 500; cursor: pointer;">Chọn tất cả (@Model.TotalQuantity)</label>
+        </div>
+
+        <div class="cart-list">
+            @foreach (var item in Model.Items)
+            {
+                <div class="cart-item-card" id="row-@item.CartItemId">
+                    <div class="cart-item-top">
+                        <div style="padding-top: 30px;">
+                            <input type="checkbox" class="custom-checkbox item-checkbox"
+                                   id="cb-@item.CartItemId"
+                                   data-id="@item.CartItemId"
+                                   data-price="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   data-qty="@item.Quantity"
+                                   onchange="recalculateTotal()" checked />
+                        </div>
+
+                        <div class="cart-img-box">
+                            <img src="@item.ImageUrl" alt="Ảnh sản phẩm" />
+                        </div>
+
+                        <div class="cart-info-box">
+                            <div>
+                                <div class="product-name">@item.ProductName</div>
+                                <span style="font-size: 12px; color: #777; background: #f5f5f5; padding: 2px 5px; border-radius: 4px;">
+                                    @item.VariantName
+                                </span>
+                                <i class="fas fa-trash-alt btn-trash" onclick="removeItem(@item.CartItemId)"></i>
+                            </div>
+
+                            <div class="price-qty-row">
+                                <div>
+                                    <span class="current-price">@item.Price.ToString("N0")₫</span>
+                                    @if (item.OldPrice.HasValue)
+                                    {
+                                        <span class="old-price">@item.OldPrice.Value.ToString("N0")₫</span>
+                                    }
+                                </div>
+
+                                <div class="qty-group">
+                                    <button class="qty-btn" onclick="changeQty(@item.CartItemId, -1)">-</button>
+                                    <input type="number" class="qty-input" id="qty-@item.CartItemId" value="@item.Quantity" readonly />
+                                    <button class="qty-btn" onclick="changeQty(@item.CartItemId, 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="cart-footer">
+            <div class="footer-info">
+                <span class="total-label">Tổng tiền tạm tính:</span>
+                <span class="total-price" id="grandTotalDisplay">0₫</span>
+            </div>
+            <button class="btn-buy-now" onclick="goToCheckout()">
+                Mua ngay (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="empty-cart">
+            <img src="~/images/giohang.png" alt="Empty Cart" />
+            <p>Giỏ hàng trống</p>
+            <a href="/" style="color: #d70018; font-weight: bold;">Về trang chủ</a>
+        </div>
+    }
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // 1. Tính tổng tiền (Chạy Client-side cho mượt)
+        function recalculateTotal() {
+            let total = 0;
+            let count = 0;
+            let allChecked = true;
+            let hasItem = false;
+
+            document.querySelectorAll('.item-checkbox').forEach(cb => {
+                hasItem = true;
+                if (cb.checked) {
+                    let price = parseFloat(cb.dataset.price);
+                    let qty = parseInt(cb.dataset.qty);
+                    total += price * qty;
+                    count++;
+                } else {
+                    allChecked = false;
+                }
+            });
+
+            if(!hasItem) allChecked = false;
+
+            // Update UI
+            document.getElementById('grandTotalDisplay').innerText = total.toLocaleString('vi-VN') + '₫';
+            document.getElementById('selectedCount').innerText = count;
+
+            const checkAll = document.getElementById('checkAll');
+            if(checkAll) checkAll.checked = allChecked;
+        }
+
+        // 2. Chọn tất cả
+        function toggleAll(source) {
+            document.querySelectorAll('.item-checkbox').forEach(cb => {
+                cb.checked = source.checked;
+            });
+            recalculateTotal();
+        }
+
+        // 3. Thay đổi số lượng
+        function changeQty(itemId, delta) {
+            let input = document.getElementById(`qty-${itemId}`);
+            let currentQty = parseInt(input.value);
+            let newQty = currentQty + delta;
+
+            if (newQty < 1) return;
+
+            // Update UI ngay
+            input.value = newQty;
+            let cb = document.getElementById(`cb-${itemId}`);
+            cb.dataset.qty = newQty;
+            recalculateTotal();
+
+            // Gửi AJAX ngầm
+            $.post('/Cart/UpdateQuantity', { cartItemId: itemId, quantity: newQty }, function(res) {
+                if (!res.success) {
+                    Swal.fire('Lỗi', res.message || "Lỗi cập nhật", 'error');
+                    // Rollback nếu lỗi
+                    input.value = currentQty;
+                    cb.dataset.qty = currentQty;
+                    recalculateTotal();
+                }
+            });
+        }
+
+        // 4. Xóa sản phẩm
+        function removeItem(itemId) {
+            Swal.fire({
+                title: 'Xóa sản phẩm?',
+                text: "Bạn có chắc chắn muốn xóa?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d70018',
+                confirmButtonText: 'Xóa'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/Cart/RemoveItem', { cartItemId: itemId }, function(res) {
+                        if (res.success) {
+                            document.getElementById(`row-${itemId}`).remove();
+                            recalculateTotal();
+
+                            // Nếu hết sạch thì reload để hiện màn hình Empty
+                            if (document.querySelectorAll('.cart-item-card').length === 0) {
+                                location.reload();
+                            }
+
+                            // Update badge header
+                            if(typeof updateCartCount === 'function') updateCartCount();
+                        }
+                    });
+                }
+            });
+        }
+
+        // 5. MUA NGAY (Chuyển trang)
+        function goToCheckout() {
+            let selectedIds = [];
+            document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+                selectedIds.push(cb.dataset.id);
+            });
+
+            if (selectedIds.length === 0) {
+                Swal.fire('Thông báo', 'Vui lòng chọn ít nhất 1 sản phẩm', 'info');
+                return;
+            }
+
+            // Tạo URL chính xác bằng JS
+            let url = '/OrderCustomer/Checkout?itemIds=' + selectedIds.join(',');
+            window.location.href = url;
+        }
+
+        // Chạy khi vào trang
+        document.addEventListener("DOMContentLoaded", () => {
+            recalculateTotal();
+        });
+    </script>
+}

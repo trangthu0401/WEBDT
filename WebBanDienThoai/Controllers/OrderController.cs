@@ -5,8 +5,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using WebBanDienThoai.Data;
+using WebBanDienThoai.Models;
 using WebBanDienThoai.Models.ViewModels;
-using WebBanDienThoai.Models; // Đảm bảo đã import Model
 
 namespace WebBanDienThoai.Controllers
 {
@@ -20,36 +20,25 @@ namespace WebBanDienThoai.Controllers
             _context = context;
         }
 
-        // GET: /Order/Index (Giữ nguyên)
-        public async Task<IActionResult> Index(
-            string searchId,
-            string statusFilter,
-            DateTime? startDate,
-            DateTime? endDate,
-            int page = 1)
+        // ============================================================
+        // 1. DANH SÁCH ĐƠN HÀNG (ĐÃ FIX LỖI DATA IS NULL)
+        // ============================================================
+        public async Task<IActionResult> Index(string searchId, string statusFilter, DateTime? startDate, DateTime? endDate, int page = 1)
         {
             int pageSize = 10;
             var query = _context.Orders.AsQueryable();
 
-            if (!string.IsNullOrEmpty(searchId))
-            {
-                if (int.TryParse(searchId, out int id))
-                {
-                    query = query.Where(o => o.OrderId == id);
-                }
-            }
+            if (!string.IsNullOrEmpty(searchId) && int.TryParse(searchId, out int id))
+                query = query.Where(o => o.OrderId == id);
+
             if (!string.IsNullOrEmpty(statusFilter))
-            {
                 query = query.Where(o => o.Status == statusFilter);
-            }
+
             if (startDate.HasValue)
-            {
                 query = query.Where(o => o.OrderDate >= startDate.Value);
-            }
+
             if (endDate.HasValue)
-            {
                 query = query.Where(o => o.OrderDate < endDate.Value.AddDays(1));
-            }
 
             int totalItems = await query.CountAsync();
 
@@ -60,10 +49,16 @@ namespace WebBanDienThoai.Controllers
                 .Select(o => new OrderViewModel
                 {
                     OrderId = o.OrderId,
-                    CustomerName = o.ShippingFullName,
-                    ShippingAddress = o.ShippingDistrict + ", " + o.ShippingCity,
+
+                    // FIX LỖI: Dùng toán tử ?? để xử lý nếu dữ liệu bị NULL
+                    CustomerName = o.ShippingFullName ?? "Khách lẻ",
+
+                    // FIX LỖI: Cộng chuỗi an toàn. Nếu District null thì thay bằng rỗng
+                    ShippingAddress = (o.ShippingDistrict ?? "") + ", " + (o.ShippingCity ?? ""),
+
                     OrderDate = o.OrderDate,
-                    Status = o.Status
+                    Status = o.Status ?? "Chờ xác nhận",
+                    TotalAmount = o.TotalAmount ?? 0
                 })
                 .ToListAsync();
 
@@ -77,50 +72,40 @@ namespace WebBanDienThoai.Controllers
             return View(orders);
         }
 
-        // GET: /Order/Details (Giữ nguyên)
+        // ============================================================
+        // 2. CHI TIẾT ĐƠN HÀNG
+        // ============================================================
         public async Task<IActionResult> Details(int id)
         {
             var order = await _context.Orders
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.ProductVariant)
-                        .ThenInclude(pv => pv.Product)
+                .Include(o => o.OrderDetails).ThenInclude(od => od.ProductVariant).ThenInclude(pv => pv.Product)
                 .Include(o => o.Payments)
                 .Include(o => o.Shipping)
-                .Where(o => o.OrderId == id)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(o => o.OrderId == id);
 
             if (order == null) return NotFound();
 
-            // --- Ánh xạ (Map) sang ViewModel (Giữ nguyên) ---
             var viewModel = new OrderDetailViewModel
             {
                 OrderId = order.OrderId,
                 OrderStatus = order.Status,
                 OrderDate = order.OrderDate ?? DateTime.Now,
                 TotalAmount = order.TotalAmount ?? 0,
-
-                // Thông tin giao hàng (từ bảng Order)
                 ShippingFullName = order.ShippingFullName,
                 ShippingPhone = order.ShippingPhone,
+
+                // Xử lý hiển thị địa chỉ chi tiết
                 ShippingFullAddress = $"{order.ShippingStreet}, {order.ShippingDistrict}, {order.ShippingCity}",
 
-                // Thông tin thanh toán (từ bảng Payment)
                 PaymentMethod = order.Payments.FirstOrDefault()?.PaymentMethod ?? "N/A",
                 PaymentStatus = order.Payments.FirstOrDefault()?.PaymentStatus ?? "N/A",
-
-                // Thông tin giao vận (từ bảng Shipping)
-                Carrier = order.Shipping?.Carrier ?? "N/A",
-                TrackingNumber = order.Shipping?.TrackingNumber ?? "N/A",
-
-                // Lấy danh sách sản phẩm
+                Carrier = order.Shipping?.Carrier ?? "Chưa có",
+                TrackingNumber = order.Shipping?.TrackingNumber ?? "---",
                 OrderItems = order.OrderDetails.Select(od => new OrderItemViewModel
                 {
                     VariantId = od.VariantId,
                     ProductName = $"{od.ProductVariant.Product.Name} ({od.ProductVariant.Color}, {od.ProductVariant.Storage})",
-                    ImageUrl = od.ProductVariant.Product.MainImage,
-                    Color = od.ProductVariant.Color,
-                    Storage = od.ProductVariant.Storage,
-                    RAM = od.ProductVariant.RAM,
+                    ImageUrl = od.ProductVariant.ImageUrl ?? od.ProductVariant.Product.MainImage,
                     UnitPrice = od.UnitPrice ?? 0,
                     Quantity = od.Quantity ?? 0
                 }).ToList()
@@ -129,142 +114,175 @@ namespace WebBanDienThoai.Controllers
             return View(viewModel);
         }
 
-        // ======================================================
-        // ACTION 2: CẬP NHẬT TRẠNG THÁI (FIXED)
-        // ======================================================
+        // ============================================================
+        // 3. BẮT ĐẦU GIAO HÀNG (Từ Modal: Chờ xác nhận -> Đang giao)
+        // ============================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AdvanceStatus(int orderId)
+        public async Task<IActionResult> StartShipping(ShippingModalViewModel model)
         {
-            var order = await _context.Orders.FindAsync(orderId);
+            var order = await _context.Orders
+                .Include(o => o.Payments)
+                .Include(o => o.Shipping)
+                .FirstOrDefaultAsync(o => o.OrderId == model.OrderId);
+
             if (order == null) return NotFound();
 
-            string newStatus = order.Status;
-            bool canAdvance = true;
-            bool shouldUpdateShipping = false;
-
-            switch (order.Status)
+            // Chỉ xử lý khi chuyển từ "Chờ xác nhận/Đang xử lý" -> "Đang giao"
+            if (order.Status == "Chờ xác nhận" || order.Status == "Đang xử lý")
             {
-                case "Đang xử lý":
-                case "Chờ xác nhận":
-                    newStatus = "Đang giao";
-                    shouldUpdateShipping = true;
-                    break;
+                using (var transaction = _context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // 1. Trừ kho (QUAN TRỌNG)
+                        if (!await CheckAndDeductStock(order.OrderId))
+                        {
+                            return RedirectToAction("Details", new { id = order.OrderId });
+                        }
 
-                case "Đang giao":
-                    // ĐỒNG BỘ TRẠNG THÁI CUỐI CÙNG
-                    newStatus = "Đã giao";
-                    shouldUpdateShipping = true;
-                    break;
+                        // 2. Update trạng thái Order
+                        order.Status = "Đang giao";
+                        _context.Orders.Update(order);
 
-                case "Đã giao":
-                case "Đã hủy":
-                    canAdvance = false;
-                    break;
+                        // 3. Tạo bản ghi Shipping
+                        var shipping = new Shipping
+                        {
+                            OrderId = order.OrderId,
+                            Carrier = model.Carrier, // Lấy từ Modal
+                            TrackingNumber = GetTrackingPrefix(model.Carrier) + DateTime.Now.ToString("ddMM") + order.OrderId,
+                            ShippedDate = DateTime.Now,
+                            EstimatedDelivery = model.EstimatedDate, // Lấy từ Modal
+                            Status = "Đang vận chuyển",
+                            Note = $"Đã bàn giao cho {model.Carrier}"
+                        };
+                        _context.Shippings.Add(shipping);
+
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        TempData["SuccessMessage"] = $"Đơn hàng #{order.OrderId} đã được giao cho {model.Carrier}.";
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                    }
+                }
             }
 
-            if (canAdvance && order.Status != newStatus)
+            return RedirectToAction("Details", new { id = model.OrderId });
+        }
+
+        // ============================================================
+        // 4. HOÀN TẤT ĐƠN HÀNG (Đang giao -> Đã giao)
+        // ============================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmDelivered(int orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.Payments)
+                .Include(o => o.Shipping)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order != null && order.Status == "Đang giao")
             {
-                try
+                // 1. Update Order
+                order.Status = "Đã giao";
+
+                // 2. Update Shipping DeliveredDate
+                if (order.Shipping != null)
                 {
-                    // 1. Kiểm tra và trừ tồn kho (CHỈ ÁP DỤNG KHI CHUYỂN SANG ĐANG GIAO)
-                    if (newStatus == "Đang giao")
-                    {
-                        if (!await CheckAndDeductStock(orderId))
-                        {
-                            return RedirectToAction("Details", new { id = orderId });
-                        }
-                    }
-
-                    // 2. Cập nhật trạng thái Order
-                    order.Status = newStatus;
-                    _context.Orders.Update(order);
-
-                    // 3. Cập nhật bảng Shipping (Nếu cần)
-                    if (shouldUpdateShipping)
-                    {
-                        var shipping = await _context.Shippings.FirstOrDefaultAsync(s => s.OrderId == orderId);
-
-                        if (shipping == null && newStatus == "Đang giao")
-                        {
-                            // Tạo mới bản ghi Shipping (Thêm Note để tránh lỗi NULL)
-                            _context.Shippings.Add(new Shipping
-                            {
-                                OrderId = orderId,
-                                Carrier = "Viettel Post",
-                                TrackingNumber = "VT" + orderId + DateTime.Now.ToString("ddMM"),
-                                ShippedDate = DateTime.Now,
-                                EstimatedDelivery = DateTime.Now.AddDays(3),
-                                Status = "Đang vận chuyển",
-                                Note = $"Bắt đầu vận chuyển đơn hàng #{orderId}"
-                            });
-                        }
-                        else if (shipping != null && newStatus == "Đã giao")
-                        {
-                            // Cập nhật DeliveredDate khi hoàn thành
-                            shipping.Status = "Đã giao";
-                            shipping.DeliveredDate = DateTime.Now;
-                            _context.Shippings.Update(shipping);
-                        }
-                    }
-
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = $"Đã cập nhật trạng thái đơn hàng #{orderId} thành '{newStatus}'.";
+                    order.Shipping.Status = "Giao thành công";
+                    order.Shipping.DeliveredDate = DateTime.Now;
                 }
-                catch (DbUpdateConcurrencyException)
+
+                // 3. Update Payment (Nếu là COD -> Đã thanh toán)
+                var payment = order.Payments.FirstOrDefault();
+                if (payment != null && payment.PaymentMethod == "COD" && payment.PaymentStatus != "Đã thanh toán")
                 {
-                    TempData["ErrorMessage"] = "Lỗi đồng bộ dữ liệu. Đơn hàng có thể đã được cập nhật bởi người khác.";
+                    payment.PaymentStatus = "Đã thanh toán";
+                    payment.PaymentDate = DateTime.Now;
                 }
-                catch (Exception ex)
-                {
-                    TempData["ErrorMessage"] = "Có lỗi xảy ra khi lưu dữ liệu. Chi tiết lỗi: " + ex.Message;
-                }
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Xác nhận giao hàng thành công!";
             }
             else
             {
-                TempData["ErrorMessage"] = "Không thể cập nhật trạng thái này.";
+                TempData["ErrorMessage"] = "Trạng thái đơn hàng không hợp lệ.";
             }
 
             return RedirectToAction("Details", new { id = orderId });
         }
 
-        // ======================================================
-        // HÀM NGHIỆP VỤ: CHECK VÀ TRỪ TỒN KHO (FIXED)
-        // ======================================================
+        // ============================================================
+        // 5. HỦY ĐƠN HÀNG (Hoàn trả kho)
+        // ============================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int orderId, string cancelReason)
+        {
+            var order = await _context.Orders.Include(o => o.OrderDetails).FirstOrDefaultAsync(o => o.OrderId == orderId);
+            if (order == null || order.Status == "Đã giao") return RedirectToAction("Details", new { id = orderId });
+
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                try
+                {
+                    // Nếu đang giao (đã trừ kho) -> Phải cộng lại kho
+                    if (order.Status == "Đang giao")
+                    {
+                        foreach (var item in order.OrderDetails)
+                        {
+                            var variant = await _context.ProductVariants.FindAsync(item.VariantId);
+                            if (variant != null) variant.Stock += item.Quantity ?? 0;
+                        }
+                    }
+
+                    order.Status = "Đã hủy";
+                    // Có thể lưu cancelReason vào bảng Note hoặc Log nếu cần
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    TempData["SuccessMessage"] = "Đã hủy đơn hàng.";
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    TempData["ErrorMessage"] = "Lỗi hủy đơn: " + ex.Message;
+                }
+            }
+            return RedirectToAction("Details", new { id = orderId });
+        }
+
+        // --- Helper: Kiểm tra và trừ kho ---
         private async Task<bool> CheckAndDeductStock(int orderId)
         {
-            var orderItems = await _context.OrderDetails
-                .Where(od => od.OrderId == orderId)
-                .Select(od => new { od.VariantId, od.Quantity })
-                .ToListAsync();
-
+            var orderItems = await _context.OrderDetails.Where(od => od.OrderId == orderId).ToListAsync();
             foreach (var item in orderItems)
             {
-                var variant = await _context.ProductVariants.FindAsync(item.VariantId);
-                int quantity = item.Quantity ?? 0;
-
-                if (variant == null)
+                var variant = await _context.ProductVariants.Include(v => v.Product).FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
+                if (variant == null || variant.Stock < item.Quantity)
                 {
-                    TempData["ErrorMessage"] = $"Lỗi dữ liệu: Không tìm thấy biến thể sản phẩm (VariantId: {item.VariantId}) trong kho.";
+                    TempData["ErrorMessage"] = $"Sản phẩm {variant?.Product?.Name ?? "Unknown"} không đủ tồn kho.";
                     return false;
                 }
-
-                if (variant.Stock < quantity)
-                {
-                    var productInfo = await _context.Products
-                        .Where(p => p.ProductId == variant.ProductId)
-                        .Select(p => new { p.Name, variant.Color, variant.Storage, variant.Stock })
-                        .FirstOrDefaultAsync();
-
-                    TempData["ErrorMessage"] = $"Không đủ tồn kho cho sản phẩm: {productInfo?.Name} ({productInfo?.Color}, {productInfo?.Storage}). Tồn kho hiện tại: {productInfo?.Stock}.";
-                    return false;
-                }
-
-                variant.Stock -= quantity;
-                _context.ProductVariants.Update(variant);
+                variant.Stock -= item.Quantity ?? 0;
             }
-
             return true;
         }
+
+        // --- Helper: Prefix mã vận đơn ---
+        private string GetTrackingPrefix(string carrier) => carrier switch
+        {
+            "Giao Hàng Nhanh" => "GHN",
+            "Giao Hàng Tiết Kiệm" => "GHTK",
+            "Viettel Post" => "VT",
+            "J&T Express" => "JT",
+            "Shopee Express" => "SPX",
+            _ => "SHIP"
+        };
     }
 }

@@ -1,0 +1,491 @@
+﻿@model WebBanDienThoai.Models.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Tạo chuỗi hiển thị địa chỉ ban đầu
+    string displayAddr = "";
+    if (Model.AddressId > 0)
+    {
+        // Hiển thị: "Số nhà, Phường, Quận, Thành phố"
+        displayAddr = $"{Model.ReceiverAddressDetail}, {Model.ReceiverDistrict}, {Model.ReceiverCity}";
+    }
+
+    var selectedIdsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedCartItemIds));
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/checkout.css" />
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+}
+
+<input type="hidden" id="bankId" value="@ViewBag.BankId" />
+<input type="hidden" id="accountNo" value="@ViewBag.AccountNo" />
+<input type="hidden" id="accountName" value="@ViewBag.AccountName" />
+<input type="hidden" id="qrTemplate" value="@ViewBag.Template" />
+
+<div class="checkout-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-7">
+
+                <div class="checkout-card">
+                    <h3 class="card-title">
+                        <i class="fa-solid fa-location-dot text-danger"></i> Thông tin nhận hàng
+                    </h3>
+
+                    <div class="address-box">
+                        @if (Model.AddressId > 0)
+                        {
+                            <span class="btn-change-address" onclick="openAddressListModal()">Thay đổi</span>
+                            <p style="font-weight: 700; margin-bottom: 5px;">@Model.ReceiverName - @Model.ReceiverPhone</p>
+                            <p style="margin: 0; color: #555;" id="displayAddress">@displayAddr</p>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning d-flex justify-content-between align-items-center mb-0">
+                                <span>Bạn chưa có địa chỉ nhận hàng.</span>
+                                <button class="btn btn-sm btn-primary" onclick="openAddMode()"><i class="fas fa-plus"></i> Thêm mới</button>
+                            </div>
+                            <p style="margin-top: 10px; color: #555;" id="displayAddress"></p>
+                        }
+
+                        <input type="hidden" id="inputName" value="@Model.ReceiverName" />
+                        <input type="hidden" id="inputPhone" value="@Model.ReceiverPhone" />
+
+                        <input type="hidden" id="inputDetail" value="@Model.ReceiverAddressDetail" />
+                        <input type="hidden" id="inputWard" value="@Model.ReceiverWard" />
+                        <input type="hidden" id="inputDistrict" value="@Model.ReceiverDistrict" />
+                        <input type="hidden" id="inputCity" value="@Model.ReceiverCity" />
+                    </div>
+                </div>
+
+                <div class="checkout-card">
+                    <h3 class="card-title"><i class="fa-solid fa-wallet text-primary"></i> Thanh toán</h3>
+
+                    <label class="payment-option active" id="opt-cod">
+                        <input type="radio" name="paymentMethod" value="COD" checked onchange="changePayment('COD')">
+                        <i class="fa-solid fa-money-bill-wave text-success fs-3"></i>
+                        <div class="ms-2">
+                            <div class="fw-bold">Thanh toán khi nhận hàng (COD)</div>
+                            <div class="text-muted small">Thanh toán tiền mặt cho shipper</div>
+                        </div>
+                    </label>
+
+                    <label class="payment-option" id="opt-banking">
+                        <input type="radio" name="paymentMethod" value="Banking" onchange="changePayment('Banking')">
+                        <i class="fa-solid fa-qrcode text-primary fs-3"></i>
+                        <div class="ms-2">
+                            <div class="fw-bold">Chuyển khoản ngân hàng (QR Code)</div>
+                            <div class="text-muted small">Quét mã VietQR để thanh toán</div>
+                        </div>
+                    </label>
+
+                    <div class="qr-payment-box" id="qrBox">
+                        <p class="text-danger fw-bold mb-2">Vui lòng quét mã để thanh toán</p>
+                        <img id="vietqrImg" src="" class="qr-img" alt="QR Code" style="min-height: 200px; background: #eee;">
+                        <p class="small mt-2 text-muted">Nội dung: <strong id="qrContent">...</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="checkout-card" style="position: sticky; top: 100px;">
+                    <h3 class="card-title">Đơn hàng (@Model.CartItems.Count sản phẩm)</h3>
+
+                    <div style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+                        @foreach (var item in Model.CartItems)
+                        {
+                            <div class="order-item-row">
+                                <div class="d-flex gap-2">
+                                    <img src="@item.ImageUrl" width="50" height="50" style="object-fit: contain; border: 1px solid #eee; border-radius: 4px;">
+                                    <div>
+                                        <div class="fw-bold text-truncate" style="max-width: 180px;">@item.ProductName</div>
+                                        <div class="text-muted small">@item.VariantName <span class="fw-bold text-dark">x @item.Quantity</span></div>
+                                    </div>
+                                </div>
+                                <div class="fw-bold text-danger">@item.TotalPrice.ToString("N0")₫</div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="couponCode" placeholder="Mã giảm giá">
+                        <button class="btn btn-outline-secondary" onclick="applyCoupon()">Áp dụng</button>
+                    </div>
+
+                    <div class="summary-row"><span>Tạm tính:</span><span>@Model.SubTotal.ToString("N0")₫</span></div>
+                    <div class="summary-row"><span>Vận chuyển:</span><span>Miễn phí</span></div>
+                    <div class="summary-row text-success" id="discountRow" style="display: none;">
+                        <span>Giảm giá:</span><span id="discountValue">-0₫</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Tổng cộng:</span>
+                        <span id="grandTotal" data-base="@Model.SubTotal">@Model.SubTotal.ToString("N0")₫</span>
+                    </div>
+
+                    <button class="btn-place-order" onclick="placeOrder()">ĐẶT HÀNG NGAY</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="listAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Địa chỉ của tôi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="addressListContainer">
+                <div class="text-center py-5"><div class="spinner-border text-danger"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="formAddressModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formModalTitle">Thêm địa chỉ mới</h5>
+                <button type="button" class="btn-close" onclick="closeFormModal()"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <input type="hidden" id="hiddenAddressId" value="0" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tỉnh/Thành <span class="text-danger">*</span></label>
+                            <select class="form-select" id="province"><option value="">Chọn</option></select>
+                            <input type="hidden" id="provinceName" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Quận/Huyện <span class="text-danger">*</span></label>
+                            <select class="form-select" id="district" disabled><option value="">Chọn</option></select>
+                            <input type="hidden" id="districtName" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Phường/Xã <span class="text-danger">*</span></label>
+                            <select class="form-select" id="ward" disabled><option value="">Chọn</option></select>
+                            <input type="hidden" id="wardName" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ cụ thể <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="streetDetail" placeholder="Số nhà, tên đường...">
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isDefaultAddress">
+                        <label class="form-check-label" for="isDefaultAddress">Đặt làm địa chỉ mặc định</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeFormModal()">Trở lại</button>
+                <button type="button" class="btn btn-primary" onclick="submitAddressForm()">Lưu địa chỉ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        var selectedCartItemIds = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedCartItemIds));
+    </script>
+
+    <script>
+        // ======================================================
+        // 1. QUẢN LÝ MODAL (Fix lỗi Bootstrap)
+        // ======================================================
+        function getModal(id) {
+            var el = document.getElementById(id);
+            return bootstrap.Modal.getOrCreateInstance(el);
+        }
+
+        function openAddressListModal() {
+            getModal('listAddressModal').show();
+            loadAddressList();
+        }
+
+        function loadAddressList() {
+            $('#addressListContainer').html('<div class="text-center py-5"><div class="spinner-border text-danger"></div></div>');
+            $.get('/AddressCustomer/GetList', function(html) {
+                $('#addressListContainer').html(html);
+            });
+        }
+
+        function openAddMode() {
+            $('#formModalTitle').text('Thêm địa chỉ mới');
+            $('#hiddenAddressId').val(0);
+            $('#addressForm')[0].reset();
+            $("#province").val('').trigger('change'); // Reset API dropdown
+
+            getModal('listAddressModal').hide();
+            getModal('formAddressModal').show();
+        }
+
+        function openEditAddress(id) {
+            $.get('/AddressCustomer/GetDetail?id=' + id, function(res) {
+                if(res.success) {
+                    let addr = res.data;
+                    $('#formModalTitle').text('Cập nhật địa chỉ');
+                    $('#hiddenAddressId').val(addr.addressID);
+
+                    // Tách lấy số nhà
+                    let parts = addr.street.split(',');
+                    $('#streetDetail').val(parts[0].trim());
+
+                    $('#isDefaultAddress').prop('checked', addr.isDefault);
+
+                    // Reset dropdown để người dùng chọn lại (Do API load async)
+                    $("#province").val('').trigger('change');
+
+                    getModal('listAddressModal').hide();
+                    getModal('formAddressModal').show();
+                }
+            });
+        }
+
+        function closeFormModal() {
+            getModal('formAddressModal').hide();
+            // Nếu chưa có địa chỉ nào thì không hiện list, ngược lại thì hiện
+            if ($('#displayAddress').text() !== "") {
+                getModal('listAddressModal').show();
+                loadAddressList();
+            }
+        }
+
+        // ======================================================
+        // 2. LOGIC ĐỊA CHỈ (Select & Submit)
+        // ======================================================
+
+        // Khi user chọn 1 dòng trong danh sách
+        function selectAddress(street, district, city, id) {
+            // Hiển thị UI
+            let fullAddr = `${street}, ${district}, ${city}`;
+            $('#displayAddress').text(fullAddr);
+
+            // Tách dữ liệu vào Input Ẩn
+            let parts = street.split(',');
+            let detail = parts[0].trim();
+            let ward = parts.length > 1 ? parts[1].trim() : "";
+
+            $('#inputDetail').val(detail);
+            $('#inputWard').val(ward);
+            $('#inputDistrict').val(district);
+            $('#inputCity').val(city);
+
+            // Ẩn nút thêm mới to, hiện nút thay đổi
+            $('.alert-warning').hide();
+            $('.address-box').show(); // Đảm bảo box hiển thị
+
+            getModal('listAddressModal').hide();
+        }
+
+        function submitAddressForm() {
+            let id = parseInt($('#hiddenAddressId').val());
+            let city = $("#provinceName").val();
+            let district = $("#districtName").val();
+            let ward = $("#wardName").val();
+            let detail = $("#streetDetail").val();
+            let isDefault = $("#isDefaultAddress").is(":checked");
+
+            if(!city || !district || !ward || !detail) {
+                Swal.fire("Thiếu thông tin", "Vui lòng chọn đầy đủ Tỉnh/Huyện/Xã và địa chỉ chi tiết", "warning");
+                return;
+            }
+
+            let fullStreet = `${detail}, ${ward}`;
+
+            let data = {
+                AddressId: id,
+                City: city,
+                District: district,
+                Street: fullStreet,
+                IsDefault: isDefault
+            };
+
+            let url = id === 0 ? '/AddressCustomer/Create' : '/AddressCustomer/Update';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if(res.success) {
+                        Swal.fire("Thành công", res.message, "success");
+                        closeFormModal();
+
+                        // Nếu chưa có địa chỉ nào hoặc set mặc định -> Chọn luôn
+                        if(isDefault || $('#displayAddress').text() === "") {
+                            selectAddress(fullStreet, district, city, 0);
+                            // Nếu đang ở trạng thái "chưa có địa chỉ" thì reload để UI cập nhật đẹp hơn
+                            if ($('#inputCity').val() === "") location.reload();
+                        }
+                    } else {
+                        Swal.fire("Lỗi", res.message, "error");
+                    }
+                },
+                error: function() {
+                     Swal.fire("Lỗi", "Lỗi kết nối server", "error");
+                }
+            });
+        }
+
+        function deleteAddress(id) {
+            Swal.fire({
+                title: 'Xóa địa chỉ?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33'
+            }).then((r) => {
+                if (r.isConfirmed) $.post('/AddressCustomer/Delete', { id: id }, () => loadAddressList());
+            });
+        }
+
+        // ======================================================
+        // 3. API ĐỊA CHÍNH VIỆT NAM
+        // ======================================================
+        const host = "https://provinces.open-api.vn/api/";
+        var callAPI = (api) => axios.get(api).then((res) => renderData(res.data, "province"));
+        callAPI(host + "?depth=1");
+        var callApiDistrict = (api) => axios.get(api).then((res) => renderData(res.data.districts, "district"));
+        var callApiWard = (api) => axios.get(api).then((res) => renderData(res.data.wards, "ward"));
+
+        var renderData = (array, select) => {
+            let row = '<option value="">Chọn</option>';
+            array.forEach(el => row += `<option data-name="${el.name}" value="${el.code}">${el.name}</option>`);
+            document.querySelector("#" + select).innerHTML = row;
+        }
+
+        $("#province").change(function() {
+            $("#provinceName").val($(this).find(':selected').data('name'));
+            $("#district").html('<option value="">Chọn</option>').prop('disabled', false);
+            $("#ward").html('<option value="">Chọn</option>').prop('disabled', true);
+            if(this.value) callApiDistrict(host + "p/" + this.value + "?depth=2");
+        });
+        $("#district").change(function() {
+            $("#districtName").val($(this).find(':selected').data('name'));
+            $("#ward").html('<option value="">Chọn</option>').prop('disabled', false);
+            if(this.value) callApiWard(host + "d/" + this.value + "?depth=2");
+        });
+        $("#ward").change(function() {
+            $("#wardName").val($(this).find(':selected').data('name'));
+        });
+
+        // ======================================================
+        // 4. THANH TOÁN & ĐẶT HÀNG (Logic quan trọng)
+        // ======================================================
+        function changePayment(method) {
+            $('.payment-option').removeClass('active');
+
+            if(method === 'COD') {
+                $('#opt-cod').addClass('active');
+                $('#qrBox').slideUp();
+            } else {
+                $('#opt-banking').addClass('active');
+                $('#qrBox').slideDown();
+
+                // Tạo QR Code
+                let amount = parseInt($('#grandTotal').text().replace(/\D/g, ''));
+                let bankId = $('#bankId').val();
+                let accNo = $('#accountNo').val();
+                let tpl = $('#qrTemplate').val();
+                let phone = $('#inputPhone').val() || "KHACHHANG";
+                let content = encodeURIComponent("THANHTOAN " + phone);
+
+                let url = `https://img.vietqr.io/image/${bankId}-${accNo}-${tpl}.png?amount=${amount}&addInfo=${content}`;
+                $('#vietqrImg').attr('src', url);
+            }
+        }
+
+        function applyCoupon() {
+            let code = $('#couponCode').val();
+            if(!code) return;
+
+            $.post('/OrderCustomer/CheckCoupon', { code: code }, function(res) {
+                if(res.success) {
+                    Swal.fire("Thành công", res.message, "success");
+
+                    let base = parseFloat($('#grandTotal').data('base'));
+                    let total = base - res.discount;
+                    if(total < 0) total = 0;
+
+                    $('#discountRow').show();
+                    $('#discountValue').text('-' + res.discount.toLocaleString('vi-VN') + '₫');
+                    $('#grandTotal').text(total.toLocaleString('vi-VN') + '₫');
+
+                    // Reload QR nếu đang chọn Banking
+                    if($('input[name="paymentMethod"]:checked').val() === 'Banking') changePayment('Banking');
+                } else {
+                    Swal.fire("Lỗi", res.message, "error");
+                }
+            });
+        }
+
+        function placeOrder() {
+            // Kiểm tra danh sách sản phẩm
+            if (!selectedCartItemIds || selectedCartItemIds.length === 0) {
+                Swal.fire("Lỗi", "Không tìm thấy sản phẩm nào để thanh toán.", "error");
+                return;
+            }
+
+            let data = {
+                ReceiverName: $('#inputName').val(),
+                ReceiverPhone: $('#inputPhone').val(),
+
+                // Địa chỉ chi tiết
+                ReceiverAddressDetail: $('#inputDetail').val(),
+                ReceiverWard: $('#inputWard').val(),
+                ReceiverDistrict: $('#inputDistrict').val(),
+                ReceiverCity: $('#inputCity').val(),
+
+                PaymentMethod: $('input[name="paymentMethod"]:checked').val(),
+                CouponCode: $('#couponCode').val(),
+
+                // QUAN TRỌNG: Gửi danh sách ID sản phẩm cần mua về Server
+                SelectedCartItemIds: selectedCartItemIds
+            };
+
+            if(!data.ReceiverCity || !data.ReceiverDistrict) {
+                Swal.fire("Thiếu thông tin", "Vui lòng chọn địa chỉ nhận hàng", "warning");
+                return;
+            }
+
+            let btn = $('.btn-place-order');
+            let oldText = btn.text();
+            btn.prop('disabled', true).text('ĐANG XỬ LÝ...');
+
+            $.ajax({
+                url: '/OrderCustomer/PlaceOrder',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if(res.success) {
+                        Swal.fire({
+                            title: "Thành công!",
+                            text: "Cảm ơn bạn đã đặt hàng.",
+                            icon: "success",
+                            confirmButtonColor: "#d70018"
+                        }).then(() => {
+                             // Chuyển về trang chủ hoặc trang lịch sử đơn hàng
+                             window.location.href = "/Home/Index";
+                        });
+                    } else {
+                        Swal.fire("Thất bại", res.message, "error");
+                        btn.prop('disabled', false).text(oldText);
+                    }
+                },
+                error: function() {
+                    Swal.fire("Lỗi", "Lỗi kết nối server", "error");
+                    btn.prop('disabled', false).text(oldText);
+                }
+            });
+        }
+    </script>
+}

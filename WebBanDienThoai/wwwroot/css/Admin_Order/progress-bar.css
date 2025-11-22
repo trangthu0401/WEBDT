@@ -7,48 +7,51 @@
     justify-content: space-between;
     align-items: center;
     position: relative;
-    max-width: 600px; /* Giới hạn chiều rộng */
-    margin: 30px auto;
+    max-width: 800px; /* Tăng rộng hơn chút để chữ không bị dính */
+    margin: 40px auto;
+    padding: 0 10px;
 }
 
-    /* Đường kẻ ngang màu xám */
+    /* Đường kẻ ngang màu xám (Nền) */
     .progress-track::before {
         content: '';
         position: absolute;
         top: 50%;
         left: 0;
         right: 0;
-        height: 3px;
+        height: 4px;
         background-color: #e0e0e0;
         transform: translateY(-50%);
         z-index: 1;
+        border-radius: 4px;
     }
 
-/* Đường kẻ màu xanh lá (tiến trình) */
+/* Đường kẻ màu xanh lá (Tiến trình thực tế) */
 .progress-line {
     position: absolute;
     top: 50%;
     left: 0;
-    height: 3px;
+    height: 4px;
     background-color: #28a745; /* Màu xanh lá */
     transform: translateY(-50%);
     z-index: 2;
     transition: width 0.5s ease;
+    border-radius: 4px;
 }
 
-/* Kiểu chung cho các bước (hình tròn) */
+/* Kiểu chung cho các bước (Hình tròn) */
 .progress-step {
     position: relative;
     z-index: 3;
-    width: 40px;
-    height: 40px;
+    width: 45px; /* Tăng size chút cho đẹp */
+    height: 45px;
     background-color: #fff;
-    border: 3px solid #e0e0e0; /* Viền xám mặc định */
+    border: 4px solid #e0e0e0; /* Viền xám mặc định */
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.5s ease;
+    transition: all 0.5s ease;
 }
 
     /* Icon bên trong hình tròn */
@@ -61,26 +64,45 @@
     /* Chữ mô tả (Chờ xác nhận, Đang giao...) */
     .progress-step .step-label {
         position: absolute;
-        bottom: -30px; /* Nằm bên dưới hình tròn */
-        width: 150px; /* Đủ rộng để không vỡ chữ */
+        top: 55px; /* Đẩy xuống dưới */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
         text-align: center;
-        font-size: 14px;
-        color: #999; /* Màu xám chữ */
+        font-size: 13px;
+        font-weight: 600;
+        color: #999;
         transition: color 0.5s ease;
+        background: #fff; /* Nền trắng để che đường kẻ nếu bị đè */
+        padding: 2px 0;
     }
 
     /* === TRẠNG THÁI ACTIVE === */
 
-    /* Khi một bước đã "active" (hoàn thành) */
+    /* Khi một bước đã "active" */
     .progress-step.active {
         border-color: #28a745; /* Viền xanh lá */
+        box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1); /* Hiệu ứng shadow nhẹ */
     }
 
         .progress-step.active i {
-            color: #28a745; /* Icon xanh lá */
+            color: #28a745;
         }
 
         .progress-step.active .step-label {
-            color: #000; /* Chữ đen, rõ ràng */
-            font-weight: 600;
+            color: #000;
+            font-weight: 700;
+        }
+
+    /* Trạng thái HỦY (Màu đỏ) */
+    .progress-step.cancelled {
+        border-color: #dc3545;
+    }
+
+        .progress-step.cancelled i {
+            color: #dc3545;
+        }
+
+        .progress-step.cancelled .step-label {
+            color: #dc3545;
         }

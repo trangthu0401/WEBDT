@@ -1,0 +1,74 @@
+﻿@model List<WebBanDienThoai.Models.Address>
+
+<div class="list-group shadow-sm rounded">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var item in Model)
+        {
+            // Tạo chuỗi địa chỉ đầy đủ để hiển thị
+            var fullAddress = $"{item.Street}, {item.District}, {item.City}";
+
+            <div class="list-group-item list-group-item-action p-3 border-bottom position-relative">
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div class="flex-grow-1"
+                         style="cursor: pointer;"
+                         onclick="selectAddress('@item.Street', '@item.District', '@item.City', @item.AddressID)">
+
+                        <div class="d-flex align-items-center gap-2">
+                            <strong class="text-dark">@item.Street</strong>
+                            @if (item.IsDefault)
+                            {
+                                <span class="badge bg-danger text-white" style="font-size: 10px; font-weight: 500;">Mặc định</span>
+                            }
+                        </div>
+
+                        <div class="text-muted small mt-1">
+                            <span>@item.District</span>, <span>@item.City</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 align-items-center">
+                        <button class="btn btn-sm btn-light text-primary border"
+                                title="Sửa"
+                                onclick="event.stopPropagation(); openEditAddress(@item.AddressID)">
+                            <i class="fas fa-pen"></i>
+                        </button>
+
+                        <button class="btn btn-sm btn-light text-danger border"
+                                title="Xóa"
+                                onclick="event.stopPropagation(); deleteAddress(@item.AddressID)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-map-marker-alt fa-3x mb-3 text-secondary" style="opacity: 0.5;"></i>
+            <p class="mb-0">Bạn chưa lưu địa chỉ nào.</p>
+        </div>
+    }
+</div>
+
+<div class="d-grid mt-3">
+    <button class="btn btn-outline-danger py-2 dashed-border" onclick="openAddMode()">
+        <i class="fas fa-plus-circle me-1"></i> Thêm địa chỉ mới
+    </button>
+</div>
+
+<style>
+    .dashed-border {
+        border-style: dashed;
+        border-width: 1px;
+        transition: all 0.2s;
+    }
+
+        .dashed-border:hover {
+            background-color: #fff5f5;
+            border-style: solid;
+        }
+</style>

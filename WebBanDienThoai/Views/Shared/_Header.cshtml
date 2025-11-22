@@ -1,7 +1,21 @@
-﻿@*
-    File: /Views/Shared/_Header.cshtml
-    (File này giữ nguyên, không cần sửa đổi)
-*@
+﻿@using System.Security.Claims
+
+@{
+    Layout = null;
+    var currentSort = ViewData["CurrentSort"] as string;
+    var currentSearch = ViewData["CurrentSearch"] as string;
+}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rabit Store - Điện thoại chính hãng giá tốt</title>
+    <link rel="stylesheet" href="~/css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+
 <header class="rabit-header">
     <div class="header-top">
         <div class="container-fluid header-top-container">

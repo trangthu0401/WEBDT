@@ -4,159 +4,225 @@
     ViewData["Title"] = $"Chi tiết Đơn hàng #{Model.OrderId}";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 
-    // --- Logic cho thanh trạng thái ĐÃ SỬA ---
-    int progressPercent = 0;
-    bool step1Active = true; // Chờ xác nhận/Đang xử lý
-    bool step2Active = false; // Đang giao
-    bool step3Active = false; // Đã giao
+    // --- Logic hiển thị Thanh tiến trình (Progress Bar) ---
+    string progressWidth = "0%";
+    bool s1 = true, s2 = false, s3 = false, s4 = false;
+    bool isCancelled = Model.OrderStatus == "Đã hủy";
 
     switch (Model.OrderStatus)
     {
         case "Chờ xác nhận":
         case "Đang xử lý":
-            progressPercent = 25;
-            step2Active = false;
+            progressWidth = "33%";
+            s2 = true;
             break;
         case "Đang giao":
-            progressPercent = 50;
-            step2Active = true;
+            progressWidth = "66%";
+            s2 = true; s3 = true;
             break;
         case "Đã giao":
-            progressPercent = 100;
-            step2Active = true;
-            step3Active = true;
-            break;
-        case "Đã hủy":
-            progressPercent = 0;
-            step1Active = true; // Vẫn coi bước 1 là trạng thái ban đầu
-            break;
-        default:
-            progressPercent = 0;
-            step1Active = false;
+            progressWidth = "100%";
+            s2 = true; s3 = true; s4 = true;
             break;
     }
 }
 
-<link href="~/css/Admin_Order/progress-bar.css?v=1" rel="stylesheet" />
+<style>
+    .progress-track {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 10px;
+    }
+
+        .progress-track::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-color: #e0e0e0;
+            transform: translateY(-50%);
+            z-index: 1;
+            border-radius: 4px;
+        }
+
+    .progress-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        height: 4px;
+        background-color: #28a745;
+        transform: translateY(-50%);
+        z-index: 2;
+        transition: width 0.5s ease;
+        border-radius: 4px;
+    }
+
+    .progress-step {
+        position: relative;
+        z-index: 3;
+        width: 45px;
+        height: 45px;
+        background-color: #fff;
+        border: 4px solid #e0e0e0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.5s ease;
+    }
+
+        .progress-step i {
+            font-size: 18px;
+            color: #e0e0e0;
+            transition: color 0.5s ease;
+        }
+
+        .progress-step .step-label {
+            position: absolute;
+            top: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #999;
+            background: #fff;
+            padding: 2px 0;
+        }
+
+        .progress-step.active {
+            border-color: #28a745;
+            box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1);
+        }
+
+            .progress-step.active i {
+                color: #28a745;
+            }
+
+            .progress-step.active .step-label {
+                color: #000;
+                font-weight: 700;
+            }
+</style>
 
 <div class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h2 class="fw-bold mb-0">Chi tiết Đơn hàng #@Model.OrderId</h2>
-
         <div class="d-flex gap-2">
             <a asp-action="Index" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Quay lại
             </a>
 
-            @* Nút hiển thị nếu trạng thái KHÔNG phải là Đã giao và KHÔNG phải là Đã hủy *@
-            @if (Model.OrderStatus != "Đã giao" && Model.OrderStatus != "Đã hủy")
+            @if (!isCancelled && Model.OrderStatus != "Đã giao")
             {
-                <form asp-action="AdvanceStatus" method="post" class="d-inline"
-                      data-confirm="true"
-                      data-confirm-title="@(Model.OrderStatus == "Đang giao" ? "Xác nhận đã giao hàng" : "Xác nhận đơn hàng")"
-                      data-confirm-message="@(Model.OrderStatus == "Đang giao" ? "Bạn có chắc chắn muốn xác nhận đơn hàng này ĐÃ GIAO THÀNH CÔNG không?" : "Bạn có chắc chắn muốn xác nhận và giao đơn hàng này không?")"
-                      data-confirm-button-text="@(Model.OrderStatus == "Đang giao" ? "Xác nhận Đã giao" : "Xác nhận")"
-                      data-confirm-button-class="@(Model.OrderStatus == "Đang giao" ? "btn-success" : "btn-primary")"
-                      data-confirm-header-class="@(Model.OrderStatus == "Đang giao" ? "bg-success text-white" : "bg-primary text-white")">
+                @if (Model.OrderStatus == "Chờ xác nhận" || Model.OrderStatus == "Đang xử lý")
+                {
+                    <button type="button" class="btn btn-primary" onclick="openShippingModal()">
+                        <i class="bi bi-truck me-1"></i> Xác nhận & Giao hàng
+                    </button>
 
-                    <input type="hidden" name="orderId" value="@Model.OrderId" />
-
-                    @* Nút 1: Xác nhận & Giao hàng (Từ Chờ xác nhận/Đang xử lý) *@
-                    @if (Model.OrderStatus == "Chờ xác nhận" || Model.OrderStatus == "Đang xử lý")
-                    {
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-box-seam me-1"></i> Xác nhận & Giao hàng
-                        </button>
-                    }
-                    @* Nút 2: Xác nhận Đã giao (Từ Đang giao) *@
-                    else if (Model.OrderStatus == "Đang giao")
-                    {
-                        <button type="submit" class="btn btn-success">
+                    <button type="button" class="btn btn-danger" onclick="openCancelModal()">
+                        <i class="bi bi-x-circle me-1"></i> Hủy đơn
+                    </button>
+                }
+                else if (Model.OrderStatus == "Đang giao")
+                {
+                    <form asp-action="ConfirmDelivered" method="post" class="d-inline">
+                        <input type="hidden" name="orderId" value="@Model.OrderId" />
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Xác nhận khách đã nhận được hàng và thanh toán đủ?');">
                             <i class="bi bi-check-circle me-1"></i> Xác nhận Đã giao
                         </button>
-                    }
-                </form>
+                    </form>
+
+                    <button type="button" class="btn btn-danger" onclick="openCancelModal()">
+                        <i class="bi bi-x-circle me-1"></i> Hủy đơn
+                    </button>
+                }
             }
         </div>
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body p-4">
-            <div class="progress-track">
-                <div class="progress-line" style="width: @progressPercent%;"></div>
-
-                <div class="progress-step @(step1Active ? "active" : "")">
-                    <i class="bi bi-patch-check-fill"></i>
-                    <div class="step-label">Chờ xác nhận</div>
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body p-5">
+            @if (isCancelled)
+            {
+                <div class="alert alert-danger text-center fw-bold mb-0">
+                    <i class="bi bi-x-circle-fill me-2"></i> ĐƠN HÀNG ĐÃ BỊ HỦY
                 </div>
+            }
+            else
+            {
+                <div class="progress-track">
+                    <div class="progress-line" style="width: @progressWidth;"></div>
 
-                <div class="progress-step @(step2Active ? "active" : "")">
-                    <i class="bi bi-truck"></i>
-                    <div class="step-label">Đang giao</div>
+                    <div class="progress-step @(s1 ? "active" : "")">
+                        <i class="bi bi-cart-check-fill"></i>
+                        <div class="step-label">Đặt hàng</div>
+                    </div>
+                    <div class="progress-step @(s2 ? "active" : "")">
+                        <i class="bi bi-clipboard-check-fill"></i>
+                        <div class="step-label">Đã xác nhận</div>
+                    </div>
+                    <div class="progress-step @(s3 ? "active" : "")">
+                        <i class="bi bi-truck-front-fill"></i>
+                        <div class="step-label">Đang giao</div>
+                    </div>
+                    <div class="progress-step @(s4 ? "active" : "")">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div class="step-label">Hoàn tất</div>
+                    </div>
                 </div>
-
-                <div class="progress-step @(step3Active ? "active" : "")">
-                    <i class="bi bi-house-check-fill"></i>
-                    <div class="step-label">Đã giao</div>
-                </div>
-            </div>
+            }
         </div>
     </div>
 
     <div class="row g-4">
-
         <div class="col-lg-8">
             <div class="card shadow-sm">
-                <div class="card-header text-white" style="background-color: #e63737;">
-                    <i class="bi bi-basket-fill me-1"></i> Chi tiết Sản phẩm
+                <div class="card-header text-white bg-danger">
+                    <i class="bi bi-basket-fill me-1"></i> Danh sách Sản phẩm
                 </div>
                 <div class="card-body p-0">
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="py-3 ps-3">Sản phẩm</th>
-                                <th class="text-center">Đơn giá</th>
-                                <th class="text-center">Số lượng</th>
-                                <th class="text-center pe-3">Tổng</th>
+                                <th class="ps-4 py-3">Sản phẩm</th>
+                                <th class="text-center">Giá</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end pe-4">Tổng</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in Model.OrderItems)
                             {
-                                // --- LOGIC HIỂN THỊ ẢNH ĐÃ FIX LỖI ĐƯỜNG DẪN ---
-                                // item.ImageUrl có dạng /images/tên_file.jpg từ DB
-                                var imagePath = !string.IsNullOrEmpty(item.ImageUrl)
-                                ? $"~{item.ImageUrl}" // SỬA LỖI: Dùng @Url.Content(~) để map tới thư mục wwwroot
-                                : "~/images/productDefault.png";
-
-                                var totalItemPrice = item.UnitPrice * item.Quantity;
-
                                 <tr>
-                                    <td class="ps-3">
+                                    <td class="ps-4">
                                         <div class="d-flex align-items-center">
-                                            <img src="@Url.Content(imagePath)"
-                                                 alt="@item.ProductName"
-                                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
-
+                                            <img src="@Url.Content("~" + item.ImageUrl)" style="width: 50px; height: 50px; object-fit: contain; border: 1px solid #eee; border-radius: 4px;" />
                                             <div class="ms-3">
-                                                <strong class="d-block">@item.ProductName</strong>
-                                                <small class="text-muted">@item.Color, @item.Storage</small>
+                                                <div class="fw-bold">@item.ProductName</div>
+                                                <small class="text-muted">@item.Color - @item.Storage</small>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center">@item.UnitPrice.ToString("N0", new CultureInfo("vi-VN")) ₫</td>
+                                    <td class="text-center">@item.UnitPrice.ToString("N0")₫</td>
                                     <td class="text-center">@item.Quantity</td>
-                                    <td class="text-center pe-3 fw-bold">@totalItemPrice.ToString("N0", new CultureInfo("vi-VN")) ₫</td>
+                                    <td class="text-end pe-4 fw-bold">@((item.UnitPrice * item.Quantity).ToString("N0"))₫</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
-                                <td colspan="3" class="text-end fw-bold pe-3">Tổng cộng:</td>
-                                <td class="text-center fw-bold fs-5 pe-3">
-                                    @Model.TotalAmount.ToString("N0", new CultureInfo("vi-VN")) ₫
-                                </td>
+                                <td colspan="3" class="text-end fw-bold pe-3">Tổng tiền:</td>
+                                <td class="text-end pe-4 text-danger fw-bold fs-5">@Model.TotalAmount.ToString("N0")₫</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -165,43 +231,130 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <i class="bi bi-person-fill me-1"></i> Thông tin Người nhận
-                </div>
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light fw-bold">Người nhận</div>
                 <div class="card-body">
-                    <h6 class="text-muted">Tên người nhận</h6>
-                    <p class="fw-bold">@Model.ShippingFullName</p>
-
-                    <h6 class="text-muted">Số điện thoại</h6>
-                    <p class="fw-bold">@Model.ShippingPhone</p>
-
-                    <h6 class="text-muted">Địa chỉ giao hàng</h6>
-                    <p>@Model.ShippingFullAddress</p>
+                    <p class="mb-1 fw-bold">@Model.ShippingFullName</p>
+                    <p class="mb-1"><i class="bi bi-telephone me-1"></i> @Model.ShippingPhone</p>
+                    <p class="mb-0 text-muted small"><i class="bi bi-geo-alt me-1"></i> @Model.ShippingFullAddress</p>
                 </div>
             </div>
 
             <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <i class="bi bi-credit-card-fill me-1"></i> Thanh toán & Vận chuyển
-                </div>
+                <div class="card-header bg-light fw-bold">Vận chuyển & Thanh toán</div>
                 <div class="card-body">
-                    <h6 class="text-muted">Phương thức thanh toán</h6>
-                    <p>@Model.PaymentMethod</p>
-
-                    <h6 class="text-muted">Trạng thái thanh toán</h6>
-                    <p>@Model.PaymentStatus</p>
-
-                    <hr>
-
-                    <h6 class="text-muted">Đơn vị vận chuyển</h6>
-                    <p>@Model.Carrier</p>
-
-                    <h6 class="text-muted">Mã vận đơn</h6>
-                    <p>@Model.TrackingNumber</p>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Đơn vị vận chuyển</small>
+                        <strong>@Model.Carrier</strong>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Mã vận đơn</small>
+                        <span class="badge bg-info text-dark">@Model.TrackingNumber</span>
+                    </div>
+                    <hr />
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Thanh toán</small>
+                        <strong>@Model.PaymentMethod</strong>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Trạng thái</small>
+                        @if (Model.PaymentStatus == "Đã thanh toán")
+                        {
+                            <span class="badge bg-success">@Model.PaymentStatus</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">@Model.PaymentStatus</span>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
+
+<div class="modal fade" id="shippingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="StartShipping" method="post">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Tạo Vận Đơn</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="OrderId" value="@Model.OrderId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Đơn vị vận chuyển</label>
+                        <select class="form-select" name="Carrier" required>
+                            <option value="">-- Chọn --</option>
+                            <option value="Giao Hàng Nhanh">Giao Hàng Nhanh (GHN)</option>
+                            <option value="Giao Hàng Tiết Kiệm">Giao Hàng Tiết Kiệm (GHTK)</option>
+                            <option value="Viettel Post">Viettel Post</option>
+                            <option value="J&T Express">J&T Express</option>
+                            <option value="Shopee Express">Shopee Express</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ngày giao dự kiến</label>
+                        <input type="date" class="form-control" name="EstimatedDate"
+                               value="@DateTime.Now.AddDays(3).ToString("yyyy-MM-dd")" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Xác nhận & Giao</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CancelOrder" method="post">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Hủy Đơn Hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="orderId" value="@Model.OrderId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Lý do hủy đơn</label>
+                        <textarea class="form-control" name="cancelReason" rows="3" required placeholder="VD: Khách đổi ý, Sai thông tin, Hết hàng..."></textarea>
+                    </div>
+
+                    <div class="alert alert-warning small">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <strong>Lưu ý:</strong> Nếu đơn hàng đã ở trạng thái "Đang giao", hệ thống sẽ tự động hoàn trả số lượng sản phẩm về kho.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">Xác nhận Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Hàm mở Modal Shipping an toàn
+        function openShippingModal() {
+            var el = document.getElementById('shippingModal');
+            var modal = bootstrap.Modal.getOrCreateInstance(el);
+            modal.show();
+        }
+
+        // Hàm mở Modal Cancel an toàn
+        function openCancelModal() {
+            var el = document.getElementById('cancelModal');
+            var modal = bootstrap.Modal.getOrCreateInstance(el);
+            modal.show();
+        }
+    </script>
+}

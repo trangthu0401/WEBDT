@@ -1,0 +1,128 @@
+﻿.checkout-wrapper {
+    padding: 40px 0;
+    background: #f4f6f8;
+    min-height: 100vh;
+}
+
+.checkout-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Address Box */
+.address-box {
+    border: 1px dashed #d70018;
+    background: #fff5f5;
+    padding: 15px;
+    border-radius: 6px;
+    position: relative;
+}
+
+.btn-change-address {
+    color: #0d6efd;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    float: right;
+}
+
+/* Payment Methods */
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+    .payment-option:hover {
+        border-color: #d70018;
+        background: #fffcfc;
+    }
+
+    .payment-option.active {
+        border-color: #d70018;
+        background: #fff5f5;
+    }
+
+    .payment-option input[type="radio"] {
+        accent-color: #d70018;
+        width: 18px;
+        height: 18px;
+    }
+
+/* QR Code Section */
+.qr-payment-box {
+    text-align: center;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border: 1px solid #ddd;
+    display: none; /* Mặc định ẩn */
+}
+
+.qr-img {
+    max-width: 200px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Order Summary */
+.order-item-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    color: #666;
+}
+
+    .summary-row.total {
+        font-size: 20px;
+        font-weight: 700;
+        color: #d70018;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed #ddd;
+    }
+
+/* Buttons */
+.btn-place-order {
+    width: 100%;
+    padding: 15px;
+    background: #d70018;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    margin-top: 20px;
+}
+
+    .btn-place-order:hover {
+        background: #b30014;
+    }
