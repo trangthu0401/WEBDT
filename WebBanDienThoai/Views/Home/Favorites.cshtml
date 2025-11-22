@@ -14,81 +14,8 @@
     <link rel="stylesheet" href="~/css/home.css">
 </head>
 <body>
-    <header class="site-header">
-        <div class="header-top">
-            <div class="container header-top-container">
-                <a asp-controller="Home" asp-action="Index" class="logo">
-                    <h1 class="logo-text">Rabit</h1>
-                    <img src="~/images/linhvatcau.png" alt="Rabit Mascot" class="logo-mascot">
-                    <h1 class="logo-text">Store</h1>
-                </a>
-
-                <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="favSearchForm">
-                    <input type="text" name="searchString" placeholder="Tìm kiếm" class="search-input" id="favSearchInput" autocomplete="off">
-                    <button type="submit" class="search-button">
-                        <img src="~/images/search.png" alt="Search Icon">
-                    </button>
-                    <div class="search-suggestions" id="favSearchSuggestions"></div>
-                </form>
-
-                <div class="header-actions">
-                    <a href="#" class="cart-link">
-                        <span>Giỏ hàng</span>
-                        <img src="~/images/giohang.png" alt="Cart Icon">
-                    </a>
-
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <div class="user-profile-dropdown">
-                            <a href="#" class="user-profile">
-                                <span>@User.FindFirstValue("FullName")</span>
-                                <img src="~/images/user.png" alt="User Icon">
-                            </a>
-                            <div class="dropdown-content">
-                                <a asp-controller="Account" asp-action="Profile">Trang cá nhân</a>
-                                <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <a asp-controller="Account" asp-action="Login" class="user-profile">
-                            <span>Đăng nhập</span>
-                            <img src="~/images/user.png" alt="User Icon">
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-        <nav class="main-nav">
-            <div class="container nav-container">
-                <a asp-controller="Home" asp-action="Index">Trang chủ</a>
-                <a asp-controller="Home" asp-action="Favorites">Yêu thích</a>
-
-                <div class="nav-category-dropdown" id="categoryDropdown">
-                    <a href="#" class="dropdown-link" id="categoryDropdownToggle">
-                        Danh mục
-                        <img src="~/images/chevron-down.png" alt="Dropdown arrow">
-                    </a>
-                    <div class="category-popup">
-                        @if (Model.BrandCounts != null && Model.BrandCounts.Any())
-                        {
-                            @foreach (var brand in Model.BrandCounts)
-                            {
-                                <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.BrandId" class="category-popup-item">
-                                    @brand.BrandName
-                                </a>
-                            }
-                        }
-                        else
-                        {
-                            <span class="category-popup-item">Không có danh mục</span>
-                        }
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
+    <!-- HEADER (SỬ DỤNG PARTIAL VIEW) -->
+    @await Html.PartialAsync("_Header")
 
     <section id="products" class="products-section">
         <div class="container">

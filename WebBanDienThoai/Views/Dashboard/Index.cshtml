@@ -85,16 +85,7 @@
     <!-- BẢNG SẢN PHẨM BÁN CHẠY -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h3 class="h5 mb-0">Sản phẩm bán chạy</h3>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Tháng 10
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Tháng 9</a></li>
-                    <li><a class="dropdown-item" href="#">Tháng 8</a></li>
-                </ul>
-            </div>
+            <h3 class="h5 mb-0">Top 5 sản phẩm bán chạy</h3>
         </div>
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0">
@@ -141,12 +132,10 @@
     </div>
 </div>
 
-<!-- CHART.JS SCRIPT VỚI API THẬT -->
+<!-- CHART.JS SCRIPT -->
 <script>
-    // Biến toàn cục để lưu chart instance
     let revenueChart = null;
 
-    // Hàm format tiền tệ
     function formatCurrency(value) {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -154,11 +143,8 @@
         }).format(value);
     }
 
-    // Hàm lấy dữ liệu từ API THẬT của bạn
     async function fetchRevenueData(month, year) {
         try {
-            console.log(`Fetching revenue data for ${month}/${year}...`);
-
             const response = await fetch(`/Dashboard/GetRevenueByDay?year=${year}&month=${month}`);
 
             if (!response.ok) {
@@ -166,18 +152,13 @@
             }
 
             const result = await response.json();
-            console.log('API Response:', result);
-
             return result;
         } catch (error) {
             console.error('Lỗi khi fetch dữ liệu:', error);
-
-            // Fallback: trả về dữ liệu mẫu nếu API fail
             return generateSampleData();
         }
     }
 
-    // Hàm tạo dữ liệu mẫu (fallback)
     function generateSampleData() {
         const currentDate = new Date();
         const year = currentDate.getFullYear();
@@ -192,16 +173,12 @@
         return { labels, data };
     }
 
-    // Hàm vẽ biểu đồ với dữ liệu từ API
     function renderRevenueChart(apiData) {
         const ctx = document.getElementById('revenueChart').getContext('2d');
 
-        // Hủy chart cũ nếu tồn tại
         if (revenueChart) {
             revenueChart.destroy();
         }
-
-        console.log('Rendering chart with data:', apiData);
 
         revenueChart = new Chart(ctx, {
             type: 'line',
@@ -294,14 +271,10 @@
         });
     }
 
-    // Hàm load dữ liệu và vẽ biểu đồ
     async function loadRevenueChart() {
         const month = document.getElementById('monthSelect').value;
         const year = document.getElementById('yearSelect').value;
 
-        console.log(`Loading chart for: ${month}/${year}`);
-
-        // Hiển thị loading
         const canvas = document.getElementById('revenueChart');
         const originalOpacity = canvas.style.opacity;
         canvas.style.opacity = '0.6';
@@ -317,13 +290,10 @@
         }
     }
 
-    // Sự kiện khi thay đổi tháng/năm
     document.getElementById('monthSelect').addEventListener('change', loadRevenueChart);
     document.getElementById('yearSelect').addEventListener('change', loadRevenueChart);
 
-    // Khởi tạo biểu đồ khi trang load
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Dashboard loaded, initializing chart...');
         loadRevenueChart();
     });
 </script>

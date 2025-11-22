@@ -1,93 +1,181 @@
-﻿@*
-    File: /Views/Shared/_Header.cshtml
-    (File này giữ nguyên, không cần sửa đổi)
-*@
-<header class="rabit-header">
-    <div class="header-top">
-        <div class="container-fluid header-top-container">
+﻿@using System.Security.Claims
+@{
+    var currentSearch = ViewData["CurrentSearch"] as string ?? "";
+}
 
-            <a class="header-logo" asp-controller="Home" asp-action="Index">
-                <img src="~/images/Logo.png" alt="Rabit Store Logo" />
+<header class="site-header">
+    <div class="header-top">
+        <div class="container header-top-container">
+            <a asp-controller="Home" asp-action="Index" class="logo">
+                <h1 class="logo-text">Rabit</h1>
+                <img src="~/images/linhvatcau.png" alt="Rabit Store" class="logo-mascot">
+                <h1 class="logo-text">Store</h1>
             </a>
 
-            <form class="header-search" asp-controller="Product" asp-action="Search" method="get">
-                <input type="text" name="query" placeholder="Tìm kiếm..." />
+            <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
+                <input type="text" name="searchString" value="@currentSearch" placeholder="Tìm kiếm điện thoại, phụ kiện..." class="search-input" id="mainSearchInput" autocomplete="off">
                 <button type="submit" class="search-button">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <img src="~/images/search.png" alt="Search">
                 </button>
+                <div class="search-suggestions" id="mainSearchSuggestions"></div>
             </form>
 
             <div class="header-actions">
-
-                <a class="btn-cart" asp-controller="Cart" asp-action="Index">
+                <a href="#" class="cart-link">
+                    <img src="~/images/giohang.png" alt="Giỏ hàng">
                     <span>Giỏ hàng</span>
-                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="cart-count">0</span>
                 </a>
 
-                <div class="user-dropdown">
-                    <button class="btn-user">
-                        <i class="fa-solid fa-user"></i>
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <span class="user-email">@User.Identity.Name</span>
-                        }
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-
-                    <div class="user-dropdown-content">
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <a asp-controller="Account" asp-action="Profile">
-                                <i class="fa-solid fa-id-card"></i> Tài khoản của tôi
-                            </a>
-                            <a asp-controller="Order" asp-action="History">
-                                <i class="fa-solid fa-box"></i> Đơn hàng
-                            </a>
-                            <hr />
-                            <form asp-controller="Account" asp-action="Logout" method="post">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn-logout">
-                                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                                </button>
-                            </form>
-                        }
-                        else
-                        {
-                            <a asp-controller="Account" asp-action="Login">
-                                <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
-                            </a>
-                            <a asp-controller="Account" asp-action="Register">
-                                <i class="fa-solid fa-user-plus"></i> Đăng ký
-                            </a>
-                            <a asp-controller="Order" asp-action="History">
-                                <i class="fa-solid fa-box"></i> Đơn hàng
-                            </a>
-                            <hr />
-                            <button class="btn-logout" disabled style="opacity: 0.6;">
-                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                            </button>
-                        }
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <div class="user-profile-dropdown">
+                        <a href="#" class="user-profile">
+                            <img src="~/images/user.png" alt="Tài khoản">
+                            <span>@User.FindFirstValue("FullName")</span>
+                        </a>
+                        <div class="dropdown-content">
+                            <a asp-controller="Account" asp-action="Profile">Trang cá nhân</a>
+                            <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
+                        </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="user-profile">
+                        <img src="~/images/user.png" alt="Đăng nhập">
+                        <span>Đăng nhập</span>
+                    </a>
+                }
             </div>
-
         </div>
     </div>
 
-    <nav class="header-nav">
-        <div class="container-fluid nav-container">
-            <ul class="nav-links">
-                <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-                <li><a asp-controller="Product" asp-action="Wishlist">Yêu thích</a></li>
-                <li class="nav-dropdown">
-                    <a href="#">Danh mục <i class="fa-solid fa-chevron-down"></i></a>
-                    <ul class="nav-dropdown-content">
-                        <li><a href="#">Điện thoại</a></li>
-                        <li><a href="#">Ipad</a></li>
+    <nav class="main-nav">
+        <div class="container nav-container">
+            <a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> Trang chủ</a>
+            <a asp-controller="Home" asp-action="Favorites"><i class="fas fa-heart"></i> Yêu thích</a>
 
-                    </ul>
-                </li>
-            </ul>
+            <div class="nav-category-dropdown" id="categoryDropdown">
+                <a href="#" class="dropdown-link" id="categoryDropdownToggle">
+                    <i class="fas fa-th-list"></i> Danh mục
+                    <img src="~/images/next.png" alt=">" style="transform: rotate(90deg); width: 12px;">
+                </a>
+                <div class="category-popup">
+                    @if (ViewBag.BrandCounts != null)
+                    {
+                        @foreach (var brand in ViewBag.BrandCounts)
+                        {
+                            <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.BrandId" class="category-popup-item">
+                                @brand.BrandName
+                            </a>
+                        }
+                    }
+                    else
+                    {
+                        <span class="category-popup-item">Không có danh mục</span>
+                    }
+                </div>
+            </div>
+
+            <a href="#"><i class="fas fa-gift"></i> Khuyến mãi</a>
+            <a href="#"><i class="fas fa-headset"></i> Hỗ trợ</a>
         </div>
     </nav>
 </header>
+
+<script>
+    // JavaScript cho dropdown danh mục
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryDropdown = document.getElementById('categoryDropdown');
+        const categoryToggle = document.getElementById('categoryDropdownToggle');
+
+        if (categoryToggle) {
+            categoryToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                categoryDropdown.classList.toggle('active');
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            if (categoryDropdown && !categoryDropdown.contains(e.target)) {
+                categoryDropdown.classList.remove('active');
+            }
+        });
+
+        // JavaScript cho đề xuất tìm kiếm
+        const searchInput = document.getElementById('mainSearchInput');
+        const suggestionsContainer = document.getElementById('mainSearchSuggestions');
+        const searchForm = document.getElementById('mainSearchForm');
+
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const term = this.value;
+                if (term.length < 2) {
+                    suggestionsContainer.innerHTML = '';
+                    suggestionsContainer.style.display = 'none';
+                    return;
+                }
+
+                fetch('/Home/SearchSuggestions?term=' + term)
+                    .then(response => response.json())
+                    .then(data => {
+                        suggestionsContainer.innerHTML = '';
+                        if (data.length > 0) {
+                            suggestionsContainer.style.display = 'block';
+                            const header = document.createElement('div');
+                            header.classList.add('suggestion-header');
+                            header.textContent = 'Sản phẩm gợi ý';
+                            suggestionsContainer.appendChild(header);
+
+                            data.forEach(product => {
+                                const suggestionLink = document.createElement('a');
+                                suggestionLink.classList.add('suggestion-item');
+                                suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
+
+                                const img = document.createElement('img');
+                                let imageUrl = product.mainImage;
+                                if (imageUrl && !imageUrl.startsWith('http')) {
+                                    imageUrl = imageUrl.replace("~", "");
+                                }
+                                img.src = imageUrl ? imageUrl : '/images/default-product.png';
+                                img.alt = product.name;
+
+                                const infoDiv = document.createElement('div');
+                                infoDiv.classList.add('suggestion-item-info');
+
+                                const nameDiv = document.createElement('div');
+                                nameDiv.classList.add('suggestion-item-name');
+                                nameDiv.textContent = product.name;
+
+                                const priceDiv = document.createElement('div');
+                                priceDiv.classList.add('suggestion-item-price');
+                                priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+                                infoDiv.appendChild(nameDiv);
+                                infoDiv.appendChild(priceDiv);
+                                suggestionLink.appendChild(img);
+                                suggestionLink.appendChild(infoDiv);
+
+                                suggestionLink.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    searchInput.value = product.name;
+                                    searchForm.submit();
+                                });
+
+                                suggestionsContainer.appendChild(suggestionLink);
+                            });
+                        } else {
+                            suggestionsContainer.style.display = 'none';
+                        }
+                    });
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!searchForm.contains(e.target)) {
+                    suggestionsContainer.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
