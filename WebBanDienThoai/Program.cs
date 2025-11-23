@@ -43,6 +43,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+    name: "profile",
+    pattern: "Account/Profile",
+    defaults: new { controller = "Account", action = "Profile" });
+
+// Route mặc định
+app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 

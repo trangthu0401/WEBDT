@@ -18,60 +18,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
-    <!-- HEADER -->
-    <header class="site-header">
-        <div class="header-top">
-            <div class="container header-top-container">
-                <a asp-controller="Home" asp-action="Index" class="logo">
-                    <h1 class="logo-text">Rabit</h1>
-                    <img src="~/images/linhvatcau.png" alt="Rabit Store" class="logo-mascot">
-                    <h1 class="logo-text">Store</h1>
-                </a>
-
-                <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
-                    <input type="text" name="searchString" value="@currentSearch" placeholder="Tìm kiếm điện thoại, phụ kiện..." class="search-input" id="mainSearchInput" autocomplete="off">
-                    <button type="submit" class="search-button">
-                        <img src="~/images/search.png" alt="Search">
-                    </button>
-                    <input type="hidden" name="id" value="@Model.BrandId" />
-                </form>
-
-                <div class="header-actions">
-                    <a href="~/Cart/Index" class="cart-link">
-                        <img src="~/images/giohang.png" alt="Giỏ hàng">
-                        <span>Giỏ hàng</span>
-                        <span class="cart-count">0</span>
-                    </a>
-
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <div class="user-profile-dropdown">
-                            <a href="#" class="user-profile">
-                                <img src="~/images/user.png" alt="Tài khoản">
-                                <span>@User.FindFirstValue("FullName")</span>
-                            </a>
-                        </div>
-                    }
-                    else
-                    {
-                        <a asp-controller="Account" asp-action="Login" class="user-profile">
-                            <img src="~/images/user.png" alt="Đăng nhập">
-                            <span>Đăng nhập</span>
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <nav class="main-nav">
-            <div class="container nav-container">
-                <a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> Trang chủ</a>
-                <a asp-controller="Home" asp-action="Favorites"><i class="fas fa-heart"></i> Yêu thích</a>
-                <a href="#"><i class="fas fa-gift"></i> Khuyến mãi</a>
-                <a href="#"><i class="fas fa-headset"></i> Hỗ trợ</a>
-            </div>
-        </nav>
-    </header>
+    <!-- HEADER (SỬ DỤNG PARTIAL VIEW) -->
+    @await Html.PartialAsync("_Header")
 
     <!-- HERO SECTION -->
     <section id="hero" class="hero-section">

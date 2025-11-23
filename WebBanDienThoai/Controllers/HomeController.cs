@@ -36,12 +36,13 @@ namespace WebBanDienThoai.Controllers
             .ToList();
         }
 
-        // === INDEX (ĐÃ SỬA LỖI) ===
+        // === INDEX (ĐÃ SỬA LẠI PHẦN LẤY SỐ LƯỢNG BÁN) ===
         public async Task<IActionResult> Index(int? id, string sortOrder, string searchString,
                                                  decimal? minPrice, decimal? maxPrice, string ram, string storage)
         {
             ViewData["CurrentSort"] = sortOrder;
             ViewData["CurrentSearch"] = searchString;
+            ViewBag.BrandCounts = await GetBrandsAsync();
 
             try
             {
@@ -62,7 +63,20 @@ namespace WebBanDienThoai.Controllers
                 // 3. Thực thi Query
                 var rawProducts = await productsQuery.ToListAsync();
 
-                // 4. Xử lý Logic Map sang ViewModel
+                // 4. LẤY SỐ LƯỢNG BÁN THỰC TẾ TỪ ORDERDETAILS
+                var productSales = await _context.OrderDetails
+                    .AsNoTracking()
+                    .Include(od => od.ProductVariant)
+                    .Where(od => od.Quantity.HasValue && od.ProductVariant != null)
+                    .GroupBy(od => od.ProductVariant.ProductId)
+                    .Select(g => new
+                    {
+                        ProductId = g.Key,
+                        SoldCount = g.Sum(od => od.Quantity.Value)
+                    })
+                    .ToDictionaryAsync(x => x.ProductId, x => x.SoldCount);
+
+                // 5. Xử lý Logic Map sang ViewModel
                 var processedList = rawProducts.Select(p =>
                 {
                     var activeVariants = p.ProductVariants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
@@ -70,9 +84,8 @@ namespace WebBanDienThoai.Controllers
                     var minPriceVariant = activeVariants.OrderBy(v => v.DiscountPrice ?? v.Price).FirstOrDefault();
                     var minPriceValue = minPriceVariant != null ? (minPriceVariant.DiscountPrice ?? minPriceVariant.Price) : 0;
 
-                    // Tính số lượng đã bán (trong thực tế sẽ lấy từ bảng OrderDetails)
-                    // Tạm thời dùng random để demo
-                    var soldCount = new System.Random().Next(50, 500);
+                    // LẤY SỐ LƯỢNG BÁN THỰC TẾ TỪ DICTIONARY, NẾU KHÔNG CÓ THÌ = 0
+                    var soldCount = productSales.ContainsKey(p.ProductId) ? productSales[p.ProductId] : 0;
 
                     return new ProductListViewModel
                     {
@@ -85,18 +98,18 @@ namespace WebBanDienThoai.Controllers
                         Price = minPriceValue,
                         Stock = activeVariants.Sum(v => v.Stock),
                         FirstVariantId = minPriceVariant?.VariantId ?? 0,
-                        SoldCount = soldCount
+                        SoldCount = soldCount // DÙNG SỐ LƯỢNG BÁN THỰC TẾ
                     };
                 });
 
-                // 5. Áp dụng Bộ lọc nâng cao
+                // 6. Áp dụng Bộ lọc nâng cao
                 if (minPrice.HasValue)
                     processedList = processedList.Where(p => p.Price >= minPrice.Value);
 
                 if (maxPrice.HasValue)
                     processedList = processedList.Where(p => p.Price <= maxPrice.Value);
 
-                // 6. Sắp xếp sử dụng switch expression
+                // 7. Sắp xếp sử dụng switch expression
                 processedList = sortOrder switch
                 {
                     "price_desc" => processedList.OrderByDescending(p => p.Price),
@@ -104,7 +117,7 @@ namespace WebBanDienThoai.Controllers
                     _ => processedList.OrderByDescending(p => p.CreatedDate)
                 };
 
-                // 7. Xử lý Yêu thích (Favorites)
+                // 8. Xử lý Yêu thích (Favorites)
                 int customerId = User.Identity?.IsAuthenticated == true &&
                                int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var idValue) ? idValue : 0;
 
@@ -123,11 +136,24 @@ namespace WebBanDienThoai.Controllers
                     return p;
                 }).ToList();
 
-                // 8. Lấy Top bán chạy (5 sản phẩm bán chạy nhất)
+                // 9. Lấy Top bán chạy (5 sản phẩm bán chạy nhất) - DÙNG SỐ LƯỢNG BÁN THỰC TẾ
                 var topSellingProducts = finalProducts
+                    .Where(p => p.SoldCount > 0) // Chỉ lấy sản phẩm đã có bán
                     .OrderByDescending(p => p.SoldCount)
                     .Take(5)
                     .ToList();
+
+                // Nếu không đủ 5 sản phẩm đã bán, thêm sản phẩm mới nhất
+                if (topSellingProducts.Count < 5)
+                {
+                    var additionalProducts = finalProducts
+                        .Where(p => !topSellingProducts.Any(t => t.ProductId == p.ProductId))
+                        .OrderByDescending(p => p.CreatedDate)
+                        .Take(5 - topSellingProducts.Count)
+                        .ToList();
+
+                    topSellingProducts.AddRange(additionalProducts);
+                }
 
                 var dsHang = await GetBrandsAsync();
                 var totalCount = finalProducts.Count;
@@ -158,6 +184,8 @@ namespace WebBanDienThoai.Controllers
         // === PRODUCT DETAIL ===
         public async Task<IActionResult> ProductDetail(int id)
         {
+            ViewBag.BrandCounts = await GetBrandsAsync();
+
             try
             {
                 var productDetail = await _context.ProductVariants
@@ -213,6 +241,8 @@ namespace WebBanDienThoai.Controllers
         public async Task<IActionResult> Favorites(string sortOrder)
         {
             ViewData["CurrentSort"] = sortOrder;
+            ViewBag.BrandCounts = await GetBrandsAsync();
+
             try
             {
                 int customerId = User.Identity?.IsAuthenticated == true &&

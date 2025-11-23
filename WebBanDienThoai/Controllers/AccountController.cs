@@ -148,14 +148,139 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
-        
+        // GET: /Account/Profile
+        [Authorize]
+        [HttpGet]
+        [Route("/Account/Profile")]
+        public async Task<IActionResult> Profile()
+        {
+            try
+            {
+                Console.WriteLine("🔍 Profile GET action called");
+
+                var accountId = int.Parse(User.FindFirstValue("AccountID"));
+
+                var account = await _context.Accounts
+                    .Include(a => a.Customer)
+                    .FirstOrDefaultAsync(a => a.AccountID == accountId);
+
+                if (account == null || account.Customer == null)
+                {
+                    Console.WriteLine("❌ Account or Customer not found");
+                    return NotFound();
+                }
+
+                var model = new AccountViewModels
+                {
+                    Email = account.Email,
+                    FullName = account.Customer.FullName,
+                    Phone = account.Customer.Phone,
+                    Gender = account.Customer.Gender,
+                    BirthDate = account.Customer.BirthDate
+                };
+
+                Console.WriteLine("✅ Profile data loaded successfully");
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in Profile GET: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // POST: /Account/Profile
+        [Authorize]
+        [HttpPost]
+        [Route("/Account/Profile")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(AccountViewModels model)
+        {
+            try
+            {
+                Console.WriteLine("🔍 Profile POST action called");
+
+                if (!ModelState.IsValid)
+                {
+                    Console.WriteLine("❌ ModelState invalid");
+                    return View(model);
+                }
+
+                var accountId = int.Parse(User.FindFirstValue("AccountID"));
+
+                var account = await _context.Accounts
+                    .Include(a => a.Customer)
+                    .FirstOrDefaultAsync(a => a.AccountID == accountId);
+
+                if (account == null || account.Customer == null)
+                {
+                    Console.WriteLine("❌ Account or Customer not found in POST");
+                    return NotFound();
+                }
+
+                // Kiểm tra số điện thoại đã tồn tại chưa (trừ chính tài khoản hiện tại)
+                if (!string.IsNullOrEmpty(model.Phone) &&
+                    await _context.Customers.AnyAsync(c => c.Phone == model.Phone && c.CustomerID != account.Customer.CustomerID))
+                {
+                    ModelState.AddModelError("Phone", "Số điện thoại đã được sử dụng bởi tài khoản khác.");
+                    Console.WriteLine("❌ Phone number already exists");
+                    return View(model);
+                }
+
+                // Cập nhật thông tin
+                account.Customer.FullName = model.FullName;
+                account.Customer.Phone = model.Phone;
+                account.Customer.Gender = model.Gender;
+                account.Customer.BirthDate = model.BirthDate;
+
+                _context.Customers.Update(account.Customer);
+                await _context.SaveChangesAsync();
+
+                // Cập nhật claim FullName nếu có thay đổi
+                if (User.FindFirstValue("FullName") != model.FullName)
+                {
+                    await UpdateFullNameClaim(model.FullName);
+                }
+
+                TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
+                Console.WriteLine("✅ Profile updated successfully");
+                return RedirectToAction("Profile");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in Profile POST: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+                ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
+                return View(model);
+            }
+        }
+
+        // Hàm hỗ trợ cập nhật claim FullName
+        private async Task UpdateFullNameClaim(string fullName)
+        {
+            var identity = (ClaimsIdentity)User.Identity;
+            var existingClaim = identity.FindFirst("FullName");
+
+            if (existingClaim != null)
+            {
+                identity.RemoveClaim(existingClaim);
+            }
+
+            identity.AddClaim(new Claim("FullName", fullName));
+
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+        }
+
+        // GET: /Account/Logout
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Home");
         }
 
-        // Hàm hỗ trợ đăng nhập (Giữ nguyên)
+        // Hàm hỗ trợ đăng nhập
         private async Task SignInUserAsync(List<Claim> claims, bool isPersistent)
         {
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -168,7 +293,7 @@ namespace WebBanDienThoai.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         }
 
-        // Các Action khác như Profile, ToggleActive bạn giữ nguyên...
+        // POST: ToggleActive (cho admin)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int accountId, int customerId)
@@ -187,18 +312,25 @@ namespace WebBanDienThoai.Controllers
                 _context.Accounts.Update(account);
                 await _context.SaveChangesAsync();
 
-                // GHI CHÚ: Tối ưu lại thông báo (dùng toán tử 3 ngôi)
                 string statusMessage = account.IsActive ? "mở khóa" : "khóa";
                 TempData["SuccessMessage"] = $"Đã {statusMessage} tài khoản '{account.Email}' thành công.";
             }
             catch (DbUpdateException ex)
             {
-                // GHI CHÚ: Nên log lỗi
                 Console.WriteLine(ex.Message);
                 TempData["ErrorMessage"] = "Không thể cập nhật trạng thái tài khoản.";
             }
 
             return RedirectToAction("Details", "Customer", new { id = customerId });
+        }
+
+        // Test route - tạm thời để kiểm tra
+        [HttpGet]
+        [Route("/Account/Test")]
+        public IActionResult Test()
+        {
+            Console.WriteLine("✅ Test route works!");
+            return Content("Test route works! - AccountController is working");
         }
     }
 }
