@@ -6,10 +6,11 @@
     var totalPages = (int)ViewBag.TotalPages;
 
     // === LOGIC PHÂN TRANG ===
-    int maxPageLinks = 3;
+    int maxPageLinks = 3; // Số lượng link trang tối đa hiển thị
     var startPage = Math.Max(1, page - (maxPageLinks / 2));
     var endPage = Math.Min(totalPages, startPage + maxPageLinks - 1);
 
+    // Điều chỉnh lại startPage nếu endPage chạm mốc totalPages
     if (endPage == totalPages)
     {
         startPage = Math.Max(1, totalPages - maxPageLinks + 1);
@@ -17,459 +18,142 @@
     // === KẾT THÚC LOGIC ===
 }
 
-<style>
-    .order-management-container {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e0e0e0;
-    }
-
-    .page-title {
-        color: #333;
-        font-weight: 600;
-        margin-bottom: 20px;
-        font-size: 1.5rem;
-        padding-bottom: 12px;
-        border-bottom: 2px solid #f0f0f0;
-    }
-
-    .filter-section {
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 16px;
-        margin-bottom: 20px;
-        border: 1px solid #dee2e6;
-    }
-
-    .custom-search-bar {
-        display: flex;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        overflow: hidden;
-        background: white;
-        height: 40px;
-    }
-
-        .custom-search-bar:focus-within {
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-        }
-
-        .custom-search-bar input {
-            border: none;
-            padding: 8px 12px;
-            outline: none;
-            flex: 1;
-            font-size: 0.9rem;
-            color: #333;
-        }
-
-            .custom-search-bar input::placeholder {
-                color: #6c757d;
-            }
-
-        .custom-search-bar button {
-            border: none;
-            padding: 8px 16px;
-            cursor: pointer;
-            background: #6c757d;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-            .custom-search-bar button:hover {
-                background: #5a6268;
-            }
-
-    .form-select {
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        padding: 8px 12px;
-        color: #333;
-        background: white;
-        height: 40px;
-        font-size: 0.9rem;
-    }
-
-        .form-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-        }
-
-    .filter-btn {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        font-weight: 500;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        font-size: 0.9rem;
-    }
-
-        .filter-btn:hover {
-            background: #0056b3;
-        }
-
-    .table-container {
-        border-radius: 6px;
-        overflow: hidden;
-        border: 1px solid #dee2e6;
-        margin-bottom: 20px;
-        background: white;
-    }
-
-    .table {
-        margin: 0;
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-        .table thead {
-            background: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .table th {
-            border: none;
-            padding: 12px 8px;
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #dee2e6;
-            background: #f8f9fa;
-        }
-
-        .table td {
-            padding: 12px 8px;
-            vertical-align: middle;
-            border-bottom: 1px solid #dee2e6;
-            color: #333;
-            font-size: 0.9rem;
-        }
-
-        .table tbody tr {
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-            .table tbody tr:hover {
-                background-color: #f8f9fa;
-            }
-
-            .table tbody tr:last-child td {
-                border-bottom: none;
-            }
-
-    /* Badge trạng thái */
-    .badge-status {
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-weight: 500;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .status-delivered {
-        background: #28a745;
-        color: white;
-    }
-
-    .status-shipping {
-        background: #17a2b8;
-        color: white;
-    }
-
-    .status-canceled {
-        background: #dc3545;
-        color: white;
-    }
-
-    .status-processing {
-        background: #ffc107;
-        color: #212529;
-    }
-
-    .pagination-container {
-        background: white;
-        border-radius: 6px;
-        padding: 16px;
-        border: 1px solid #dee2e6;
-    }
-
-    .page-link {
-        color: #007bff;
-        border: 1px solid #dee2e6;
-        padding: 6px 12px;
-        font-weight: 500;
-    }
-
-        .page-link:hover {
-            background-color: #e9ecef;
-            color: #0056b3;
-            border-color: #dee2e6;
-        }
-
-    .page-item.active .page-link {
-        background-color: #007bff;
-        border-color: #007bff;
-        color: white;
-    }
-
-    .page-info {
-        color: #6c757d;
-        font-weight: 500;
-        font-size: 0.9rem;
-    }
-
-        .page-info span {
-            color: #333;
-            font-weight: 600;
-        }
-
-    .order-id {
-        font-weight: 600;
-        color: #333;
-        font-family: 'Courier New', monospace;
-    }
-
-    .customer-name {
-        font-weight: 500;
-        color: #333;
-    }
-
-    .address-text {
-        color: #6c757d;
-        font-size: 0.85rem;
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .date-text {
-        color: #495057;
-        font-weight: 500;
-    }
-
-    /* Responsive styles */
-    @@media (max-width: 768px) {
-        .order-management-container {
-            padding: 16px;
-        }
-
-        .filter-section {
-            padding: 12px;
-        }
-
-        .table th,
-        .table td {
-            padding: 8px 6px;
-            font-size: 0.85rem;
-        }
-
-        .pagination-container {
-            padding: 12px;
-        }
-
-        .page-title {
-            font-size: 1.3rem;
-        }
-
-        .address-text {
-            max-width: 150px;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .filter-row {
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .search-col, .filter-col, .btn-col {
-            width: 100% !important;
-        }
-
-        .table-responsive {
-            font-size: 0.8rem;
-        }
-
-        .page-link {
-            padding: 4px 8px;
-            font-size: 0.85rem;
-        }
-
-        .pagination-container .d-flex {
-            flex-direction: column;
-            gap: 12px;
-            text-align: center;
-        }
-
-        .address-text {
-            max-width: 120px;
-        }
-    }
-</style>
-
+<!-- Link CSS cho thanh tìm kiếm và trạng thái (nhớ cache-busting) -->
+<link href="~/css/searchStyle.css?v=2" rel="stylesheet" />
+<link href="~/css/Admin_Order/orderStyle.css?v=1" rel="stylesheet" />
 <div class="container mt-4">
-    <div class="order-management-container">
-        <h2 class="page-title">Quản lý đơn hàng</h2>
 
-        <div class="filter-section">
-            <!-- Dòng 1: Tìm kiếm và lọc trạng thái -->
-            <div class="row g-3 align-items-end mb-3">
-                <!-- Tìm kiếm ID -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold mb-2">Tìm kiếm đơn hàng</label>
-                    <div class="custom-search-bar">
-                        <input type="text" id="searchId" placeholder="Nhập ID đơn hàng..."
-                               value="@ViewBag.SearchId" aria-label="Search">
-                        <button type="button" onclick="filterSearch()">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Lọc trạng thái -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold mb-2">Trạng thái đơn hàng</label>
-                    <select id="statusFilter" class="form-select">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="Chờ xác nhận" selected="@(ViewBag.StatusFilter == "Chờ xác nhận")">Chờ xác nhận</option>
-                        <option value="Đang giao" selected="@(ViewBag.StatusFilter == "Đang giao")">Đang giao</option>
-                        <option value="Đã giao" selected="@(ViewBag.StatusFilter == "Đã giao")">Đã giao</option>
-                        <option value="Đã hủy" selected="@(ViewBag.StatusFilter == "Đã hủy")">Đã hủy</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Dòng 2: Lọc theo ngày -->
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold mb-2">Từ ngày</label>
-                    <input type="date" id="startDate" class="form-control" value="@ViewBag.StartDate">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold mb-2">Đến ngày</label>
-                    <input type="date" id="endDate" class="form-control" value="@ViewBag.EndDate">
-                </div>
-                <div class="col-md-6 d-flex align-items-end">
-                    <button class="btn w-100 filter-btn" type="button" onclick="filter()">
-                        <i class="bi bi-funnel me-1"></i> Lọc đơn hàng
-                    </button>
-                </div>
-            </div>
+    <!-- THANH FILTER -->
+    <div class="filter-bar justify-content-between">
+        <!-- Lọc theo ID -->
+        <div class="w-50 custom-search-bar">
+            <input type="text" id="searchId" placeholder="Nhập ID đơn hàng..."
+                   value="@ViewBag.SearchId" aria-label="Search">
+            <button type="button" onclick="filterSearch()"><i class="bi bi-search"></i></button>
         </div>
 
-        <!-- Bảng -->
-        <div class="table-container">
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th class="text-start">ID</th>
-                            <th class="text-start">TÊN KHÁCH HÀNG</th>
-                            <th class="text-start">ĐỊA CHỈ</th>
-                            <th class="text-center">NGÀY ĐẶT</th>
-                            <th class="text-center">TRẠNG THÁI</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var order in Model)
-                        {
-                            <tr onclick="window.location.href = '@Url.Action("Details", "Order", new { id = order.OrderId })'">
-                                <td class="text-start order-id">@order.OrderCode</td>
-                                <td class="text-start customer-name">@order.CustomerName</td>
-                                <td class="text-start address-text" title="@order.ShippingAddress">@order.ShippingAddress</td>
-                                <td class="text-center date-text">@order.OrderDate?.ToString("dd/MM/yyyy")</td>
-                                <td class="text-center">
-                                    @if (order.Status == "Đã giao")
-                                    {
-                                        <span class="badge-status status-delivered">ĐÃ GIAO</span>
-                                    }
-                                    else if (order.Status == "Đang giao")
-                                    {
-                                        <span class="badge-status status-shipping">ĐANG GIAO</span>
-                                    }
-                                    else if (order.Status == "Đã hủy")
-                                    {
-                                        <span class="badge-status status-canceled">ĐÃ HỦY</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge-status status-processing">CHỜ XÁC NHẬN</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+        <!-- Lọc Trạng thái -->
+        <div class="w-25">
+            <select id="statusFilter" class="form-select">
+                <option value="">--Trạng thái đơn hàng--</option>
+                <option value="Chờ xác nhận" selected="@(ViewBag.StatusFilter == "Chờ xác nhận")">Chờ xác nhận</option>
+                <option value="Đang giao" selected="@(ViewBag.StatusFilter == "Đang giao")">Đang giao</option>
+                <option value="Đã giao" selected="@(ViewBag.StatusFilter == "Đã giao")">Đã giao</option>
+                <option value="Đã hủy" selected="@(ViewBag.StatusFilter == "Đã hủy")">Đã hủy</option>
+            </select>
         </div>
+    </div>
 
-        <!-- Phân trang -->
-        <div class="pagination-container">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="page-info">Trang <span>@(page)</span> / @totalPages</div>
-                <nav>
-                    <ul class="pagination mb-0">
-                        <!-- Nút 'Trước' -->
-                        <li class="page-item @(page <= 1 ? "disabled" : "")">
-                            <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = page - 1 })">‹</a>
-                        </li>
-
-                        <!-- Hiển thị '1 ...' nếu cần -->
-                        @if (startPage > 1)
-                        {
-                            <li class="page-item">
-                                <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = 1 })">1</a>
-                            </li>
-                            @if (startPage > 2)
-                            {
-                                <li class="page-item disabled"><span class="page-link">...</span></li>
-                            }
-                        }
-
-                        <!-- Vòng lặp các trang chính -->
-                        @for (int i = startPage; i <= endPage; i++)
-                        {
-                            <li class="page-item @(i == page ? "active" : "")">
-                                <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = i })">@i</a>
-                            </li>
-                        }
-
-                        <!-- Hiển thị '... [cuối]' nếu cần -->
-                        @if (endPage < totalPages)
-                        {
-                            @if (endPage < totalPages - 1)
-                            {
-                                <li class="page-item disabled"><span class="page-link">...</span></li>
-                            }
-                            <li class="page-item">
-                                <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = totalPages })">@totalPages</a>
-                            </li>
-                        }
-
-                        <!-- Nút 'Sau' -->
-                        <li class="page-item @(page >= totalPages ? "disabled" : "")">
-                            <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = page + 1 })">›</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
+    <!-- Dòng 2: Lọc theo ngày -->
+    <div class="filter-bar">
+        <div class="w-25 d-flex align-items-center">
+            <label for="startDate" class="form-label me-2 mb-0">Từ:</label>
+            <input type="date" id="startDate" class="form-control" value="@ViewBag.StartDate">
         </div>
+        <div class="w-25 d-flex align-items-center">
+            <label for="endDate" class="form-label me-2 mb-0">Đến:</label>
+            <input type="date" id="endDate" class="form-control" value="@ViewBag.EndDate">
+        </div>
+        <div class="ms-auto">
+            <button class="btn btn-primary w-auto" type="button" onclick="filter()">
+                <i class="bi bi-funnel-fill me-1"></i> Lọc
+            </button>
+        </div>
+    </div>
+
+    <!-- BẢNG -->
+    <table class="table align-middle rounded-table table-hover-pointer">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>TÊN KHÁCH HÀNG</th>
+                <th>ĐỊA CHỈ</th>
+                <th>NGÀY ĐẶT</th>
+                <th>TRẠNG THÁI</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr onclick="window.location.href = '@Url.Action("Details", "Order", new { id = order.OrderId })'">
+                    <td>@order.OrderCode</td>
+                    <td>@order.CustomerName</td>
+                    <td>@order.ShippingAddress</td>
+                    <td>@order.OrderDate?.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <!-- Logic hiển thị badge trạng thái -->
+                        @if (order.Status == "Đã giao")
+                        {
+                            <span class="badge-status status-delivered">ĐÃ GIAO</span>
+                        }
+                        else if (order.Status == "Đang giao")
+                        {
+                            <span class="badge-status status-shipping">ĐANG GIAO</span>
+                        }
+                        else if (order.Status == "Đã hủy")
+                        {
+                            <span class="badge-status status-canceled">ĐÃ HỦY</span>
+                        }
+                        else
+                        {
+                            <span class="badge-status status-processing">CHỜ XÁC NHẬN</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- PHÂN TRANG -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>Trang @(page) / @totalPages</div>
+        <nav>
+            <ul class="pagination mb-0">
+                <!-- Nút 'Trước' -->
+                <li class="page-item @(page <= 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = page - 1 })">‹</a>
+                </li>
+
+                <!-- Hiển thị '1 ...' nếu cần (LOGIC MỚI) -->
+                @if (startPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = 1 })">1</a>
+                    </li>
+                    @if (startPage > 2)
+                    {
+                        <!-- Chỉ hiển thị '...' nếu cách trang 1 ít nhất 1 số -->
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    }
+                }
+
+                <!-- Vòng lặp các trang chính (chỉ lặp 5 trang) -->
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = i })">@i</a>
+                    </li>
+                }
+
+                <!-- Hiển thị '... [cuối]' nếu cần (LOGIC MỚI) -->
+                @if (endPage < totalPages)
+                {
+                    @if (endPage < totalPages - 1)
+                    {
+                        <!-- Chỉ hiển thị '...' nếu cách trang cuối ít nhất 1 số -->
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    }
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = totalPages })">@totalPages</a>
+                    </li>
+                }
+
+                <!-- Nút 'Sau' -->
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { searchId = ViewBag.SearchId, statusFilter = ViewBag.StatusFilter, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = page + 1 })">›</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </div>
 
@@ -491,11 +175,4 @@
         window.location.href = `?searchId=${encodeURIComponent(searchId)}` +
                                `&page=1`;
     }
-
-    // Enter để tìm kiếm
-    document.getElementById('searchId').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            filterSearch();
-        }
-    });
 </script>

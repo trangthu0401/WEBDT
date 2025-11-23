@@ -59,10 +59,10 @@
                     </div>
                 </div>
                 <button class="carousel-control next" id="carouselNext">
-                    <img src="~/images/muitenphai.png alt="Next">
+                    <img src="~/images/muitentrai.png"  style="transform:rotate(180deg)" alt="Next">
                 </button>
                 <button class="carousel-control prev" id="carouselPrev">
-                    <img src="~/images/muitentrai.png" style="transform:rotate(180deg)" alt="Previous">
+                    <img src="~/images/muitenphai.png" style="transform:rotate(180deg)" alt="Previous">
                 </button>
                 
             </div>
@@ -84,7 +84,7 @@
         <section class="top-selling-section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">TOP BAN CHAY TUAN NAY</h2>
+                    <h2 class="section-title">TOP BÁN CHẠY TUẦN NÀY </h2>
                     <a href="#" class="view-all-link">
                         Xem tất cả <i class="fas fa-arrow-right"></i>
                     </a>
@@ -97,12 +97,12 @@
                              onclick="@(product.FirstVariantId > 0 ? $"location.href='/Home/ProductDetail/{product.FirstVariantId}'" : "")">
 
                             <div class="best-seller-badge">
-                                <i class="fas fa-crown"></i> BAN CHAY
+                                <i class="fas fa-crown"></i> BÁN CHẠY
                             </div>
 
                             @if (product.FirstVariantId == 0)
                             {
-                                <span class="out-of-stock-badge">HET HANG</span>
+                                <span class="out-of-stock-badge">HẾT HÀNG</span>
                             }
 
                             <div class="image-wrapper">
@@ -122,7 +122,7 @@
                                 }
                                 else
                                 {
-                                    <p class="product-price" style="color:#999">LIEN HE</p>
+                                    <p class="product-price" style="color:#999">LIÊN HỆ</p>
                                 }
 
                                 <div class="wishlist-button @(product.IsFavorited ? "liked" : "")"
@@ -142,7 +142,7 @@
     <section id="products" class="products-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">TAT CA SAN PHAM</h2>
+                <h2 class="section-title">TẤT CẢ SẢN PHẨM</h2>
                 <span class="product-count">@Model.TotalProductCount san pham</span>
             </div>
 
@@ -150,18 +150,18 @@
                 <span>Sap xep theo:</span>
                 <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder=""
                    class="sort-btn @(string.IsNullOrEmpty(currentSort) ? "active" : "")">
-                    <i class="fas fa-star"></i> Moi nhat
+                    <i class="fas fa-star"></i> Mới Nhất
                 </a>
                 <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_asc"
                    class="sort-btn @(currentSort == "price_asc" ? "active" : "")">
-                    <i class="fas fa-sort-amount-up"></i> Gia tang
+                    <i class="fas fa-sort-amount-up"></i> Giá Tăng
                 </a>
                 <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_desc"
                    class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
-                    <i class="fas fa-sort-amount-down"></i> Gia giam
+                    <i class="fas fa-sort-amount-down"></i> Giá Giảm
                 </a>
                 <button id="filterButton" class="sort-btn">
-                    <i class="fas fa-filter"></i> Bo loc nang cao
+                    <i class="fas fa-filter"></i> Bộ lọc nâng cao
                 </button>
             </div>
 
@@ -175,7 +175,7 @@
 
                             @if (product.FirstVariantId == 0)
                             {
-                                <span class="out-of-stock-badge">HET HANG</span>
+                                <span class="out-of-stock-badge">HẾT HÀNG</span>
                             }
 
                             <div class="image-wrapper">
@@ -192,7 +192,7 @@
                                 }
                                 else
                                 {
-                                    <p class="product-price" style="color:#999">LIEN HE</p>
+                                    <p class="product-price" style="color:#999">LIÊN HỆ</p>
                                 }
 
                                 <div class="wishlist-button @(product.IsFavorited ? "liked" : "")"
@@ -208,8 +208,8 @@
                 {
                     <div style="grid-column:1/-1; text-align:center; padding:60px 20px;">
                         <i class="fas fa-search" style="font-size:48px; color:#ddd; margin-bottom:20px;"></i>
-                        <h3 style="color:#999; margin-bottom:10px;">Khong tim thay san pham nao</h3>
-                        <p style="color:#aaa;">Hay thu tim kiem voi tu khoa khac hoac danh muc khac</p>
+                        <h3 style="color:#999; margin-bottom:10px;">Không tìm thấy sản phẩm nào</h3>
+                        <p style="color:#aaa;">Hãy tìm kiếm với từ khóa khác</p>
                     </div>
                 }
             </div>
@@ -219,14 +219,14 @@
     <!-- FLOATING ACTION BUTTONS -->
     <button class="fab-contact" id="fabChatButton">
         <img src="~/images/lienhe.png" alt="Hỗ trợ">
-        <span>Ho tro 24/7</span>
+        <span>Hỗ trợ 24/7</span>
     </button>
 
     <!-- FILTER POPUP -->
     <div class="filter-popup-overlay" id="filterPopup">
         <div class="filter-popup-content">
             <div class="filter-header">
-                <h3><i class="fas fa-filter"></i> Bo loc san pham</h3>
+                <h3><i class="fas fa-filter"></i> Bộ lọc sản phẩm</h3>
                 <span class="close-filter" id="closeFilter">&times;</span>
             </div>
             <form asp-action="Index" method="get">
@@ -240,7 +240,7 @@
                     </div>
                 </div>
                 <button type="submit" class="btn-apply-filter">
-                    <i class="fas fa-check"></i> Ap dung bo loc
+                    <i class="fas fa-check"></i> Ap1 dụng bộ lọc
                 </button>
             </form>
         </div>

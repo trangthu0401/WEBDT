@@ -1,50 +1,111 @@
-﻿/* File: wwwroot/css/tableStyle.css (Phiên bản tối ưu) */
+﻿/* File: wwwroot/css/tableStyle.css */
 
 .rounded-table {
-    border-radius: 24px;
-    overflow: hidden; /* BẮT BUỘC: Để bo góc hoạt động */
-    border: 1px solid #CACACA; /* Viền ngoài */
-    border-collapse: separate; /* BẮT BUỘC */
-    border-spacing: 0;
     width: 100%;
-    /* QUAN TRỌNG: Đặt màu nền mặc định là trắng
-      Điều này ngăn Bootstrap tự động thêm màu xen kẽ (striped)
-    */
-    background-color: #fff;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    border: none;
+    background-color: transparent;
 }
 
-    /* === Header (<th>) === */
+    /* === PHẦN HEADER (Giữ nguyên vì bạn đã ưng ý) === */
     .rounded-table thead th {
-        background-color: #f8f9fa; /* Màu nền xám nhạt cho header */
-        font-weight: 600;
-        border: none; /* Bỏ hết viền */
-        border-bottom: 2px solid #CACACA; /* Chỉ giữ viền dưới */
-
-        padding: 22px 8px;
+        background-color: #fff;
+        color: #6c757d;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        padding: 16px 12px;
         vertical-align: middle;
-        text-align: center; /* Sửa lỗi không căn giữa */
+        text-align: center;
+        /* Viền dưới header */
+        border-bottom: 2px solid #dee2e6;
     }
 
-    /* === Body (<td>) === */
+    /* === PHẦN NỘI DUNG === */
+    .rounded-table tbody tr {
+        background-color: #fff;
+        transition: background-color 0.15s ease-in-out;
+    }
+
     .rounded-table tbody td {
-        border: none; /* Bỏ hết viền */
-        padding: 22px 8px;
+        padding: 16px 12px;
         vertical-align: middle;
-        text-align: center; /* Sửa lỗi không căn giữa */
-        /* Mặc định, các ô <td> phải TRONG SUỐT */
+        text-align: center;
+        color: #495057;
+        /* [ĐÃ SỬA] Tăng độ đậm của viền ngang lên màu xám rõ nét (#c4c4c4) */
+        border-bottom: 1px solid #c4c4c4;
         background-color: transparent;
+        box-shadow: none !important;
     }
 
-    /* === Đường kẻ ngăn cách === */
-    .rounded-table tbody tr:not(:first-child) td {
-        /* Chỉ thêm viền TOP cho các hàng KHÔNG phải hàng đầu tiên */
-        border-top: 1px solid #CACACA;
+    /* === HIỆU ỨNG HOVER (ĐẬM HƠN) === */
+    .rounded-table tbody tr:hover {
+        /* [ĐÃ SỬA] Màu nền khi hover đậm hơn rõ rệt (#e2e6ea) */
+        background-color: #e2e6ea !important;
+        cursor: pointer;
     }
 
-    /* === ĐÂY LÀ PHẦN SỬA LỖI MÀU NỀN === 
-  Quy tắc này nói: "Hãy tìm các <td> NẰM BÊN TRONG một <tr> 
-  có class .bg-danger-subtle, và TÔ MÀU NỀN cho chúng"
-*/
-    .rounded-table tbody tr.tr-inactive td {
-        background-color: #DDDDDD; /* Màu xám siêu nhạt (nhạt hơn <th>) */
+        /* Đảm bảo các ô con trong suốt để hiện màu hover của dòng */
+        .rounded-table tbody tr:hover td {
+            background-color: transparent !important;
+            color: #000; /* Chữ đen tuyền khi hover cho nổi bật */
+        }
+
+    /* === Hàng cuối cùng === */
+    /* Giữ viền hàng cuối hoặc bỏ tùy ý (ở đây tôi giữ lại để đóng khung danh sách) */
+    .rounded-table tbody tr:last-child td {
+        border-bottom: 1px solid #c4c4c4;
     }
+
+    /* === TRẠNG THÁI INACTIVE === */
+    .rounded-table tbody tr.tr-inactive {
+        background-color: #f2f2f2; /* Xám nền rõ hơn chút */
+    }
+
+        .rounded-table tbody tr.tr-inactive td {
+            color: #aaa;
+            text-decoration: line-through;
+            border-bottom: 1px solid #c4c4c4;
+        }
+
+        .rounded-table tbody tr.tr-inactive:hover {
+            background-color: #e9ecef !important;
+        }
+
+/* === NÚT CHI TIẾT (Custom Button Style) === */
+.btn-table-detail {
+    display: inline-flex; /* Để căn giữa icon và chữ */
+    align-items: center;
+    justify-content: center;
+    gap: 4px; /* Khoảng cách giữa chữ và icon */
+
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555; /* Màu chữ xám đậm */
+    background-color: #fff;
+    border: 1px solid #e0e0e0; /* Viền xám mỏng */
+    border-radius: 4px; /* Bo góc nhẹ (4px là chuẩn đẹp) */
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+}
+
+    /* Icon bên trong nút */
+    .btn-table-detail i {
+        font-size: 16px;
+        transition: transform 0.2s ease; /* Hiệu ứng trượt cho icon */
+    }
+
+    /* === HIỆU ỨNG HOVER === */
+    .btn-table-detail:hover {
+        background-color: #0d6efd; /* Nền xanh dương (Bootstrap Primary) */
+        color: #fff; /* Chữ trắng */
+        border-color: #0d6efd;
+        box-shadow: 0 2px 6px rgba(13, 110, 253, 0.2); /* Bóng mờ nhẹ */
+    }
+
+        /* Khi hover, icon trượt sang phải một chút */
+        .btn-table-detail:hover i {
+            transform: translateX(3px);
+        }
