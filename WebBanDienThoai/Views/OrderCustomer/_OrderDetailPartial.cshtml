@@ -1,0 +1,197 @@
+﻿@model WebBanDienThoai.Models.Order
+
+<style>
+    /* Style nội bộ cho Popup */
+    .popup-wrapper {
+        font-family: 'Be Vietnam Pro', sans-serif;
+    }
+
+    .popup-layout {
+        display: flex;
+        gap: 20px;
+        min-height: 300px;
+    }
+
+    .popup-left {
+        flex: 6;
+        border-right: 1px dashed #e0e0e0;
+        padding-right: 20px;
+    }
+
+    .popup-right {
+        flex: 4;
+        padding-left: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .popup-item {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f5f5f5;
+        align-items: center;
+    }
+
+    .popup-thumb {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 2px;
+    }
+
+    .popup-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    .popup-meta {
+        font-size: 0.8rem;
+        color: #888;
+    }
+
+    .popup-price {
+        font-weight: 700;
+        color: #e63946;
+        text-align: right;
+        font-size: 0.95rem;
+    }
+
+    .total-final {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #d70018;
+        border-top: 1px dashed #ddd;
+        padding-top: 8px;
+        margin-top: 4px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .badge-status-pop {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        margin-bottom: 15px;
+        text-align: center;
+        width: 100%;
+    }
+
+    .bg-success-subtle {
+        background: #d1f2eb;
+        color: #1abc9c;
+    }
+
+    .bg-warning-subtle {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .bg-danger-subtle {
+        background: #fadbd8;
+        color: #e74c3c;
+    }
+
+    .bg-info-subtle {
+        background: #d6eaf8;
+        color: #3498db;
+    }
+
+    .bg-secondary-subtle {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .btn-cancel-pop {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #fee2e2;
+        background: #fff;
+        color: #dc2626;
+        font-weight: 600;
+        margin-top: auto;
+        cursor: pointer;
+    }
+
+        .btn-cancel-pop:hover {
+            background: #dc2626;
+            color: white;
+        }
+</style>
+
+<div class="popup-wrapper">
+    <div class="popup-layout">
+        <!-- TRÁI -->
+        <div class="popup-left">
+            <div class="text-danger fw-bold mb-3"><i class="fas fa-box-open"></i> Sản phẩm</div>
+            <div style="max-height: 320px; overflow-y: auto; padding-right: 5px;">
+                @foreach (var detail in Model.OrderDetails)
+                {
+                    var product = detail.ProductVariant?.Product;
+                    var variant = detail.ProductVariant;
+                    string imgUrl = variant?.ImageUrl ?? product?.MainImage ?? "/images/no-image.png";
+                    <div class="popup-item">
+                        <img src="@imgUrl" class="popup-thumb">
+                        <div style="flex-grow:1">
+                            <div class="popup-name">@product?.Name</div>
+                            <div class="popup-meta">@variant?.Color | @variant?.Storage</div>
+                        </div>
+                        <div>
+                            <div class="popup-price">@detail.UnitPrice?.ToString("N0")₫</div>
+                            <div style="font-size: 0.8rem; text-align: right; color: #666;">x @detail.Quantity</div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="total-final">
+                <span>Tổng cộng:</span>
+                <span>@Model.TotalAmount?.ToString("N0")₫</span>
+            </div>
+        </div>
+
+        <!-- PHẢI -->
+        <div class="popup-right">
+            @{
+                string st = Model.Status?.ToLower() ?? "";
+                string stClass = "bg-secondary-subtle";
+                if (st.Contains("đã giao")) stClass = "bg-success-subtle";
+                else if (st.Contains("đang")) stClass = "bg-info-subtle";
+                else if (st.Contains("hủy")) stClass = "bg-danger-subtle";
+                else stClass = "bg-warning-subtle";
+            }
+            <div class="badge-status-pop @stClass">@Model.Status</div>
+
+            <div class="mb-3">
+                <div class="fw-bold text-primary small text-uppercase mb-1">Nhận hàng</div>
+                <div class="fw-bold text-dark">@Model.ShippingFullName</div>
+                <div class="small text-muted">@Model.ShippingPhone</div>
+                <div class="small text-muted">@Model.ShippingStreet, @Model.ShippingDistrict</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="fw-bold text-success small text-uppercase mb-1">Thanh toán</div>
+                @{
+                    var pm = Model.Payments?.FirstOrDefault();
+                    string pMethod = pm?.PaymentMethod ?? "COD";
+                    string pStatus = pm?.PaymentStatus ?? "Chưa thanh toán";
+                }
+                <div class="small fw-bold">@pMethod</div>
+                <div class="small @(pStatus.Contains("Đã") ? "text-success" : "text-warning")">@pStatus</div>
+            </div>
+
+            @if (st.Contains("chờ") && !st.Contains("hủy") && !st.Contains("đang"))
+            {
+                <button type="button" class="btn-cancel-pop" onclick="openCancelModal(@Model.OrderId)">
+                    <i class="fas fa-ban"></i> Hủy đơn hàng
+                </button>
+            }
+        </div>
+    </div>
+</div>

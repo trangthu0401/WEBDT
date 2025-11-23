@@ -1,0 +1,397 @@
+﻿@model WebBanDienThoai.Models.Order
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng #" + Model.OrderId.ToString("D5");
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* CSS Layout trang chi tiết */
+    .detail-page-container {
+        background-color: #f8f9fa;
+        min-height: 85vh;
+        padding: 40px 0;
+        font-family: 'Be Vietnam Pro', sans-serif;
+    }
+
+    /* Card Style */
+    .detail-card {
+        background: #fff;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .detail-header {
+        background-color: #fff;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 20px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .section-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Table Sản phẩm */
+    .table-prods {
+        width: 100%;
+    }
+
+        .table-prods td {
+            padding: 15px 0;
+            vertical-align: middle;
+            border-bottom: 1px solid #f9f9f9;
+        }
+
+        .table-prods tr:last-child td {
+            border-bottom: none;
+        }
+
+    .img-thumb {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 3px;
+    }
+
+    .prod-name {
+        font-weight: 600;
+        color: #111;
+        margin-bottom: 4px;
+        font-size: 1rem;
+    }
+
+    .prod-meta {
+        color: #888;
+        font-size: 0.9rem;
+    }
+
+    .prod-price {
+        font-weight: 700;
+        color: #e63946;
+        font-size: 1rem;
+        text-align: right;
+    }
+
+    /* Tổng tiền */
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+        color: #555;
+    }
+
+    .summary-total {
+        border-top: 1px dashed #e5e7eb;
+        padding-top: 15px;
+        margin-top: 5px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #d70018;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* Thông tin bên phải */
+    .info-content {
+        font-size: 0.95rem;
+        color: #374151;
+        line-height: 1.6;
+    }
+
+    .info-highlight {
+        font-weight: 600;
+        color: #111;
+    }
+
+    /* Badge trạng thái */
+    .badge-lg {
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .bg-success-subtle {
+        background-color: #d1f2eb;
+        color: #1abc9c;
+    }
+
+    .bg-warning-subtle {
+        background-color: #fff3cd;
+        color: #b7791f;
+    }
+
+    .bg-danger-subtle {
+        background-color: #f8d7da;
+        color: #c53030;
+    }
+
+    .bg-info-subtle {
+        background-color: #cff4fc;
+        color: #0c5460;
+    }
+
+    .bg-secondary-subtle {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    /* Nút Hủy & Hỗ trợ */
+    .btn-cancel-lg {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: 1px solid #fee2e2;
+        background-color: #fff;
+        color: #dc2626;
+        transition: 0.2s;
+        margin-top: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .btn-cancel-lg:hover {
+            background-color: #dc2626;
+            color: white;
+        }
+
+    .btn-support-lg {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        color: #4b5563;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+        .btn-support-lg:hover {
+            background-color: #e5e7eb;
+            color: #111;
+        }
+</style>
+
+<div class="detail-page-container">
+    <div class="container">
+
+        <!-- Nút quay lại -->
+        <div class="mb-4">
+            <a href="/OrderCustomer/History" class="text-decoration-none text-muted fw-bold d-inline-flex align-items-center gap-2 hover-red">
+                <i class="bi bi-arrow-left"></i> Quay lại danh sách
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- CỘT TRÁI: SẢN PHẨM -->
+            <div class="col-lg-8">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <div>
+                            <h4 class="mb-1 fw-bold text-dark">Đơn hàng #@Model.OrderId.ToString("D5")</h4>
+                            <span class="text-muted small">Ngày đặt: @Model.OrderDate?.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <!-- Badge Trạng Thái -->
+                        @{
+                            string stClass = "bg-secondary-subtle";
+                            string st = Model.Status?.ToLower() ?? "";
+                            if (st.Contains("đã giao") || st.Contains("thanh toán")) stClass = "bg-success-subtle";
+                            else if (st.Contains("đang")) stClass = "bg-info-subtle";
+                            else if (st.Contains("chờ")) stClass = "bg-warning-subtle";
+                            else if (st.Contains("hủy")) stClass = "bg-danger-subtle";
+                        }
+                        <span class="badge-lg @stClass">@Model.Status</span>
+                    </div>
+
+                    <div class="p-4">
+                        <table class="table-prods">
+                            @foreach (var detail in Model.OrderDetails)
+                            {
+                                var product = detail.ProductVariant?.Product;
+                                var variant = detail.ProductVariant;
+                                string imgUrl = variant?.ImageUrl ?? product?.MainImage ?? "/images/no-image.png";
+
+                                <tr>
+                                    <td style="width: 80px;">
+                                        <img src="@imgUrl" class="img-thumb">
+                                    </td>
+                                    <td>
+                                        <div class="prod-name">@product?.Name</div>
+                                        <div class="prod-meta">
+                                            @variant?.Color | @variant?.Storage
+                                        </div>
+                                    </td>
+                                    <td class="text-center text-muted" style="width: 100px;">x @detail.Quantity</td>
+                                    <td style="width: 140px;">
+                                        <div class="prod-price">@detail.UnitPrice?.ToString("N0")₫</div>
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+
+                    <div class="bg-light p-4 border-top">
+                        <div class="summary-row">
+                            <span>Tạm tính:</span>
+                            <span>@Model.TotalAmount?.ToString("N0")₫</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Phí vận chuyển:</span>
+                            <span class="text-success">Miễn phí</span>
+                        </div>
+                        <div class="summary-total">
+                            <span>Tổng cộng:</span>
+                            <span>@Model.TotalAmount?.ToString("N0")₫</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI: THÔNG TIN -->
+            <div class="col-lg-4">
+                <!-- Thông tin nhận hàng -->
+                <div class="detail-card p-4">
+                    <div class="section-title text-primary"><i class="fas fa-map-marker-alt"></i> Địa chỉ nhận hàng</div>
+                    <div class="info-content">
+                        <div class="info-highlight">@Model.ShippingFullName</div>
+                        <div class="mb-1">@Model.ShippingPhone</div>
+                        <div style="color: #666;">
+                            @Model.ShippingStreet, @Model.ShippingDistrict, @Model.ShippingCity
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thông tin thanh toán -->
+                <div class="detail-card p-4">
+                    <div class="section-title text-success"><i class="fas fa-receipt"></i> Thanh toán</div>
+                    @{
+                        var payment = Model.Payments?.FirstOrDefault();
+                        string pMethod = payment?.PaymentMethod ?? "COD";
+                        string pStatus = payment?.PaymentStatus ?? "Chưa thanh toán";
+                        string pColor = pStatus.Contains("Đã") ? "text-success" : "text-warning";
+                    }
+                    <div class="info-content">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Hình thức:</span>
+                            <span class="fw-bold">@pMethod</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Trạng thái:</span>
+                            <span class="fw-bold @pColor">@pStatus</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CÁC NÚT THAO TÁC -->
+                <div class="detail-card p-4 border-0 shadow-none bg-transparent">
+                    <!-- Nút Hủy chỉ hiện khi đơn Chờ xử lý -->
+                    @if (st.Contains("chờ") && !st.Contains("hủy") && !st.Contains("đang"))
+                    {
+                        <button class="btn-cancel-lg" onclick="openCancelModal(@Model.OrderId)">
+                            <i class="fas fa-ban"></i> Hủy đơn hàng
+                        </button>
+                    }
+
+                    <a href="#" class="btn-support-lg">
+                        <i class="bi bi-headset"></i> Cần hỗ trợ đơn hàng này?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL LÝ DO HỦY -->
+<div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Xác nhận hủy đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="cancelOrderId">
+                <div class="d-flex flex-column gap-2">
+                    <label class="p-2 border rounded cursor-pointer hover-bg-light">
+                        <input type="radio" name="cancelReason" value="Đổi ý không mua nữa" checked class="form-check-input me-2"> Đổi ý không mua nữa
+                    </label>
+                    <label class="p-2 border rounded cursor-pointer hover-bg-light">
+                        <input type="radio" name="cancelReason" value="Tìm thấy nơi khác giá tốt hơn" class="form-check-input me-2"> Tìm thấy giá tốt hơn
+                    </label>
+                    <label class="p-2 border rounded cursor-pointer hover-bg-light">
+                        <input type="radio" name="cancelReason" value="Đặt nhầm sản phẩm" class="form-check-input me-2"> Đặt nhầm sản phẩm
+                    </label>
+                    <label class="p-2 border rounded cursor-pointer hover-bg-light">
+                        <input type="radio" name="cancelReason" value="Khác" class="form-check-input me-2"> Lý do khác
+                    </label>
+                    <textarea id="otherReason" class="form-control mt-2 d-none" rows="2" placeholder="Nhập lý do..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Bỏ qua</button>
+                <button class="btn btn-danger rounded-pill px-4" onclick="submitCancel()">Xác nhận hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts Xử lý Hủy Đơn -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // 1. Mở Modal Hủy
+    function openCancelModal(id) {
+        $('#cancelOrderId').val(id);
+        var cancelModal = new bootstrap.Modal(document.getElementById('cancelReasonModal'));
+        cancelModal.show();
+    }
+
+    // 2. Hiển thị ô nhập lý do khác
+    $('input[name="cancelReason"]').change(function () {
+        if (this.value === 'Khác') $('#otherReason').removeClass('d-none').focus();
+        else $('#otherReason').addClass('d-none');
+    });
+
+    // 3. Gửi yêu cầu hủy lên Server
+    function submitCancel() {
+        let id = $('#cancelOrderId').val();
+        let reason = $('input[name="cancelReason"]:checked').val();
+        if (reason === 'Khác') reason = $('#otherReason').val();
+
+        if (!reason) { Swal.fire("Lỗi", "Vui lòng nhập lý do", "warning"); return; }
+
+        $.post('/OrderCustomer/CancelOrder', { orderId: id, reason: reason }, function (res) {
+            if (res.success) {
+                Swal.fire("Đã hủy!", res.message, "success").then(() => location.reload());
+            } else {
+                Swal.fire("Lỗi", res.message, "error");
+            }
+        });
+    }
+</script>

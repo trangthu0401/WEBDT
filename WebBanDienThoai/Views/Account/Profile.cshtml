@@ -7,7 +7,7 @@
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,10 +15,52 @@
 
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Style riêng cho nút Lịch sử (Màu trắng viền xám) */
+        .btn-order-history {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            justify-content: center;
+            cursor: pointer;
+            height: 100%;
+        }
+
+            .btn-order-history:hover {
+                background-color: #f8f9fa;
+                border-color: #bbb;
+                color: #e63946;
+            }
+
+        /* Layout 2 nút ngang nhau */
+        .form-actions {
+            display: flex !important;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        .btn-save-profile {
+            flex: 2;
+        }
+
+        .btn-order-history {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
 
@@ -74,12 +116,19 @@
             </div>
 
             <div class="form-actions full-width">
-                <button type="submit" class="btn-save-profile">Lưu thay đổi</button>
+                <button type="submit" class="btn-save-profile">
+                    <i class="fas fa-save"></i> Lưu thay đổi
+                </button>
+
+                <!-- ĐÃ SỬA: Trỏ về action History của OrderCustomerController -->
+                <a asp-controller="OrderCustomer" asp-action="History" class="btn-order-history">
+                    <i class="fas fa-history"></i> Lịch sử mua hàng
+                </a>
             </div>
+
         </form>
     </div>
 
-    <!-- Thêm thư viện jQuery để Validation hoạt động -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
