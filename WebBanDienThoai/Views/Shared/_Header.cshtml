@@ -1,182 +1,103 @@
+﻿[file name]: Views/Shared/_Header.cshtml
+[file content begin]
 ﻿@using System.Security.Claims
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
-    var currentSearch = ViewData["CurrentSearch"] as string ?? "";
+    string displayName = "Tài khoản";
+    if (User.Identity.IsAuthenticated)
+    {
+        displayName = User.FindFirstValue("FullName") ?? User.Identity.Name;
+        if (!string.IsNullOrEmpty(displayName) && displayName.Length > 12)
+        {
+            displayName = displayName.Substring(0, 12) + "...";
+        }
+    }
 }
 
-<header class="site-header">
+<header>
     <div class="header-top">
-        <div class="container header-top-container">
-            <a asp-controller="Home" asp-action="Index" class="logo">
-                <h1 class="logo-text">Rabit</h1>
-                <img src="~/images/linhvatcau.png" alt="Rabit Store" class="logo-mascot">
-                <h1 class="logo-text">Store</h1>
-            </a>
+        <div class="header-container">
+            <div class="logo-area">
+                <a asp-controller="Home" asp-action="Index">
+                    <span class="logo-text">Rabit</span>
+                    <img src="~/images/linhvatcau.png" alt="Mascot" class="logo-img" />
+                    <span class="logo-text">Store</span>
+                </a>
+            </div>
 
-            <form asp-controller="Home" asp-action="Index" method="get" class="search-form" id="mainSearchForm">
-                <input type="text" name="searchString" value="@currentSearch" placeholder="Tìm kiếm điện thoại, phụ kiện..." class="search-input" id="mainSearchInput" autocomplete="off">
-                <button type="submit" class="search-button">
-                    <img src="~/images/search.png" alt="Search">
-                </button>
-                <div class="search-suggestions" id="mainSearchSuggestions"></div>
-            </form>
+            <div class="search-area">
+                <form asp-controller="Product" asp-action="Search" method="get" class="search-form">
+                    <input type="text" name="query" class="search-input" placeholder="Tìm kiếm điện thoại, phụ kiện..." />
+                    <button type="submit" class="search-btn">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
+            </div>
 
             <div class="header-actions">
-                <a href="#" class="cart-link">
-                    <img src="~/images/giohang.png" alt="Giỏ hàng">
+                <a asp-controller="Cart" asp-action="Index" class="btn-cart-red position-relative">
+                    <i class="fa-solid fa-cart-shopping"></i>
                     <span>Giỏ hàng</span>
-                    <span class="cart-count">0</span>
+                    <span id="cart-count-badge"
+                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          style="font-size: 10px; display: none;">
+                        0
+                    </span>
                 </a>
 
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <div class="user-profile-dropdown">
-                        <a href="#" class="user-profile">
-                            <img src="~/images/user.png" alt="Tài khoản">
-                            <span>@User.FindFirstValue("FullName")</span>
-                        </a>
-                        <div class="dropdown-content">
-                            <!-- QUAN TRỌNG: Đảm bảo có dòng này -->
-                            <a asp-controller="Account" asp-action="Profile">Trang cá nhân</a>
-                            <a asp-controller="Account" asp-action="Logout">Đăng xuất</a>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <a asp-controller="Account" asp-action="Login" class="user-profile">
-                        <img src="~/images/user.png" alt="Đăng nhập">
-                        <span>Đăng nhập</span>
-                    </a>
-                }
+                <div class="dropdown">
+                    <button class="btn-user-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-regular fa-user"></i>
+                        <span>@displayName</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end mt-2">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a></li>
+                            <li><a class="dropdown-item" asp-controller="Order" asp-action="History">Đơn mua</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li><a class="dropdown-item" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>
+                            <li><a class="dropdown-item" asp-controller="Account" asp-action="Register">Đăng ký</a></li>
+                        }
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 
-    <nav class="main-nav">
-        <div class="container nav-container">
-            <a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> Trang chủ</a>
-            <a asp-controller="Home" asp-action="Favorites"><i class="fas fa-heart"></i> Yêu thích</a>
-
-            <div class="nav-category-dropdown" id="categoryDropdown">
-                <a href="#" class="dropdown-link" id="categoryDropdownToggle">
-                    <i class="fas fa-th-list"></i> Danh mục
-                   
+    <nav class="header-nav">
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-house"></i> Trang chủ
                 </a>
-                <div class="category-popup">
-                    @if (ViewBag.BrandCounts != null)
-                    {
-                        @foreach (var brand in ViewBag.BrandCounts)
-                        {
-                            <a asp-controller="Home" asp-action="Index" asp-route-id="@brand.BrandId" class="category-popup-item">
-                                @brand.BrandName
-                            </a>
-                        }
-                    }
-                    else
-                    {
-                        <span class="category-popup-item">Không có danh mục</span>
-                    }
-                </div>
-            </div>
-
-            <a href="#"><i class="fas fa-gift"></i> Khuyến mãi</a>
-            <a href="#"><i class="fas fa-headset"></i> Hỗ trợ</a>
-        </div>
+            </li>
+            <li class="nav-item">
+                <!-- SỬA LỖI: Thay Product/Wishlist bằng Home/Favorites -->
+                <a asp-controller="Home" asp-action="Favorites">
+                    <i class="fa-solid fa-heart"></i> Yêu thích
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#">
+                    <i class="fa-solid fa-gift"></i> Khuyến mãi
+                </a>
+            </li>
+            <li class="nav-item">
+                <a asp-controller="Home" asp-action="Contact">
+                    <i class="fa-solid fa-headset"></i> Hỗ trợ
+                </a>
+            </li>
+        </ul>
     </nav>
 </header>
-
-<script>
-    // JavaScript cho dropdown danh mục
-    document.addEventListener('DOMContentLoaded', function() {
-        const categoryDropdown = document.getElementById('categoryDropdown');
-        const categoryToggle = document.getElementById('categoryDropdownToggle');
-
-        if (categoryToggle) {
-            categoryToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                categoryDropdown.classList.toggle('active');
-            });
-        }
-
-        document.addEventListener('click', function(e) {
-            if (categoryDropdown && !categoryDropdown.contains(e.target)) {
-                categoryDropdown.classList.remove('active');
-            }
-        });
-
-        // JavaScript cho đề xuất tìm kiếm
-        const searchInput = document.getElementById('mainSearchInput');
-        const suggestionsContainer = document.getElementById('mainSearchSuggestions');
-        const searchForm = document.getElementById('mainSearchForm');
-
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function() {
-                const term = this.value;
-                if (term.length < 2) {
-                    suggestionsContainer.innerHTML = '';
-                    suggestionsContainer.style.display = 'none';
-                    return;
-                }
-
-                fetch('/Home/SearchSuggestions?term=' + term)
-                    .then(response => response.json())
-                    .then(data => {
-                        suggestionsContainer.innerHTML = '';
-                        if (data.length > 0) {
-                            suggestionsContainer.style.display = 'block';
-                            const header = document.createElement('div');
-                            header.classList.add('suggestion-header');
-                            header.textContent = 'Sản phẩm gợi ý';
-                            suggestionsContainer.appendChild(header);
-
-                            data.forEach(product => {
-                                const suggestionLink = document.createElement('a');
-                                suggestionLink.classList.add('suggestion-item');
-                                suggestionLink.href = `/Home/Index?searchString=${encodeURIComponent(product.name)}`;
-
-                                const img = document.createElement('img');
-                                let imageUrl = product.mainImage;
-                                if (imageUrl && !imageUrl.startsWith('http')) {
-                                    imageUrl = imageUrl.replace("~", "");
-                                }
-                                img.src = imageUrl ? imageUrl : '/images/default-product.png';
-                                img.alt = product.name;
-
-                                const infoDiv = document.createElement('div');
-                                infoDiv.classList.add('suggestion-item-info');
-
-                                const nameDiv = document.createElement('div');
-                                nameDiv.classList.add('suggestion-item-name');
-                                nameDiv.textContent = product.name;
-
-                                const priceDiv = document.createElement('div');
-                                priceDiv.classList.add('suggestion-item-price');
-                                priceDiv.textContent = product.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-
-                                infoDiv.appendChild(nameDiv);
-                                infoDiv.appendChild(priceDiv);
-                                suggestionLink.appendChild(img);
-                                suggestionLink.appendChild(infoDiv);
-
-                                suggestionLink.addEventListener('click', function(e) {
-                                    e.preventDefault();
-                                    searchInput.value = product.name;
-                                    searchForm.submit();
-                                });
-
-                                suggestionsContainer.appendChild(suggestionLink);
-                            });
-                        } else {
-                            suggestionsContainer.style.display = 'none';
-                        }
-                    });
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!searchForm.contains(e.target)) {
-                    suggestionsContainer.style.display = 'none';
-                }
-            });
-        }
-    });
-</script>
+[file content end]

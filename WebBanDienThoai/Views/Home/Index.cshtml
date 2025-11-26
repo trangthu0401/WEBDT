@@ -1,251 +1,245 @@
-﻿@model WebBanDienThoai.Models.ViewModels.ManageProductsViewModel
+﻿
+@model WebBanDienThoai.Models.ViewModels.ManageProductsViewModel
 @using System.Security.Claims
 
 @{
-    Layout = null;
+    Layout = "_Layout"; // THAY Layout = null bằng Layout = "_Layout"
     var currentSort = ViewData["CurrentSort"] as string;
     var currentSearch = ViewData["CurrentSearch"] as string;
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rabit Store - Điện thoại chính hãng giá tốt</title>
+
+<!-- HERO SECTION -->
+<section id="hero" class="hero-section">
+    <div class="container hero-container">
+        <aside class="category-sidebar">
+            <ul>
+                <li class="@(Model.BrandId == null ? "active" : "")">
+                    <a asp-action="Index" asp-route-id="">
+                        <span>Tất cả sản phẩm</span>
+                        <span class="badge">@Model.TotalProductCount</span>
+                    </a>
+                </li>
+                @if (Model.BrandCounts != null)
+                {
+                    foreach (var brand in Model.BrandCounts)
+                    {
+                        <li class="@(Model.BrandId == brand.BrandId ? "active" : "")">
+                            <a asp-action="Index" asp-route-id="@brand.BrandId">
+                                <span>@brand.BrandName</span>
+                                <img src="~/images/next .png" alt=">">
+                            </a>
+                        </li>
+                    }
+                }
+            </ul>
+        </aside>
+
+        <div class="hero-carousel" id="heroCarousel">
+            <div class="carousel-track">
+                <div class="carousel-slide">
+                    <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:90/plain/https://dashboard.cellphones.com.vn/storage/690x300_iPhone_17_Pro_Opensale_v3.png"
+                         alt="iPhone 17 Pro" class="carousel-image">
+                </div>
+                <div class="carousel-slide">
+                    <img src="https://cdn.tgdd.vn/Products/Images/42/329149/Slider/vi-vn-iphone-16-pro-max-1.jpg"
+                         alt="iPhone 16 Pro Max" class="carousel-image">
+                </div>
+            </div>
+            <button class="carousel-control next" id="carouselNext">
+                <img src="~/images/muitentrai.png" style="transform:rotate(180deg)" alt="Next">
+            </button>
+            <button class="carousel-control prev" id="carouselPrev">
+                <img src="~/images/muitenphai.png" style="transform:rotate(180deg)" alt="Previous">
+            </button>
+        </div>
+
+        <aside class="ads-sidebar">
+            <a href="#" class="ad-banner">
+                <img src="~/images/poster1.png" alt="Khuyến mãi đặc biệt">
+            </a>
+            <a href="#" class="ad-banner">
+                <img src="~/images/poster2.png" alt="Bảo hành 2 năm">
+            </a>
+        </aside>
+    </div>
+</section>
+
+<!-- TOP BAN CHAY SECTION -->
+@if (Model.TopSellingProducts.Count > 0)
+{
+    <section class="top-selling-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">TOP BÁN CHẠY TUẦN NÀY </h2>
+                <a href="#" class="view-all-link">
+                    Xem tất cả <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="product-grid">
+                @foreach (var product in Model.TopSellingProducts)
+                {
+                    <div class="product-card @(product.FirstVariantId == 0 ? "disabled" : "")"
+                         onclick="@(product.FirstVariantId > 0 ? $"location.href='/Home/ProductDetail/{product.FirstVariantId}'" : "")">
+
+                        <div class="best-seller-badge">
+                            <i class="fas fa-crown"></i> BÁN CHẠY
+                        </div>
+
+                        @if (product.FirstVariantId == 0)
+                        {
+                            <span class="out-of-stock-badge">HẾT HÀNG</span>
+                        }
+
+                        <div class="image-wrapper">
+                            <img src="@(string.IsNullOrEmpty(product.MainImage) ? "/images/default-product.png" : product.MainImage)"
+                                 alt="@product.Name" class="product-image">
+                        </div>
+
+                        <div class="product-info">
+                            <h3 class="product-name" title="@product.Name">@product.Name</h3>
+
+                            @if (product.FirstVariantId > 0)
+                            {
+                                <p class="product-price">@product.Price.ToString("N0")₫</p>
+                                <p class="sold-count">
+                                    <i class="fas fa-fire"></i> Da ban: @product.SoldCount
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="product-price" style="color:#999">LIÊN HỆ</p>
+                            }
+
+                            <div class="wishlist-button @(product.IsFavorited ? "liked" : "")"
+                                 data-productid="@product.ProductId" onclick="event.stopPropagation();">
+                                <i class="fa fa-heart"></i>
+                                <span>@(product.IsFavorited ? "Da thich" : "Yeu thich")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ALL PRODUCTS SECTION -->
+<section id="products" class="products-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">TẤT CẢ SẢN PHẨM</h2>
+            <span class="product-count">@Model.TotalProductCount san pham</span>
+        </div>
+
+        <div class="sort-buttons">
+            <span>Sap xep theo:</span>
+            <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder=""
+               class="sort-btn @(string.IsNullOrEmpty(currentSort) ? "active" : "")">
+                <i class="fas fa-star"></i> Mới Nhất
+            </a>
+            <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_asc"
+               class="sort-btn @(currentSort == "price_asc" ? "active" : "")">
+                <i class="fas fa-sort-amount-up"></i> Giá Tăng
+            </a>
+            <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_desc"
+               class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
+                <i class="fas fa-sort-amount-down"></i> Giá Giảm
+            </a>
+            <button id="filterButton" class="sort-btn">
+                <i class="fas fa-filter"></i> Bộ lọc nâng cao
+            </button>
+        </div>
+
+        <div class="product-grid">
+            @if (Model.Products.Count > 0)
+            {
+                foreach (var product in Model.Products)
+                {
+                    <div class="product-card @(product.FirstVariantId == 0 ? "disabled" : "")"
+                         onclick="@(product.FirstVariantId > 0 ? $"location.href='/Home/ProductDetail/{product.FirstVariantId}'" : "")">
+
+                        @if (product.FirstVariantId == 0)
+                        {
+                            <span class="out-of-stock-badge">HẾT HÀNG</span>
+                        }
+
+                        <div class="image-wrapper">
+                            <img src="@(string.IsNullOrEmpty(product.MainImage) ? "/images/default-product.png" : product.MainImage)"
+                                 alt="@product.Name" class="product-image">
+                        </div>
+
+                        <div class="product-info">
+                            <h3 class="product-name" title="@product.Name">@product.Name</h3>
+
+                            @if (product.FirstVariantId > 0)
+                            {
+                                <p class="product-price">@product.Price.ToString("N0")₫</p>
+                            }
+                            else
+                            {
+                                <p class="product-price" style="color:#999">LIÊN HỆ</p>
+                            }
+
+                            <div class="wishlist-button @(product.IsFavorited ? "liked" : "")"
+                                 data-productid="@product.ProductId" onclick="event.stopPropagation();">
+                                <i class="fa fa-heart"></i>
+                                <span>@(product.IsFavorited ? "Da thich" : "Yeu thich")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="grid-column:1/-1; text-align:center; padding:60px 20px;">
+                    <i class="fas fa-search" style="font-size:48px; color:#ddd; margin-bottom:20px;"></i>
+                    <h3 style="color:#999; margin-bottom:10px;">Không tìm thấy sản phẩm nào</h3>
+                    <p style="color:#aaa;">Hãy tìm kiếm với từ khóa khác</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- FLOATING ACTION BUTTONS -->
+<button class="fab-contact" id="fabChatButton">
+    <img src="~/images/lienhe.png" alt="Hỗ trợ">
+    <span>Hỗ trợ 24/7</span>
+</button>
+
+<!-- FILTER POPUP -->
+<div class="filter-popup-overlay" id="filterPopup">
+    <div class="filter-popup-content">
+        <div class="filter-header">
+            <h3><i class="fas fa-filter"></i> Bộ lọc sản phẩm</h3>
+            <span class="close-filter" id="closeFilter">&times;</span>
+        </div>
+        <form asp-action="Index" method="get">
+            <input type="hidden" name="id" value="@Model.BrandId" />
+            <div class="filter-group">
+                <label>Khoang gia</label>
+                <div class="price-range-inputs">
+                    <input type="number" name="minPrice" placeholder="Tu" value="@Model.MinPrice">
+                    <span>-</span>
+                    <input type="number" name="maxPrice" placeholder="Den" value="@Model.MaxPrice">
+                </div>
+            </div>
+            <button type="submit" class="btn-apply-filter">
+                <i class="fas fa-check"></i> Ap1 dụng bộ lọc
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Styles {
     <link rel="stylesheet" href="~/css/home.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-</head>
-<body>
-    <!-- HEADER (SỬ DỤNG PARTIAL VIEW) -->
-    @await Html.PartialAsync("_Header")
+}
 
-    <!-- HERO SECTION -->
-    <section id="hero" class="hero-section">
-        <div class="container hero-container">
-            <aside class="category-sidebar">
-                <ul>
-                    <li class="@(Model.BrandId == null ? "active" : "")">
-                        <a asp-action="Index" asp-route-id="">
-                            <span>Tất cả sản phẩm</span>
-                            <span class="badge">@Model.TotalProductCount</span>
-                        </a>
-                    </li>
-                    @if (Model.BrandCounts != null)
-                    {
-                        foreach (var brand in Model.BrandCounts)
-                        {
-                            <li class="@(Model.BrandId == brand.BrandId ? "active" : "")">
-                                <a asp-action="Index" asp-route-id="@brand.BrandId">
-                                    <span>@brand.BrandName</span>
-                                    <img src="~/images/next .png" alt=">">
-                                </a>
-                            </li>
-                        }
-                    }
-                </ul>
-            </aside>
-
-            <div class="hero-carousel" id="heroCarousel">
-                <div class="carousel-track">
-                    <div class="carousel-slide">
-                        <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:1036:450/q:90/plain/https://dashboard.cellphones.com.vn/storage/690x300_iPhone_17_Pro_Opensale_v3.png"
-                             alt="iPhone 17 Pro" class="carousel-image">
-                    </div>
-                    <div class="carousel-slide">
-                        <img src="https://cdn.tgdd.vn/Products/Images/42/329149/Slider/vi-vn-iphone-16-pro-max-1.jpg"
-                             alt="iPhone 16 Pro Max" class="carousel-image">
-                    </div>
-                </div>
-                <button class="carousel-control next" id="carouselNext">
-                    <img src="~/images/muitentrai.png"  style="transform:rotate(180deg)" alt="Next">
-                </button>
-                <button class="carousel-control prev" id="carouselPrev">
-                    <img src="~/images/muitenphai.png" style="transform:rotate(180deg)" alt="Previous">
-                </button>
-                
-            </div>
-
-            <aside class="ads-sidebar">
-                <a href="#" class="ad-banner">
-                    <img src="~/images/poster1.png" alt="Khuyến mãi đặc biệt">
-                </a>
-                <a href="#" class="ad-banner">
-                    <img src="~/images/poster2.png" alt="Bảo hành 2 năm">
-                </a>
-            </aside>
-        </div>
-    </section>
-
-    <!-- TOP BAN CHAY SECTION -->
-    @if (Model.TopSellingProducts.Count > 0)
-    {
-        <section class="top-selling-section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">TOP BÁN CHẠY TUẦN NÀY </h2>
-                    <a href="#" class="view-all-link">
-                        Xem tất cả <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-
-                <div class="product-grid">
-                    @foreach (var product in Model.TopSellingProducts)
-                    {
-                        <div class="product-card @(product.FirstVariantId == 0 ? "disabled" : "")"
-                             onclick="@(product.FirstVariantId > 0 ? $"location.href='/Home/ProductDetail/{product.FirstVariantId}'" : "")">
-
-                            <div class="best-seller-badge">
-                                <i class="fas fa-crown"></i> BÁN CHẠY
-                            </div>
-
-                            @if (product.FirstVariantId == 0)
-                            {
-                                <span class="out-of-stock-badge">HẾT HÀNG</span>
-                            }
-
-                            <div class="image-wrapper">
-                                <img src="@(string.IsNullOrEmpty(product.MainImage) ? "/images/default-product.png" : product.MainImage)"
-                                     alt="@product.Name" class="product-image">
-                            </div>
-
-                            <div class="product-info">
-                                <h3 class="product-name" title="@product.Name">@product.Name</h3>
-
-                                @if (product.FirstVariantId > 0)
-                                {
-                                    <p class="product-price">@product.Price.ToString("N0")₫</p>
-                                    <p class="sold-count">
-                                        <i class="fas fa-fire"></i> Da ban: @product.SoldCount
-                                    </p>
-                                }
-                                else
-                                {
-                                    <p class="product-price" style="color:#999">LIÊN HỆ</p>
-                                }
-
-                                <div class="wishlist-button @(product.IsFavorited ? "liked" : "")"
-                                     data-productid="@product.ProductId" onclick="event.stopPropagation();">
-                                    <i class="fa fa-heart"></i>
-                                    <span>@(product.IsFavorited ? "Da thich" : "Yeu thich")</span>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        </section>
-    }
-
-    <!-- ALL PRODUCTS SECTION -->
-    <section id="products" class="products-section">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">TẤT CẢ SẢN PHẨM</h2>
-                <span class="product-count">@Model.TotalProductCount san pham</span>
-            </div>
-
-            <div class="sort-buttons">
-                <span>Sap xep theo:</span>
-                <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder=""
-                   class="sort-btn @(string.IsNullOrEmpty(currentSort) ? "active" : "")">
-                    <i class="fas fa-star"></i> Mới Nhất
-                </a>
-                <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_asc"
-                   class="sort-btn @(currentSort == "price_asc" ? "active" : "")">
-                    <i class="fas fa-sort-amount-up"></i> Giá Tăng
-                </a>
-                <a asp-action="Index" asp-route-id="@Model.BrandId" asp-route-sortOrder="price_desc"
-                   class="sort-btn @(currentSort == "price_desc" ? "active" : "")">
-                    <i class="fas fa-sort-amount-down"></i> Giá Giảm
-                </a>
-                <button id="filterButton" class="sort-btn">
-                    <i class="fas fa-filter"></i> Bộ lọc nâng cao
-                </button>
-            </div>
-
-            <div class="product-grid">
-                @if (Model.Products.Count > 0)
-                {
-                    foreach (var product in Model.Products)
-                    {
-                        <div class="product-card @(product.FirstVariantId == 0 ? "disabled" : "")"
-                             onclick="@(product.FirstVariantId > 0 ? $"location.href='/Home/ProductDetail/{product.FirstVariantId}'" : "")">
-
-                            @if (product.FirstVariantId == 0)
-                            {
-                                <span class="out-of-stock-badge">HẾT HÀNG</span>
-                            }
-
-                            <div class="image-wrapper">
-                                <img src="@(string.IsNullOrEmpty(product.MainImage) ? "/images/default-product.png" : product.MainImage)"
-                                     alt="@product.Name" class="product-image">
-                            </div>
-
-                            <div class="product-info">
-                                <h3 class="product-name" title="@product.Name">@product.Name</h3>
-
-                                @if (product.FirstVariantId > 0)
-                                {
-                                    <p class="product-price">@product.Price.ToString("N0")₫</p>
-                                }
-                                else
-                                {
-                                    <p class="product-price" style="color:#999">LIÊN HỆ</p>
-                                }
-
-                                <div class="wishlist-button @(product.IsFavorited ? "liked" : "")"
-                                     data-productid="@product.ProductId" onclick="event.stopPropagation();">
-                                    <i class="fa fa-heart"></i>
-                                    <span>@(product.IsFavorited ? "Da thich" : "Yeu thich")</span>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div style="grid-column:1/-1; text-align:center; padding:60px 20px;">
-                        <i class="fas fa-search" style="font-size:48px; color:#ddd; margin-bottom:20px;"></i>
-                        <h3 style="color:#999; margin-bottom:10px;">Không tìm thấy sản phẩm nào</h3>
-                        <p style="color:#aaa;">Hãy tìm kiếm với từ khóa khác</p>
-                    </div>
-                }
-            </div>
-        </div>
-    </section>
-
-    <!-- FLOATING ACTION BUTTONS -->
-    <button class="fab-contact" id="fabChatButton">
-        <img src="~/images/lienhe.png" alt="Hỗ trợ">
-        <span>Hỗ trợ 24/7</span>
-    </button>
-
-    <!-- FILTER POPUP -->
-    <div class="filter-popup-overlay" id="filterPopup">
-        <div class="filter-popup-content">
-            <div class="filter-header">
-                <h3><i class="fas fa-filter"></i> Bộ lọc sản phẩm</h3>
-                <span class="close-filter" id="closeFilter">&times;</span>
-            </div>
-            <form asp-action="Index" method="get">
-                <input type="hidden" name="id" value="@Model.BrandId" />
-                <div class="filter-group">
-                    <label>Khoang gia</label>
-                    <div class="price-range-inputs">
-                        <input type="number" name="minPrice" placeholder="Tu" value="@Model.MinPrice">
-                        <span>-</span>
-                        <input type="number" name="maxPrice" placeholder="Den" value="@Model.MaxPrice">
-                    </div>
-                </div>
-                <button type="submit" class="btn-apply-filter">
-                    <i class="fas fa-check"></i> Ap1 dụng bộ lọc
-                </button>
-            </form>
-        </div>
-    </div>
-
+@section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Wishlist Logic
@@ -359,15 +353,14 @@
 
         // Add some interactive effects
         window.addEventListener('scroll', function() {
-            const header = document.querySelector('.site-header');
+            const header = document.querySelector('header');
             if(window.scrollY > 100) {
                 header.style.background = 'rgba(255,255,255,0.95)';
                 header.style.backdropFilter = 'blur(20px)';
             } else {
-                header.style.background = 'var(--primary-light)';
-                header.style.backdropFilter = 'blur(10px)';
+                header.style.background = '#fff';
+                header.style.backdropFilter = 'none';
             }
         });
     </script>
-</body>
-</html>
+}
