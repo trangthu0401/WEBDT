@@ -2,18 +2,6 @@
 ﻿@using System.Security.Claims
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
-@{
-    string displayName = "Tài khoản";
-    if (User.Identity.IsAuthenticated)
-    {
-        displayName = User.FindFirstValue("FullName") ?? User.Identity.Name;
-        if (!string.IsNullOrEmpty(displayName) && displayName.Length > 12)
-        {
-            displayName = displayName.Substring(0, 12) + "...";
-        }
-    }
-}
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -24,135 +12,52 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/css/customer-layout.css" rel="stylesheet" asp-append-version="true" />
-    @await RenderSectionAsync("Styles", required: false)
+    @RenderSection("Styles", required: false)
 </head>
 <body>
 
-<header>
-    <div class="header-top">
-        <div class="header-container">
-            <div class="logo-area">
-                <a asp-controller="Home" asp-action="Index">
-                    <span class="logo-text">Rabit</span>
-                    <img src="~/images/linhvatcau.png" alt="Mascot" class="logo-img" />
-                    <span class="logo-text">Store</span>
-                </a>
-            </div>
+    @await Html.PartialAsync("_Header")
 
-            <div class="search-area">
-                <form asp-controller="Product" asp-action="Search" method="get" class="search-form">
-                    <input type="text" name="query" class="search-input" placeholder="Tìm kiếm điện thoại, phụ kiện..." />
-                    <button type="submit" class="search-btn">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                </form>
-            </div>
+    <main class="main-content">
+        @RenderBody()
+    </main>
 
-            <div class="header-actions">
-                <a asp-controller="Cart" asp-action="Index" class="btn-cart-red position-relative">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <span>Giỏ hàng</span>
-                    <span id="cart-count-badge"
-                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                          style="font-size: 10px; display: none;">
-                        0
-                    </span>
-                </a>
-
-                <div class="dropdown">
-                    <button class="btn-user-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa-regular fa-user"></i>
-                        <span>@displayName</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end mt-2">
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a></li>
-                            <li><a class="dropdown-item" asp-controller="Order" asp-action="History">Đơn mua</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form asp-controller="Account" asp-action="Logout" method="post">
-                                    <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li><a class="dropdown-item" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>
-                            <li><a class="dropdown-item" asp-controller="Account" asp-action="Register">Đăng ký</a></li>
-                        }
-                    </ul>
-                </div>
-            </div>
+    <footer class="bg-light text-center py-3 border-top mt-5">
+        <div class="container text-muted">
+            &copy; 2025 Rabit Store - Hệ thống bán lẻ điện thoại chính hãng.
         </div>
-    </div>
+    </footer>
 
-    <nav class="header-nav">
-        <ul class="nav-list">
-            <li class="nav-item">
-                <a asp-controller="Home" asp-action="Index">
-                    <i class="fa-solid fa-house"></i> Trang chủ
-                </a>
-            </li>
-            <li class="nav-item">
-                <a asp-controller="Product" asp-action="Wishlist">
-                    <i class="fa-solid fa-heart"></i> Yêu thích
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#">
-                    <i class="fa-solid fa-gift"></i> Khuyến mãi
-                </a>
-            </li>
-            <li class="nav-item">
-                <a asp-controller="Home" asp-action="Contact">
-                    <i class="fa-solid fa-headset"></i> Hỗ trợ
-                </a>
-            </li>
-        </ul>
-    </nav>
-</header>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<main class="main-content">
-    @RenderBody()
-</main>
-
-<footer class="bg-light text-center py-3 border-top mt-5">
-    <div class="container text-muted">
-        &copy; 2025 Rabit Store - Hệ thống bán lẻ điện thoại chính hãng.
-    </div>
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    // Script cập nhật số lượng giỏ hàng
-    function updateCartCount() {
-        $.ajax({
-            url: '/Cart/GetCartCount',
-            type: 'GET',
-            success: function (res) {
-                var badge = $('#cart-count-badge');
-                if (res.count > 0) {
-                    badge.text(res.count);
-                    badge.show();
-                } else {
-                    badge.hide();
+    <script>
+        // Script cập nhật số lượng giỏ hàng
+        function updateCartCount() {
+            $.ajax({
+                url: '/Cart/GetCartCount',
+                type: 'GET',
+                success: function (res) {
+                    var badge = $('#cart-count-badge');
+                    if (res.count > 0) {
+                        badge.text(res.count);
+                        badge.show();
+                    } else {
+                        badge.hide();
+                    }
+                },
+                error: function(err) {
+                    console.log("Lỗi cập nhật giỏ hàng: ", err);
                 }
-            },
-            error: function(err) {
-                console.log("Lỗi cập nhật giỏ hàng: ", err);
-            }
+            });
+        }
+
+        $(document).ready(function() {
+            updateCartCount();
         });
-    }
+    </script>
 
-    $(document).ready(function() {
-        updateCartCount();
-    });
-</script>
-
-@await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 
 </body>
 </html>

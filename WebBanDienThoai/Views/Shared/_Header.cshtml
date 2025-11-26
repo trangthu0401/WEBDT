@@ -1,5 +1,4 @@
-﻿[file name]: Views/Shared/_Header.cshtml
-[file content begin]
+﻿
 ﻿@using System.Security.Claims
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
@@ -82,7 +81,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <!-- SỬA LỖI: Thay Product/Wishlist bằng Home/Favorites -->
+                <!-- QUAN TRỌNG: Đã sửa thành Home/Favorites -->
                 <a asp-controller="Home" asp-action="Favorites">
                     <i class="fa-solid fa-heart"></i> Yêu thích
                 </a>
@@ -100,4 +99,3 @@
         </ul>
     </nav>
 </header>
-[file content end]
