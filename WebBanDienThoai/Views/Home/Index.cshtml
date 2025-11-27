@@ -147,7 +147,7 @@
                 <i class="fas fa-sort-amount-down"></i> Giá Giảm
             </a>
             <button id="filterButton" class="sort-btn">
-                <i class="fas fa-filter"></i> Bộ lọc nâng cao
+                <i class="fas fa-filter"></i> Bộ lọc
             </button>
         </div>
 
@@ -218,7 +218,7 @@
         <form asp-action="Index" method="get">
             <input type="hidden" name="id" value="@Model.BrandId" />
             <div class="filter-group">
-                <label>Khoang gia</label>
+                <label>khoảng giá</label>
                 <div class="price-range-inputs">
                     <input type="number" name="minPrice" placeholder="Tu" value="@Model.MinPrice">
                     <span>-</span>
@@ -226,7 +226,7 @@
                 </div>
             </div>
             <button type="submit" class="btn-apply-filter">
-                <i class="fas fa-check"></i> Ap1 dụng bộ lọc
+                <i class="fas fa-check"></i> Áp dụng bộ lọc
             </button>
         </form>
     </div>
