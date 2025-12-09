@@ -367,22 +367,42 @@ namespace WebBanDienThoai.Controllers
             }
         }
 
+
+
         [HttpGet]
         public async Task<IActionResult> SearchSuggestions(string term)
         {
-            if (string.IsNullOrEmpty(term) || term.Length < 2) return Json(new List<object>());
+            if (string.IsNullOrEmpty(term) || term.Length < 2)
+                return Json(new List<object>());
 
-            var data = await _context.Products
+            var products = await _context.Products
                 .AsNoTracking()
-                .Where(p => p.Name.Contains(term) && p.IsActive)
-                .Take(5)
-                .Select(p => new {
-                    productId = p.ProductId,
-                    name = p.Name,
-                    mainImage = p.MainImage,
-                    price = p.ProductVariants.Count > 0 ? p.ProductVariants.Min(v => v.DiscountPrice ?? v.Price) : 0
+                .Where(p => p.IsActive && p.Name.Contains(term))
+                .OrderBy(p => p.Name)
+                .Take(5) // Lấy tối đa 5 sản phẩm
+                .Select(p => new
+                {
+                    p.ProductId,
+                    p.Name,
+                    p.MainImage,
+                    Variants = p.ProductVariants
+                                .Where(v => v.IsActive)
+                                .Select(v => new { v.Price, v.DiscountPrice })
+                                .ToList()
                 })
                 .ToListAsync();
+
+          
+            var data = products.Select(p => new
+            {
+                productId = p.ProductId,
+                name = p.Name,
+                mainImage = p.MainImage,
+
+                price = p.Variants.Any()
+                        ? p.Variants.Min(v => v.DiscountPrice ?? v.Price)
+                        : 0
+            });
 
             return Json(data);
         }
