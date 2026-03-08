@@ -29,6 +29,14 @@ namespace WebBanDienThoai.Models.ViewModels
 
     public class ManageProductsViewModel
     {
+        
+            // ... các trường cũ giữ nguyên ... 
+            public List<string> RamOptions { get; set; } = new List<string>();
+            public List<string> StorageOptions { get; set; } = new List<string>();
+
+            // Thêm các thuộc tính lọc hiện tại để giữ trạng thái checkbox
+            public List<int> SelectedBrandIds { get; set; } = new List<int>();
+        
         public List<ProductListViewModel> Products { get; set; } = new();
         public List<ProductListViewModel> TopSellingProducts { get; set; } = new();
         public List<BrandCount> BrandCounts { get; set; } = new();

@@ -38,53 +38,61 @@ namespace WebBanDienThoai.Controllers
 
         // === INDEX (ĐÃ SỬA LẠI PHẦN LẤY SỐ LƯỢNG BÁN) ===
         public async Task<IActionResult> Index(int? id, string sortOrder, string searchString,
-                                                 decimal? minPrice, decimal? maxPrice, string ram, string storage)
+                                          decimal? minPrice, decimal? maxPrice, string ram, string storage, List<int> brandIds)
         {
             ViewData["CurrentSort"] = sortOrder;
             ViewData["CurrentSearch"] = searchString;
-            ViewBag.BrandCounts = await GetBrandsAsync();
+
+            // 1. Phải lấy lại danh sách Brand để popup lọc có dữ liệu
+            var dsHang = await GetBrandsAsync();
 
             try
             {
-                // 1. Query cơ bản lấy Product
+                // 2. Query cơ bản
                 var productsQuery = _context.Products
                     .AsNoTracking()
                     .Include(p => p.Brand)
                     .Include(p => p.ProductVariants)
-                    .Where(p => p.IsActive);
+                    .Where(p => p.IsActive == true)
+                    .AsQueryable();
 
-                // 2. Áp dụng Filter cơ bản trên SQL
-                if (id.HasValue && id > 0)
-                    productsQuery = productsQuery.Where(p => p.BrandId == id);
-
+                // 3. Lọc theo search
                 if (!string.IsNullOrEmpty(searchString))
                     productsQuery = productsQuery.Where(p => p.Name.Contains(searchString));
 
-                // 3. Thực thi Query
+                // 4. Lọc theo THƯƠNG HIỆU (Dùng brandIds để hỗ trợ chọn nhiều hãng)
+                if (brandIds != null && brandIds.Any())
+                {
+                    productsQuery = productsQuery.Where(p => brandIds.Contains(p.BrandId));
+                }
+                else if (id.HasValue && id > 0)
+                {
+                    productsQuery = productsQuery.Where(p => p.BrandId == id.Value);
+                    brandIds = new List<int> { id.Value };
+                }
+
                 var rawProducts = await productsQuery.ToListAsync();
 
-                // 4. LẤY SỐ LƯỢNG BÁN THỰC TẾ TỪ ORDERDETAILS
+                // 5. Lấy số lượng bán thực tế từ OrderDetails
                 var productSales = await _context.OrderDetails
                     .AsNoTracking()
                     .Include(od => od.ProductVariant)
-                    .Where(od => od.Quantity.HasValue && od.ProductVariant != null)
                     .GroupBy(od => od.ProductVariant.ProductId)
-                    .Select(g => new
-                    {
-                        ProductId = g.Key,
-                        SoldCount = g.Sum(od => od.Quantity.Value)
-                    })
+                    .Select(g => new { ProductId = g.Key, SoldCount = g.Sum(od => od.Quantity ?? 0) })
                     .ToDictionaryAsync(x => x.ProductId, x => x.SoldCount);
 
-                // 5. Xử lý Logic Map sang ViewModel
+                // 6. Mapping ViewModel & Lọc cấu hình (SỬA LỖI ĐỎ TẠI ĐÂY)
                 var processedList = rawProducts.Select(p =>
                 {
-                    var activeVariants = p.ProductVariants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
+                    var activeVariants = p.ProductVariants?.Where(v => v.IsActive == true).ToList() ?? new List<ProductVariant>();
 
-                    var minPriceVariant = activeVariants.OrderBy(v => v.DiscountPrice ?? v.Price).FirstOrDefault();
-                    var minPriceValue = minPriceVariant != null ? (minPriceVariant.DiscountPrice ?? minPriceVariant.Price) : 0;
+                    // Lọc theo RAM/Storage nếu người dùng chọn trong popup
+                    if (!string.IsNullOrEmpty(ram)) activeVariants = activeVariants.Where(v => v.RAM == ram).ToList();
+                    if (!string.IsNullOrEmpty(storage)) activeVariants = activeVariants.Where(v => v.Storage == storage).ToList();
 
-                    // LẤY SỐ LƯỢNG BÁN THỰC TẾ TỪ DICTIONARY, NẾU KHÔNG CÓ THÌ = 0
+                    var bestVariant = activeVariants.OrderBy(v => v.DiscountPrice ?? v.Price).FirstOrDefault();
+                    if (bestVariant == null) return null;
+
                     var soldCount = productSales.ContainsKey(p.ProductId) ? productSales[p.ProductId] : 0;
 
                     return new ProductListViewModel
@@ -93,83 +101,52 @@ namespace WebBanDienThoai.Controllers
                         Name = p.Name,
                         MainImage = p.MainImage,
                         BrandName = p.Brand?.BrandName ?? "Unknown",
-                        IsActive = p.IsActive,
-                        CreatedDate = p.CreatedDate,
-                        Price = minPriceValue,
+                        // KHÔNG dùng ?? cho các trường không null để hết lỗi đỏ
+                        IsActive = p.IsActive  ,
+                        CreatedDate = p.CreatedDate ,
+                        Price = bestVariant.DiscountPrice ?? bestVariant.Price ,
                         Stock = activeVariants.Sum(v => v.Stock),
-                        FirstVariantId = minPriceVariant?.VariantId ?? 0,
-                        SoldCount = soldCount // DÙNG SỐ LƯỢNG BÁN THỰC TẾ
+                        FirstVariantId = bestVariant.VariantId,
+                        SoldCount = soldCount
                     };
-                });
+                }).Where(x => x != null).Cast<ProductListViewModel>().AsQueryable();
 
-                // 6. Áp dụng Bộ lọc nâng cao
-                if (minPrice.HasValue)
-                    processedList = processedList.Where(p => p.Price >= minPrice.Value);
+                // 7. Lọc khoảng giá
+                if (minPrice.HasValue) processedList = processedList.Where(p => p.Price >= minPrice.Value);
+                if (maxPrice.HasValue) processedList = processedList.Where(p => p.Price <= maxPrice.Value);
 
-                if (maxPrice.HasValue)
-                    processedList = processedList.Where(p => p.Price <= maxPrice.Value);
-
-                // 7. Sắp xếp sử dụng switch expression
-                processedList = sortOrder switch
+                // 8. Sắp xếp
+                var finalProducts = sortOrder switch
                 {
-                    "price_desc" => processedList.OrderByDescending(p => p.Price),
-                    "price_asc" => processedList.OrderBy(p => p.Price),
-                    _ => processedList.OrderByDescending(p => p.CreatedDate)
+                    "price_desc" => processedList.OrderByDescending(p => p.Price).ToList(),
+                    "price_asc" => processedList.OrderBy(p => p.Price).ToList(),
+                    _ => processedList.OrderByDescending(p => p.CreatedDate).ToList()
                 };
 
-                // 8. Xử lý Yêu thích (Favorites)
-                int customerId = User.Identity?.IsAuthenticated == true &&
-                               int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var idValue) ? idValue : 0;
-
-                var favIds = new HashSet<int>();
-                if (customerId > 0)
-                {
-                    favIds = (await _context.FavoriteDetails
-                        .Where(fd => fd.Favorite != null && fd.Favorite.CustomerID == customerId)
-                        .Select(fd => fd.VariantId)
-                        .ToListAsync()).ToHashSet();
-                }
-
-                // Map lại IsFavorited
-                var finalProducts = processedList.Select(p => {
-                    p.IsFavorited = favIds.Contains(p.FirstVariantId);
-                    return p;
-                }).ToList();
-
-                // 9. Lấy Top bán chạy (5 sản phẩm bán chạy nhất) - DÙNG SỐ LƯỢNG BÁN THỰC TẾ
-                var topSellingProducts = finalProducts
-                    .Where(p => p.SoldCount > 0) // Chỉ lấy sản phẩm đã có bán
+                // 9. LẤY TOP BÁN CHẠY (Chỉ lấy sản phẩm có SoldCount > 0 để không bị hiện số 0)
+                var topSelling = finalProducts
+                    .Where(p => p.SoldCount > 0)
                     .OrderByDescending(p => p.SoldCount)
                     .Take(5)
                     .ToList();
 
-                // Nếu không đủ 5 sản phẩm đã bán, thêm sản phẩm mới nhất
-                if (topSellingProducts.Count < 5)
-                {
-                    var additionalProducts = finalProducts
-                        .Where(p => !topSellingProducts.Any(t => t.ProductId == p.ProductId))
-                        .OrderByDescending(p => p.CreatedDate)
-                        .Take(5 - topSellingProducts.Count)
-                        .ToList();
-
-                    topSellingProducts.AddRange(additionalProducts);
-                }
-
-                var dsHang = await GetBrandsAsync();
-                var totalCount = finalProducts.Count;
+                // 10. Lấy Options cho Dropdown RAM/ROM từ DB
+                var allV = await _context.ProductVariants.Where(v => v.IsActive == true).ToListAsync();
 
                 var viewModel = new ManageProductsViewModel
                 {
                     Products = finalProducts,
-                    TopSellingProducts = topSellingProducts,
+                    TopSellingProducts = topSelling, // Danh sách sạch, không có số 0
                     BrandCounts = dsHang,
-                    TotalProductCount = totalCount,
-                    BrandId = id,
-                    CurrentSearch = searchString ?? string.Empty,
+                    SelectedBrandIds = brandIds ?? new List<int>(),
+                    RamOptions = allV.Select(v => v.RAM).Distinct().Where(s => !string.IsNullOrEmpty(s)).OrderBy(s => s).ToList(),
+                    StorageOptions = allV.Select(v => v.Storage).Distinct().Where(s => !string.IsNullOrEmpty(s)).OrderBy(s => s).ToList(),
+                    TotalProductCount = finalProducts.Count,
                     MinPrice = minPrice,
                     MaxPrice = maxPrice,
                     SelectedRam = ram,
-                    SelectedStorage = storage
+                    SelectedStorage = storage,
+                    BrandId = id
                 };
 
                 return View(viewModel);
@@ -177,10 +154,9 @@ namespace WebBanDienThoai.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi Index Home.");
-                return RedirectToAction("Error");
+                return View("Error");
             }
         }
-
         // === PRODUCT DETAIL ===
         public async Task<IActionResult> ProductDetail(int id)
         {
@@ -392,7 +368,7 @@ namespace WebBanDienThoai.Controllers
                 })
                 .ToListAsync();
 
-          
+
             var data = products.Select(p => new
             {
                 productId = p.ProductId,
