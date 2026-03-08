@@ -199,7 +199,7 @@
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a></li>
-                            <li><a class="dropdown-item" asp-controller="Order" asp-action="History">Đơn mua</a></li>
+                            <li><a class="dropdown-item" asp-controller="OrderCustomer" asp-action="History">Đơn mua</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form asp-controller="Account" asp-action="Logout" method="post">
