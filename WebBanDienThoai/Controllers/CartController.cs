@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -51,6 +51,12 @@ namespace WebBanDienThoai.Controllers
                     .Where(c => c.CustomerID == customerId)
                     .ToListAsync();
 
+                // Ẩn khỏi giao diện khách: chỉ hiển thị SP & biến thể đang bán
+                cartItems = cartItems
+                    .Where(c => c.ProductVariant != null && c.ProductVariant.IsActive &&
+                                c.ProductVariant.Product != null && c.ProductVariant.Product.IsActive)
+                    .ToList();
+
                 viewModel.Items = cartItems.Select(c => new CartItemViewModel
                 {
                     CartItemId = c.CartItemId,
@@ -92,9 +98,14 @@ namespace WebBanDienThoai.Controllers
             if (customerId == 0)
                 return Json(new { success = false, message = "Vui lòng đăng nhập để mua hàng." });
 
-            var variant = await _context.ProductVariants.FindAsync(variantId);
+            var variant = await _context.ProductVariants
+                .Include(v => v.Product)
+                .FirstOrDefaultAsync(v => v.VariantId == variantId);
             if (variant == null)
                 return Json(new { success = false, message = "Sản phẩm không tồn tại." });
+
+            if (!variant.IsActive || variant.Product == null || !variant.Product.IsActive)
+                return Json(new { success = false, message = "Sản phẩm đã ngừng bán hoặc không còn hiển thị." });
 
             if (variant.Stock < quantity)
                 return Json(new { success = false, message = $"Kho chỉ còn {variant.Stock} sản phẩm." });

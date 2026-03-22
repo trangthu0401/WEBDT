@@ -1,8 +1,9 @@
-﻿// Thêm các using cần thiết
+// Thêm các using cần thiết
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -53,7 +54,7 @@ namespace WebBanDienThoai.Controllers
                 var viewModel = new ProductVariantIndexViewModel
                 {
                     Product = product,
-                    Variants = product.ProductVariants.ToList(),
+                    Variants = product.ProductVariants != null ? product.ProductVariants.ToList() : new List<ProductVariant>(),
                     CreateForm = new ProductVariantCreateViewModel { ProductId = productId }
                 };
 
@@ -68,19 +69,16 @@ namespace WebBanDienThoai.Controllers
         }
 
         // --- 2. THÊM BIẾN THỂ MỚI ---
-        // --- 2. THÊM BIẾN THỂ MỚI ---
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ProductVariantCreateViewModel viewModel)
+        public async Task<IActionResult> Create([Bind(Prefix = "CreateForm")] ProductVariantCreateViewModel viewModel)
         {
-            // ← SỬA: Dùng viewModel.ProductId thay vì productId
             if (viewModel.ProductId <= 0)
             {
                 TempData["StatusMessage"] = "Lỗi: Sản phẩm không hợp lệ.";
                 return RedirectToAction("Index", "Product");
             }
 
-            // ← KIỂM TRA MODELSTATE CHI TIẾT
             if (!ModelState.IsValid)
             {
                 var errors = new List<string>();
@@ -91,20 +89,20 @@ namespace WebBanDienThoai.Controllers
                         errors.Add(error.ErrorMessage);
                     }
                 }
-                TempData["StatusMessage"] = "Lỗi: " + string.Join(" | ", errors);
+                var detail = errors.Count > 0 ? " (" + string.Join(" ", errors) + ")" : string.Empty;
+                SetVariantFeedback(TempData, "error", "Vui lòng điền đủ các trường bắt buộc." + detail);
                 return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
 
-            // ← KIỂM TRA LOGIC THÊM
             if (viewModel.Price <= 0)
             {
-                TempData["StatusMessage"] = "Lỗi: Giá phải lớn hơn 0.";
+                SetVariantFeedback(TempData, "error", "Lỗi thêm biến thể: Giá phải lớn hơn 0.");
                 return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
 
             if (viewModel.Stock < 0)
             {
-                TempData["StatusMessage"] = "Lỗi: Tồn kho không được âm.";
+                SetVariantFeedback(TempData, "error", "Lỗi thêm biến thể: Tồn kho không được âm.");
                 return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
 
@@ -124,7 +122,7 @@ namespace WebBanDienThoai.Controllers
                     ProductId = viewModel.ProductId,
                     Color = viewModel.Color?.Trim() ?? string.Empty,
                     Storage = storageValue.Replace("GB", "").Trim(),
-                    RAM = ramValue.Replace("GB", "").Trim(),
+                    RAM = string.IsNullOrEmpty(ramValue) ? "-" : ramValue.Replace("GB", "").Trim(),
                     Price = viewModel.Price,
                     DiscountPrice = viewModel.DiscountPrice,
                     Stock = viewModel.Stock,
@@ -136,18 +134,18 @@ namespace WebBanDienThoai.Controllers
                 _context.ProductVariants.Add(newVariant);
                 await _context.SaveChangesAsync();
 
-                TempData["StatusMessage"] = "✅ Thêm biến thể mới thành công!";
+                SetVariantFeedback(TempData, "success", "Thêm biến thể thành công!");
             }
             catch (DbUpdateException dbEx)
             {
                 Console.WriteLine($"DbUpdateException: {dbEx.Message}");
                 Console.WriteLine($"Inner: {dbEx.InnerException?.Message}");
-                TempData["StatusMessage"] = $"❌ Lỗi database: {dbEx.InnerException?.Message ?? dbEx.Message}";
+                SetVariantFeedback(TempData, "error", "Lỗi thêm biến thể: " + (dbEx.InnerException?.Message ?? dbEx.Message));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi khi thêm biến thể: {ex.Message}");
-                TempData["StatusMessage"] = $"❌ Lỗi: {ex.Message}";
+                SetVariantFeedback(TempData, "error", "Lỗi thêm biến thể: " + ex.Message);
             }
 
             return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
@@ -159,7 +157,7 @@ namespace WebBanDienThoai.Controllers
         {
             if (viewModel.Price < 0 || viewModel.Stock < 0)
             {
-                TempData["StatusMessage"] = "Lỗi: Giá hoặc Tồn kho không thể âm.";
+                SetVariantFeedback(TempData, "error", "Giá hoặc tồn kho không hợp lệ.");
                 return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
 
@@ -173,7 +171,8 @@ namespace WebBanDienThoai.Controllers
                         errors.Add(error.ErrorMessage);
                     }
                 }
-                TempData["StatusMessage"] = "Lỗi: " + string.Join(" | ", errors);
+                var detail = errors.Count > 0 ? " (" + string.Join(" ", errors) + ")" : string.Empty;
+                SetVariantFeedback(TempData, "error", "Vui lòng điền đủ các trường bắt buộc." + detail);
                 return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
 
@@ -183,7 +182,7 @@ namespace WebBanDienThoai.Controllers
 
                 if (variantToUpdate == null)
                 {
-                    TempData["StatusMessage"] = "❌ Lỗi: Không tìm thấy biến thể.";
+                    SetVariantFeedback(TempData, "error", "Không tìm thấy biến thể để cập nhật.");
                     return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
                 }
 
@@ -198,15 +197,52 @@ namespace WebBanDienThoai.Controllers
                 _context.ProductVariants.Update(variantToUpdate);
                 await _context.SaveChangesAsync();
 
-                TempData["StatusMessage"] = "✅ Cập nhật biến thể thành công!";
+                SetVariantFeedback(TempData, "success", "Cập nhật biến thể thành công!");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi khi sửa biến thể: {ex.Message}");
-                TempData["StatusMessage"] = $"❌ Lỗi: {ex.Message}";
+                SetVariantFeedback(TempData, "error", "Lỗi cập nhật biến thể: " + ex.Message);
             }
 
             return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
+        }
+
+        /// <summary>Bật/tắt hiển thị một biến thể (chỉ ảnh hưởng biến thể đó; ẩn cả sản phẩm thì xử lý ở Product/Edit).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleVariantActive(int variantId, int productId, bool setActive)
+        {
+            if (productId <= 0 || variantId <= 0)
+            {
+                SetVariantFeedback(TempData, "error", "Thông tin không hợp lệ.");
+                return RedirectToAction("Index", "Product");
+            }
+
+            var variant = await _context.ProductVariants
+                .FirstOrDefaultAsync(v => v.VariantId == variantId && v.ProductId == productId);
+
+            if (variant == null)
+            {
+                SetVariantFeedback(TempData, "error", "Không tìm thấy biến thể.");
+                return RedirectToAction(nameof(Index), new { productId });
+            }
+
+            try
+            {
+                variant.IsActive = setActive;
+                variant.UpdatedDate = DateTime.Now;
+                await _context.SaveChangesAsync();
+                SetVariantFeedback(TempData, "success", setActive
+                    ? "Biến thể đã chuyển sang Đang bán."
+                    : "Biến thể đã được ẩn.");
+            }
+            catch (Exception ex)
+            {
+                SetVariantFeedback(TempData, "error", "Không thể cập nhật trạng thái: " + ex.Message);
+            }
+
+            return RedirectToAction(nameof(Index), new { productId });
         }
 
         // --- 4. XÓA BIẾN THỂ ---
@@ -218,7 +254,7 @@ namespace WebBanDienThoai.Controllers
 
             if (variantToDelete == null)
             {
-                TempData["StatusMessage"] = "❌ Lỗi: Không tìm thấy biến thể để xóa.";
+                SetVariantFeedback(TempData, "error", "Không tìm thấy biến thể để xóa.");
                 if (productId > 0)
                     return RedirectToAction(nameof(Index), new { productId = productId });
                 return RedirectToAction("Index", "Product");
@@ -234,7 +270,7 @@ namespace WebBanDienThoai.Controllers
                 _context.ProductVariants.Remove(variantToDelete);
                 await _context.SaveChangesAsync();
 
-                TempData["StatusMessage"] = "✅ Đã xóa biến thể thành công.";
+                SetVariantFeedback(TempData, "success", "Đã xóa biến thể thành công.");
             }
             catch (DbUpdateException dbEx)
             {
@@ -246,38 +282,44 @@ namespace WebBanDienThoai.Controllers
 
                     if (errorMessage.Contains("OrderDetails"))
                     {
-                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể này đã tồn tại trong 'Chi tiết Đơn hàng'.";
+                        SetVariantFeedback(TempData, "error", "Không thể xóa: biến thể đã có trong đơn hàng.");
                     }
                     else if (errorMessage.Contains("CartItems"))
                     {
-                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể này trong 'Giỏ hàng' khách.";
+                        SetVariantFeedback(TempData, "error", "Không thể xóa: biến thể đang có trong giỏ hàng.");
                     }
                     else if (errorMessage.Contains("ReviewDetails"))
                     {
-                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể này đã được 'Đánh giá'.";
+                        SetVariantFeedback(TempData, "error", "Không thể xóa: biến thể đã có đánh giá.");
                     }
                     else if (errorMessage.Contains("FavoriteDetails"))
                     {
-                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể trong 'Danh sách Yêu thích'.";
+                        SetVariantFeedback(TempData, "error", "Không thể xóa: biến thể đang trong danh sách yêu thích.");
                     }
                     else
                     {
-                        TempData["StatusMessage"] = "❌ Không thể xóa do ràng buộc dữ liệu.";
+                        SetVariantFeedback(TempData, "error", "Không thể xóa do ràng buộc dữ liệu.");
                     }
                 }
                 else
                 {
                     Console.WriteLine($"DbUpdateException: {dbEx.Message}");
-                    TempData["StatusMessage"] = $"❌ Lỗi database: {dbEx.InnerException?.Message}";
+                    SetVariantFeedback(TempData, "error", "Lỗi database: " + (dbEx.InnerException?.Message ?? dbEx.Message));
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi khi xóa: {ex.Message}");
-                TempData["StatusMessage"] = $"❌ Lỗi: {ex.Message}";
+                SetVariantFeedback(TempData, "error", "Lỗi xóa biến thể: " + ex.Message);
             }
 
             return RedirectToAction(nameof(Index), new { productId = productId });
+        }
+
+        private static void SetVariantFeedback(ITempDataDictionary tempData, string kind, string message)
+        {
+            tempData["PvFeedbackKind"] = kind;
+            tempData["PvFeedbackMessage"] = message;
         }
 
         // --- 5. HÀM HỖ TRỢ ---

@@ -1,9 +1,11 @@
-﻿@model WebBanDienThoai.Models.ViewModels.ProductVariantIndexViewModel
+@model WebBanDienThoai.Models.ViewModels.ProductVariantIndexViewModel
+@using System.Text.Json
 
 @{
-    // GHI CHÚ: Đã đổi Model
     ViewData["Title"] = "Chi tiết: " + Model.Product.Name;
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var pvFeedbackKind = TempData["PvFeedbackKind"] as string;
+    var pvFeedbackMessage = TempData["PvFeedbackMessage"] as string;
 }
 
 <div class="products-container">
@@ -66,6 +68,12 @@
                 Thêm Biến Thể Mới
             </button>
         </div>
+        @if (!Model.Product.IsActive)
+        {
+            <div class="alert alert-warning border-0 rounded-0 mb-0 small py-2 px-3">
+                <strong>Sản phẩm đang ẩn:</strong> khách không thấy bất kỳ biến thể nào. Khi mở lại sản phẩm ở mục Sửa sản phẩm, hãy bật từng biến thể cần bán.
+            </div>
+        }
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
@@ -79,6 +87,7 @@
                             <th scope="col" class="text-end">Giá</th>
                             <th scope="col" class="text-end">Giá KM</th>
                             <th scope="col" class="text-center">Tồn kho</th>
+                            <th scope="col" class="text-center">Trạng thái bán</th>
                             <th scope="col" class="text-center">Hành động</th>
                         </tr>
                     </thead>
@@ -107,7 +116,32 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <div class="crud" style="justify-content: center;">
+                                    @if (variant.IsActive)
+                                    {
+                                        <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle">Đang bán</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle">Đã ẩn</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="crud flex-wrap gap-1" style="justify-content: center;">
+
+                                        <form asp-controller="ProductVariant" asp-action="ToggleVariantActive" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="variantId" value="@variant.VariantId" />
+                                            <input type="hidden" name="productId" value="@Model.Product.ProductId" />
+                                            <input type="hidden" name="setActive" value="true" />
+                                            <button type="submit" class="btn btn-sm @(variant.IsActive ? "btn-success" : "btn-outline-success")" title="Đặt biến thể ở trạng thái đang bán (khi sản phẩm cũng đang bán)">Đang bán</button>
+                                        </form>
+                                        <form asp-controller="ProductVariant" asp-action="ToggleVariantActive" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="variantId" value="@variant.VariantId" />
+                                            <input type="hidden" name="productId" value="@Model.Product.ProductId" />
+                                            <input type="hidden" name="setActive" value="false" />
+                                            <button type="submit" class="btn btn-sm @(!variant.IsActive ? "btn-secondary" : "btn-outline-secondary")" title="Ẩn biến thể này khỏi trang khách">Ẩn</button>
+                                        </form>
 
                                         @* === NÚT SỬA === *@
                                         <button type="button"
@@ -142,7 +176,7 @@
                         @if (!Model.Variants.Any())
                         {
                             <tr>
-                                <td colspan="9" class="text-center p-3">Sản phẩm này chưa có biến thể nào.</td>
+                                <td colspan="10" class="text-center p-3">Sản phẩm này chưa có biến thể nào.</td>
                             </tr>
                         }
                     </tbody>
@@ -163,8 +197,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <!-- GHI CHÚ: Đã sửa asp-action="Create" và asp-controller="ProductVariant" -->
-            <form asp-action="Create" asp-controller="ProductVariant" method="post" enctype="multipart/form-data">
+            <form id="formAddVariant" asp-action="Create" asp-controller="ProductVariant" method="post" enctype="multipart/form-data" novalidate>
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <!-- GHI CHÚ: Đã sửa asp-for trỏ vào CreateForm -->
@@ -214,6 +247,28 @@
         </div>
     </div>
 </div>
+
+@* Popup thông báo thành công / lỗi (sau POST hoặc validate client) *@
+<div class="modal fade" id="variantFeedbackModal" tabindex="-1" aria-labelledby="variantFeedbackTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" id="variantFeedbackHeader">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="variantFeedbackTitle">
+                    <span id="variantFeedbackIcon" class="fs-4" aria-hidden="true"></span>
+                    <span id="variantFeedbackTitleText">Thông báo</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body py-4 px-4">
+                <p class="mb-0" id="variantFeedbackBody" style="white-space: pre-wrap;"></p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @* ------------------------------------------------------------------------------------------------------------------------------------------------- *@
 
 @* MODAL XÓA BIẾN THỂ *@
@@ -315,7 +370,53 @@
 @* === JAVASCRIPT CHO CÁC MODAL === *@
 @* ================================================================== *@
 <script>
+    var pvFeedbackKindFromServer = @Html.Raw(JsonSerializer.Serialize(pvFeedbackKind));
+    var pvFeedbackMsgFromServer = @Html.Raw(JsonSerializer.Serialize(pvFeedbackMessage));
+
+    function showVariantFeedback(kind, message) {
+        var modalEl = document.getElementById('variantFeedbackModal');
+        if (!modalEl || typeof bootstrap === 'undefined') return;
+        var header = document.getElementById('variantFeedbackHeader');
+        var titleText = document.getElementById('variantFeedbackTitleText');
+        var body = document.getElementById('variantFeedbackBody');
+        var icon = document.getElementById('variantFeedbackIcon');
+        var ok = kind === 'success';
+        if (header) {
+            header.classList.remove('bg-success', 'bg-danger');
+            header.classList.add(ok ? 'bg-success' : 'bg-danger');
+        }
+        if (titleText) titleText.textContent = ok ? 'Thành công' : 'Có lỗi';
+        if (icon) icon.textContent = ok ? '✓' : '!';
+        if (body) body.textContent = message || '';
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        if (pvFeedbackKindFromServer && pvFeedbackMsgFromServer) {
+            showVariantFeedback(pvFeedbackKindFromServer, pvFeedbackMsgFromServer);
+        }
+
+        var addForm = document.getElementById('formAddVariant');
+        if (addForm) {
+            addForm.addEventListener('submit', function (e) {
+                var colorEl = addForm.querySelector('[name="CreateForm.Color"]');
+                var storageEl = addForm.querySelector('[name="CreateForm.Storage"]');
+                var priceEl = addForm.querySelector('[name="CreateForm.Price"]');
+                var stockEl = addForm.querySelector('[name="CreateForm.Stock"]');
+                var color = colorEl ? colorEl.value.trim() : '';
+                var storageRaw = storageEl ? storageEl.value.trim() : '';
+                var priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
+                var stockVal = stockEl ? parseInt(stockEl.value, 10) : NaN;
+
+                if (!color || !storageRaw || isNaN(priceVal) || priceVal <= 0 || isNaN(stockVal) || stockVal < 0) {
+                    e.preventDefault();
+                    showVariantFeedback('error', 'Bạn vui lòng điền đủ các trường bắt buộc: Màu sắc, Dung lượng, Giá bán (lớn hơn 0) và Tồn kho (không âm).');
+                    return false;
+                }
+            });
+        }
+
         // --- Code xử lý 'auto-gb' ---
         const inputs = document.querySelectorAll('.auto-gb');
         inputs.forEach(input => {

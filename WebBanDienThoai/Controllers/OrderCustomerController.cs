@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -148,6 +148,11 @@ namespace WebBanDienThoai.Controllers
                 .Where(c => c.CustomerID == customerId && selectedIds.Contains(c.CartItemId))
                 .ToListAsync();
 
+            cartItems = cartItems
+                .Where(c => c.ProductVariant != null && c.ProductVariant.IsActive &&
+                            c.ProductVariant.Product != null && c.ProductVariant.Product.IsActive)
+                .ToList();
+
             if (!cartItems.Any()) return RedirectToAction("Index", "Cart");
 
             var customer = await _context.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.CustomerID == customerId);
@@ -204,7 +209,7 @@ namespace WebBanDienThoai.Controllers
                 try
                 {
                     var dbCartItems = await _context.CartItems
-                        .Include(c => c.ProductVariant)
+                        .Include(c => c.ProductVariant).ThenInclude(v => v.Product)
                         .Where(c => c.CustomerID == customerId && model.SelectedCartItemIds.Contains(c.CartItemId))
                         .ToListAsync();
 
@@ -214,6 +219,10 @@ namespace WebBanDienThoai.Controllers
                     decimal totalAmount = 0;
                     foreach (var item in dbCartItems)
                     {
+                        var pv = item.ProductVariant;
+                        if (pv == null || !pv.IsActive || pv.Product == null || !pv.Product.IsActive)
+                            return Json(new { success = false, message = "Có sản phẩm đã ngừng bán. Vui lòng làm mới giỏ hàng và thử lại." });
+
                         if (item.Quantity > item.ProductVariant.Stock)
                             return Json(new { success = false, message = $"Hết hàng: {item.VariantId}" });
                         totalAmount += (item.ProductVariant.DiscountPrice ?? item.ProductVariant.Price) * item.Quantity;

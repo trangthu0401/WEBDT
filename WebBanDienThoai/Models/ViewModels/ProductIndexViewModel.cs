@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -9,8 +9,7 @@ namespace WebBanDienThoai.Models.ViewModels
     // === DÙNG CHO TRANG INDEX (DANH SÁCH) SẢN PHẨM ===
     public class ProductIndexViewModel
     {
-        // FIX: Đã đổi từ ProductListViewModel sang ProducAdmintListViewModel
-        public List<ProducAdmintListViewModel> Products { get; set; } = new List<ProducAdmintListViewModel>();
+        public List<ProductAdminListViewModel> Products { get; set; } = new List<ProductAdminListViewModel>();
         public List<BrandCountViewModel> BrandCounts { get; set; } = new List<BrandCountViewModel>();
         public int TotalProductCount { get; set; }
     }
@@ -43,21 +42,6 @@ namespace WebBanDienThoai.Models.ViewModels
         public Product Product { get; set; } = new Product();
         public List<SelectListItem> BrandList { get; set; } = new List<SelectListItem>();
         public IFormFile? MainImageFile { get; set; }
-    }
-
-    // ViewModel con cho 1 hàng trong bảng Admin (Chứa TotalStock, LowestPrice)
-    public class ProducAdmintListViewModel
-    {
-        public int ProductId { get; set; }
-        public string Name { get; set; }
-        public string MainImage { get; set; }
-        public int BrandId { get; set; }
-        public string BrandName { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public bool IsActive { get; set; }
-        public decimal FirstVariantPrice { get; set; }
-        public decimal LowestPrice { get; set; }
-        public int TotalStock { get; set; }
     }
 
     public class BrandCountViewModel

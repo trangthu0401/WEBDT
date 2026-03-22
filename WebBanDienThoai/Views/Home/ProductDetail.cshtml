@@ -1,4 +1,4 @@
-﻿@model WebBanDienThoai.Models.ViewModels.ProductDetailViewModel
+@model WebBanDienThoai.Models.ViewModels.ProductDetailViewModel
 @{
     ViewData["Title"] = Model.ProductDetail.Product.Name;
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -343,24 +343,186 @@
             font-weight: 500;
         }
 
+        /* === Sản phẩm tương tự (phong cách thẻ shop, giữ màu #d70018) === */
+        .related-section {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 20px 16px 24px;
+            margin-bottom: 40px;
+        }
+
+        .related-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .related-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .related-title-bar {
+            width: 4px;
+            height: 22px;
+            background: linear-gradient(180deg, #d70018 0%, #b80015 100%);
+            border-radius: 2px;
+        }
+
+        .related-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .related-sub {
+            font-size: 13px;
+            color: #888;
+            margin: 0;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .related-card {
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1px solid #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            height: 100%;
+        }
+
+            .related-card:hover {
+                border-color: #f5c2c7;
+                box-shadow: 0 6px 16px rgba(215, 0, 24, 0.12);
+                transform: translateY(-3px);
+            }
+
+        .related-card-img {
+            position: relative;
+            aspect-ratio: 1;
+            background: linear-gradient(180deg, #fafafa 0%, #fff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+
+            .related-card-img img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+
+        .related-badge-sale {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #d70018;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            line-height: 1.3;
+        }
+
+        .related-card-body {
+            padding: 10px 12px 14px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .related-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.9em;
+        }
+
+        .related-price-row {
+            margin-top: auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 6px 8px;
+        }
+
+        .related-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #d70018;
+        }
+
+        .related-old {
+            font-size: 12px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .related-meta {
+            font-size: 11px;
+            color: #999;
+        }
+
+        @@media (max-width: 767px) {
+            .related-grid {
+                display: flex;
+                gap: 10px;
+                overflow-x: auto;
+                padding-bottom: 6px;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                margin: 0 -4px;
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+
+                .related-grid > * {
+                    flex: 0 0 46%;
+                    min-width: 46%;
+                    scroll-snap-align: start;
+                }
+        }
+
         /* Responsive */
-        media (max-width: 768px) {
-            .product-layout
+        @@media (max-width: 768px) {
+            .product-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
 
-        {
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
+            .product-gallery {
+                position: static;
+                margin-bottom: 20px;
+            }
 
-        .product-gallery {
-            position: static;
-            margin-bottom: 20px;
-        }
-
-        .color-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
+            .color-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
     </style>
 }
@@ -540,43 +702,53 @@
     </div>
 </section>
 
-<section id="section-related" class="container" style="margin-bottom: 60px;">
-    <h2 class="section-header" style="border-left: 4px solid #d70018; padding-left: 10px; margin-bottom: 20px;">
-        Sản phẩm tương tự
-    </h2>
+<section id="section-related" class="container" style="margin-bottom: 48px;">
     @if (Model.RelatedProducts.Any())
     {
-        <div class="row">
-            @foreach (var variant in Model.RelatedProducts.Take(4))
-            {
-                <div class="col-md-3 col-6 mb-3">
-                    <div class="product-card-list h-100" style="border:1px solid #eee; border-radius:8px; overflow:hidden;">
-                        <div class="card-img-container" style="padding:15px; text-align:center;">
-                            <a href="/Home/ProductDetail/@variant.VariantId">
-                                <img src="@(variant.ImageUrl ?? variant.Product.MainImage)"
-                                     style="height:160px; object-fit:contain;"
-                                     alt="@variant.Product.Name">
-                            </a>
-                        </div>
-                        <div class="product-info-list" style="padding:10px;">
-                            <a href="/Home/ProductDetail/@variant.VariantId" style="font-weight:600; color:#333; display:block; margin-bottom:5px;">
-                                @variant.Product.Name
-                            </a>
+        <div class="related-section">
+            <div class="related-head">
+                <div>
+                    <div class="related-title-wrap">
+                        <span class="related-title-bar" aria-hidden="true"></span>
+                        <h2 class="related-title">Sản phẩm tương tự</h2>
+                    </div>
+                    <p class="related-sub mt-1">Gợi ý cùng hãng — xem nhanh giá và ưu đãi</p>
+                </div>
+            </div>
 
-                            @{
-                                // ĐÃ SỬA: Xử lý Nullable Decimal cho phần Related Products
-                                var finalPrice = (variant.DiscountPrice.HasValue && variant.DiscountPrice > 0)
-                                ? variant.DiscountPrice.Value
-                                : variant.Price;
+            <div class="related-grid">
+                @foreach (var variant in Model.RelatedProducts.Take(8))
+                {
+                    var img = string.IsNullOrEmpty(variant.ImageUrl) ? variant.Product?.MainImage : variant.ImageUrl;
+                    var hasDiscount = variant.DiscountPrice.HasValue && variant.DiscountPrice.Value > 0 && variant.DiscountPrice < variant.Price;
+                    var payPrice = hasDiscount ? variant.DiscountPrice!.Value : variant.Price;
+                    int? pct = null;
+                    if (hasDiscount && variant.Price > 0)
+                    {
+                        pct = (int)((1 - variant.DiscountPrice!.Value / variant.Price) * 100);
+                    }
+                    <a class="related-card" href="@Url.Action("ProductDetail", "Home", new { id = variant.VariantId })">
+                        <div class="related-card-img">
+                            @if (hasDiscount && pct.HasValue)
+                            {
+                                <span class="related-badge-sale">-@pct%</span>
                             }
-
-                            <div style="color:#d70018; font-weight:700;">
-                                @finalPrice.ToString("N0")₫
+                            <img src="@(img ?? "/images/placeholder.png")" alt="@variant.Product?.Name" loading="lazy" />
+                        </div>
+                        <div class="related-card-body">
+                            <div class="related-name">@variant.Product?.Name</div>
+                            <div class="related-meta">@variant.Color · @variant.Storage</div>
+                            <div class="related-price-row">
+                                <span class="related-price">@payPrice.ToString("N0")₫</span>
+                                @if (hasDiscount)
+                                {
+                                    <span class="related-old">@variant.Price.ToString("N0")₫</span>
+                                }
                             </div>
                         </div>
-                    </div>
-                </div>
-            }
+                    </a>
+                }
+            </div>
         </div>
     }
 </section>

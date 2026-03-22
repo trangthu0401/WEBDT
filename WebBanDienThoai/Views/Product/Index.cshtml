@@ -1,460 +1,238 @@
-﻿@model WebBanDienThoai.Models.ViewModels.ProductIndexViewModel
+@model WebBanDienThoai.Models.ViewModels.ProductIndexViewModel
+@using System.Globalization
 ﻿@{
     ViewData["Title"] = "Quản lý Sản phẩm";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
-    var currentBrandIdStr = ViewContext.RouteData.Values["brandId"]?.ToString();
 
-    // Lấy dữ liệu phân trang từ ViewBag
+    var vn = CultureInfo.GetCultureInfo("vi-VN");
     int currentPage = ViewBag.PageIndex ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
-    string searchId = ViewBag.SearchId;
-    string brandId = currentBrandIdStr; // Sử dụng BrandId hiện tại
+    string? searchId = ViewBag.SearchId as string;
+    int? filterBrandId = ViewBag.BrandId as int?;
 
-    // Helper để tạo URL phân trang, giữ lại các bộ lọc
-    Func<int, string> getUrl = (page) => Url.Action("Index", "Product", new { pageIndex = page, brandId = brandId, searchId = searchId });
+    string DefaultProductImage = "/images/productDefault.png";
+
+    Func<int, string> getPageUrl = page => Url.Action("Index", "Product", new { pageIndex = page, brandId = filterBrandId, searchId = searchId }) ?? "#";
 }
-<link href="~/css/Dashboard.css" rel="stylesheet">
 
-<div class="products-container">
+<link href="~/css/Dashboard.css" rel="stylesheet" />
 
-    @* --- HEADER (TÌM KIẾM, THÊM MỚI) --- *@
-    <div class="products-header">
+<div class="product-admin-page container-fluid py-3 px-2 px-md-3">
 
-        <form class="product-search-form" method="get" asp-action="Index" asp-controller="Product">
-            @if (!string.IsNullOrEmpty(currentBrandIdStr))
-            {
-                <input type="hidden" name="brandId" value="@currentBrandIdStr" />
-            }
-            <input type="text" id="searchId" name="searchId" value="@ViewBag.SearchId" placeholder="Tìm kiếm...">
-            <button type="submit" class="btn-search-submit">
-                <img src="/images/Admin/Product/search_black.png" alt="Search Icon">
-            </button>
-        </form>
-
-        <div class="products-actions">
-            <a asp-action="Create" asp-controller="Product" class="btn btn-primary">
-                <span>Thêm</span>
-                <img src="/images/Admin/Product/admin_add.png" alt="Add Icon">
-            </a>
+    <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="h4 mb-1 fw-semibold text-dark">Sản phẩm</h1>
+            <p class="text-muted small mb-0">Quản lý danh mục, giá và tồn kho</p>
         </div>
+        <a asp-action="Create" asp-controller="Product" class="btn btn-danger d-inline-flex align-items-center gap-2 px-4 shadow-sm">
+            <span>Thêm sản phẩm</span>
+            <img src="/images/Admin/Product/admin_add.png" alt="" width="18" height="18" />
+        </a>
     </div>
 
-    @* --- THANH LỌC THEO HÃNG - ĐÃ CHỈNH MÀU KHI ACTIVE --- *@
-    <nav class="nav nav-pills nav-fill nav-container mb-3">
+    <form method="get" asp-action="Index" asp-controller="Product" class="card border-0 shadow-sm mb-4 rounded-3 overflow-hidden">
+        <div class="card-body p-3 p-md-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6 col-lg-5">
+                    <label for="searchId" class="form-label small text-muted mb-1">Tìm kiếm</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="searchId" name="searchId" value="@searchId" class="form-control border-start-0 ps-0" placeholder="Theo ID hoặc tên sản phẩm..." />
+                    </div>
+                </div>
+                <div class="col-md-auto">
+                    @if (filterBrandId.HasValue)
+                    {
+                        <input type="hidden" name="brandId" value="@filterBrandId.Value" />
+                    }
+                    <button type="submit" class="btn btn-outline-danger w-100 w-md-auto">Tìm</button>
+                </div>
+            </div>
+        </div>
+    </form>
 
-        <a class="nav-link @(string.IsNullOrEmpty(currentBrandIdStr) ? "active" : "")"
-           aria-current="page"
-           href="@Url.Action("Index", "Product", new { searchId = ViewBag.SearchId })">
-            @* Giữ lại searchId khi bấm Tất cả *@
-            Tất cả (@Model.TotalProductCount)
+    <nav class="nav nav-pills flex-nowrap gap-2 pb-2 mb-3 overflow-auto brand-filter-nav" aria-label="Lọc hãng">
+        <a class="nav-link rounded-pill px-3 @(filterBrandId == null || filterBrandId <= 0 ? "active" : "")"
+           href="@Url.Action("Index", "Product", new { searchId })">
+            Tất cả <span class="badge bg-light text-dark ms-1">@Model.TotalProductCount</span>
         </a>
-
         @foreach (var brand in Model.BrandCounts)
         {
-            <a class="nav-link @(currentBrandIdStr == brand.brandId.ToString() ? "active" : "")"
-               href="@Url.Action("Index", "Product", new { brandId = brand.brandId, searchId = ViewBag.SearchId })">
-                @brand.BrandName (@brand.Count)
+            <a class="nav-link rounded-pill px-3 @(filterBrandId == brand.brandId ? "active" : "")"
+               href="@Url.Action("Index", "Product", new { brandId = brand.brandId, searchId })">
+                @brand.BrandName <span class="badge bg-light text-dark ms-1">@brand.Count</span>
             </a>
         }
     </nav>
 
-    @* --- THÔNG BÁO (STATUS MESSAGE) --- *@
     @if (TempData["StatusMessage"] != null)
     {
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <div class="alert alert-success border-0 shadow-sm rounded-3 alert-dismissible fade show" role="alert">
             @TempData["StatusMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
         </div>
     }
 
-    @* --- BẢNG HIỂN THỊ SẢN PHẨM --- *@
-    <div class="table-responsive">
-        <table class="table table-hover align-middle product-table-standard">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col" style="width: 35%;">Sản phẩm</th>
-                    <th scope="col" style="width: 15%;">Giá</th>
-                    <th scope="col" style="width: 10%;">Số lượng</th>
-                    <th scope="col" style="width: 10%;">Hãng</th>
-                    <th scope="col" style="width: 10%;">Ngày nhập</th>
-                    <th scope="col" style="width: 10%;">Trạng thái</th>
-                    <th scope="col" style="width: 10%;">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Products != null && Model.Products.Any())
-                {
-                    @foreach (var item in Model.Products)
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 product-admin-table">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="ps-4">Sản phẩm</th>
+                        <th scope="col">Giá thấp nhất</th>
+                        <th scope="col">Tồn kho</th>
+                        <th scope="col">Hãng</th>
+                        <th scope="col">Ngày nhập</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col" class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Products != null && Model.Products.Count > 0)
+                    {
+                        foreach (var item in Model.Products)
+                        {
+                            var imageUrl = string.IsNullOrWhiteSpace(item.MainImage)
+                                ? DefaultProductImage
+                                : (item.MainImage.StartsWith("/") ? item.MainImage : "/" + item.MainImage);
+
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="product-thumb rounded-3 overflow-hidden bg-light flex-shrink-0">
+                                            <img src="@imageUrl"
+                                                 alt="@item.Name"
+                                                 loading="lazy"
+                                                 onerror="this.onerror=null;this.src='@DefaultProductImage';" />
+                                        </div>
+                                        <div>
+                                            <div class="small text-muted font-monospace">ID @item.ProductId</div>
+                                            <div class="fw-semibold text-dark">@item.Name</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-medium">@item.LowestPrice.ToString("N0", vn) ₫</span>
+                                </td>
+                                <td>@item.TotalStock.ToString("N0", vn)</td>
+                                <td><span class="text-secondary">@item.BrandName</span></td>
+                                <td>
+                                    <div class="small">@item.CreatedDate.ToString("dd/MM/yyyy", vn)</div>
+                                    <div class="text-muted small">@item.CreatedDate.ToString("HH:mm", vn)</div>
+                                </td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2">Đang bán</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2">Đã ẩn</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-inline-flex align-items-center gap-2">
+                                        <a href="@Url.Action("Index", "ProductVariant", new { productId = item.ProductId })" class="btn btn-sm btn-light border" title="Biến thể">
+                                            <img src="/images/Admin/Product/view.png" alt="" width="16" height="16" />
+                                        </a>
+                                        <a href="@Url.Action("Edit", "Product", new { id = item.ProductId })" class="btn btn-sm btn-light border" title="Sửa">
+                                            <img src="/images/Admin/Product/edit.png" alt="" width="16" height="16" />
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            @* 1. Cột Sản phẩm *@
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    @{
-                                        string imageUrl = "/images/placeholder.png";
-                                        if (!string.IsNullOrEmpty(item.MainImage))
-                                        {
-                                            imageUrl = item.MainImage.StartsWith("/")
-                                            ? item.MainImage : "/" + item.MainImage;
-                                        }
-                                    }
-                                    <div class="product-image me-3">
-                                        <img src="@imageUrl" alt="@item.Name" />
-                                    </div>
-                                    <div class="product-text">
-                                        <span class="product-id">ID: @item.ProductId</span>
-                                        <span class="product-name">@item.Name</span>
-                                    </div>
-                                </div>
-                            </td>
-
-                            @* 2. Cột Giá *@
-                            <td>@String.Format("{0:N0}", item.LowestPrice) vnd</td>
-                            @* 3. Cột Số lượng *@
-                            <td>@item.TotalStock</td>
-                            @* 4. Cột Hãng *@
-                            <td>@item.BrandName</td>
-                            @* 5. Cột Ngày nhập *@
-                            <td>
-                                @item.CreatedDate.ToString("dd/MM/yy") <br />
-                                <small>@item.CreatedDate.ToString("h:mm tt")</small>
-                            </td>
-                            @* 6. Cột Trạng thái *@
-                            <td>
-                                @{
-                                    string statusClass = item.IsActive ? "available" : "hidden";
-                                    string statusText = item.IsActive ? "Đang bán" : "Đã ẩn";
-                                }
-                                <span class="status-chip @statusClass">@statusText</span>
-                            </td>
-                            @* 7. Cột Hành động (CRUD) *@
-                            <td>
-                                <div class="crud">
-                                    <a href="@Url.Action("Index", "ProductVariant", new { productId = item.ProductId })" title="Xem biến thể">
-                                        <img src="/images/Admin/Product/view.png" alt="View">
-                                    </a>
-                                    <a href="@Url.Action("Edit", "Product", new { id = item.ProductId })" title="Sửa sản phẩm">
-                                        <img src="/images/Admin/Product/edit.png" alt="Edit">
-                                    </a>
-                                   @*  <form asp-action="Delete" asp-controller="Product" asp-route-id="@item.ProductId" method="post"
-                                          data-confirm="true"
-                                          data-confirm-title="Xác nhận Xóa Sản phẩm"
-                                          data-confirm-message="Bạn có chắc chắn muốn XÓA TOÀN BỘ sản phẩm '@item.Name' và các biến thể của nó không? Hành động này không thể hoàn tác."
-                                          data-confirm-button-text="Xóa"
-                                          data-confirm-button-class="btn-danger"
-                                          data-confirm-header-class="bg-danger text-white">
-
-                                        <button type="submit" class="btn-delete" title="Xóa sản phẩm">
-                                            <img src="/images/Admin/Product/delete.png" alt="Delete">
-                                        </button>
-                                    </form> *@
-                                </div>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                Không có sản phẩm nào phù hợp bộ lọc.
                             </td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="7" class="text-center p-4">
-                            Không có sản phẩm nào được tìm thấy.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    @* --- FOOTER (PHÂN TRANG - ĐỘNG) --- *@
-    <footer class="products-footer">
-        <nav aria-label="Page navigation example" class="ms-auto">
-            <ul class="pagination pagination-sm">
-
-                @* Previous button *@
+    @if (totalPages > 1)
+    {
+        <nav class="d-flex justify-content-center justify-content-md-end mt-4" aria-label="Phân trang">
+            <ul class="pagination pagination-sm mb-0 shadow-sm rounded-3 overflow-hidden">
                 <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
-                    <a class="page-link" href="@(currentPage > 1 ? getUrl(currentPage - 1) : "#")" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
+                    <a class="page-link border-0 px-3" href="@(currentPage > 1 ? getPageUrl(currentPage - 1) : "#")" aria-label="Trước">&laquo;</a>
                 </li>
-
-                @* Page numbers *@
                 @for (int i = 1; i <= totalPages; i++)
                 {
                     <li class="page-item @(i == currentPage ? "active" : "")">
-                        <a class="page-link" href="@getUrl(i)">@i</a>
+                        <a class="page-link border-0 px-3" href="@getPageUrl(i)">@i</a>
                     </li>
                 }
-
-                @* Next button *@
                 <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-                    <a class="page-link" href="@(currentPage<totalPages? getUrl(currentPage + 1) : "#")" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
+                    <a class="page-link border-0 px-3" href="@(currentPage < totalPages ? getPageUrl(currentPage + 1) : "#")" aria-label="Sau">&raquo;</a>
                 </li>
             </ul>
         </nav>
-    </footer>
+    }
 </div>
 
-@* ============================================================================== *@
-@* ========================== JAVASCRIPT (ĐÃ TỐI ƯU) ============================ *@
-@* ============================================================================== *@
-<script>
-    // Hàm này hiện không cần thiết vì form đã xử lý submit
-    function filterSearch() {
-        const searchId = document.getElementById("searchId").value;
-        const currentUrl = new URL(window.location.href);
-
-        currentUrl.searchParams.set("searchId", searchId);
-
-        window.location.href = currentUrl.href;
-    }
-</script>
-
-@* ============================================================================== *@
-@* ================================= CSS (STYLE) ================================ *@
-@* ============================================================================== *@
 <style>
-    /* CSS cho navigation pills - Màu đỏ đồng nhất */
-    .nav-container .nav-link {
+    .product-admin-page .brand-filter-nav .nav-link {
         color: #495057;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        margin: 0 2px;
-        transition: all 0.3s ease;
-        border-radius: 6px;
-        padding: 8px 16px;
-        text-decoration: none;
-        font-weight: 500;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        white-space: nowrap;
+        font-size: 0.9rem;
     }
 
-        .nav-container .nav-link.active {
-            background-color: #dc3545 !important;
-            color: #ffffff !important;
-            border-color: #dc3545 !important;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
-        }
-
-        .nav-container .nav-link:hover:not(.active) {
-            background-color: #fff3f3;
-            color: #dc3545;
-            border-color: #dc3545;
-            transform: translateY(-1px);
-        }
-
-    .product-image {
-        flex-shrink: 0;
-        width: 60px;
-        height: 60px;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #eee;
-    }
-
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-    .product-text {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .product-id {
-        font-size: 0.8rem;
-        color: #6c757d;
-        font-family: 'Courier New', Courier, monospace;
-    }
-
-    .product-name {
+    .product-admin-page .brand-filter-nav .nav-link.active {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: #fff;
+        border-color: #dc3545;
         font-weight: 600;
-        color: #333;
-        line-height: 1.3;
     }
 
-    .crud {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+    .product-admin-page .brand-filter-nav .nav-link:not(.active):hover {
+        background: #fff5f5;
+        border-color: #f5c2c7;
+        color: #dc3545;
     }
 
-        .crud form {
-            display: inline-block;
-            margin: 0;
-            padding: 0;
-            line-height: 1;
-        }
-
-    .btn-delete, .btn-edit {
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        line-height: 1;
-        transition: transform 0.2s;
-    }
-
-        .btn-delete:hover, .btn-edit:hover {
-            transform: scale(1.1);
-        }
-
-    .btn-search-submit {
-        background: none;
-        border: none;
-        padding: 0 8px;
-        margin: 0;
-        line-height: 1;
-        cursor: pointer;
-    }
-
-        .btn-search-submit:hover {
-            opacity: 0.8;
-        }
-
-    .crud a img, .crud button img {
-        height: 16px;
-        width: auto;
-        vertical-align: middle;
-        opacity: 0.7;
-        transition: opacity 0.2s;
-    }
-
-    .crud a:hover img, .crud button:hover img {
-        opacity: 1;
-    }
-
-    /* Status chips */
-    .status-chip {
-        padding: 4px 8px;
-        border-radius: 12px;
+    .product-admin-table thead th {
         font-size: 0.8rem;
-        font-weight: 500;
-        display: inline-block;
-        text-align: center;
-        min-width: 70px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #6c757d;
+        border-bottom-width: 1px;
     }
 
-        .status-chip.available {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-chip.hidden {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-    /* Products header styles */
-    .products-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        gap: 15px;
+    .product-admin-table tbody tr:hover {
+        background-color: rgba(220, 53, 69, 0.04);
     }
 
-    .product-search-form {
-        display: flex;
-        align-items: center;
-        background: #fff;
-        border: 1px solid #dee2e6;
-        border-radius: 25px;
-        padding: 5px 15px;
-        flex: 1;
-        max-width: 400px;
+    .product-thumb {
+        width: 56px;
+        height: 56px;
     }
 
-        .product-search-form input {
-            border: none;
-            outline: none;
-            flex: 1;
-            padding: 8px 0;
-        }
-
-    .products-actions {
-        display: flex;
-        gap: 10px;
+    .product-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
-    .btn-primary {
+    .product-admin-page .pagination .page-link {
+        color: #dc3545;
+    }
+
+    .product-admin-page .pagination .page-item.active .page-link {
         background-color: #dc3545;
         border-color: #dc3545;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        border-radius: 6px;
-        color: white;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
+        color: #fff;
     }
 
-        .btn-primary:hover {
-            background-color: #c82333;
-            border-color: #c82333;
-            color: white;
-            transform: translateY(-1px);
-        }
-
-    /* Table styles */
-    .product-table-standard {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-        .product-table-standard thead th {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            font-weight: 600;
-            color: #495057;
-            padding: 12px 15px;
-        }
-
-        .product-table-standard tbody td {
-            padding: 12px 15px;
-            vertical-align: middle;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .product-table-standard tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-
-    /* Footer pagination */
-    .products-footer {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 20px;
-        padding-top: 15px;
-        border-top: 1px solid #dee2e6;
-    }
-
-    .pagination {
-        margin-bottom: 0;
-    }
-
-    .page-link {
-        color: #dc3545;
-        border: 1px solid #dee2e6;
-    }
-
-    .page-item.active .page-link {
-        background-color: #dc3545;
-        border-color: #dc3545;
-        color: white;
-    }
-
-    .page-link:hover {
-        color: #dc3545;
-        background-color: #f8f9fa;
-        border-color: #dee2e6;
+    .product-admin-page .pagination .page-item.disabled .page-link {
+        color: #adb5bd;
     }
 </style>

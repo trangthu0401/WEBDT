@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -130,8 +130,11 @@ namespace WebBanDienThoai.Controllers
                     .Take(5)
                     .ToList();
 
-                // 10. Lấy Options cho Dropdown RAM/ROM từ DB
-                var allV = await _context.ProductVariants.Where(v => v.IsActive == true).ToListAsync();
+                // 10. Options RAM/ROM chỉ từ biến thể & sản phẩm đang bán
+                var allV = await _context.ProductVariants
+                    .AsNoTracking()
+                    .Where(v => v.IsActive && v.Product.IsActive)
+                    .ToListAsync();
 
                 var viewModel = new ManageProductsViewModel
                 {
@@ -164,21 +167,21 @@ namespace WebBanDienThoai.Controllers
 
             try
             {
+                // Chỉ hiển thị chi tiết khi sản phẩm đang bán (IsActive) và biến thể đang bán
                 var productDetail = await _context.ProductVariants
                     .AsNoTracking()
                     .Include(v => v.Product)
                     .ThenInclude(p => p.Brand)
-                    .FirstOrDefaultAsync(v => v.VariantId == id);
+                    .FirstOrDefaultAsync(v => v.VariantId == id && v.IsActive && v.Product.IsActive);
 
                 if (productDetail == null) return NotFound();
 
-                // Lấy danh sách các biến thể khác cùng ProductId
+                // Biến thể cùng SP: chỉ lấy biến thể đang bán (sản phẩm cha đã lọc ở trên)
                 var allVariants = await _context.ProductVariants
                     .AsNoTracking()
-                    .Where(v => v.ProductId == productDetail.ProductId && v.IsActive)
+                    .Where(v => v.ProductId == productDetail.ProductId && v.IsActive && v.Product.IsActive)
                     .ToListAsync();
 
-                // Lấy sản phẩm liên quan
                 var brandId = productDetail.Product?.BrandId ?? 0;
 
                 var relatedProducts = new List<ProductVariant>();
@@ -189,10 +192,11 @@ namespace WebBanDienThoai.Controllers
                         .Include(v => v.Product)
                             .ThenInclude(p => p.Brand)
                         .Where(v => v.Product != null &&
+                                   v.Product.IsActive &&
                                    v.Product.BrandId == brandId &&
                                    v.ProductId != productDetail.ProductId &&
                                    v.IsActive)
-                        .Take(4)
+                        .Take(8)
                         .ToListAsync();
                 }
 
@@ -232,7 +236,8 @@ namespace WebBanDienThoai.Controllers
                        .ThenInclude(pv => pv.Product)
                            .ThenInclude(p => p.Brand)
                     .Where(fd => fd.Favorite != null && fd.Favorite.CustomerID == customerId &&
-                                fd.ProductVariant != null && fd.ProductVariant.IsActive)
+                                fd.ProductVariant != null && fd.ProductVariant.IsActive &&
+                                fd.ProductVariant.Product != null && fd.ProductVariant.Product.IsActive)
                     .Select(fd => fd.ProductVariant);
 
                 var rawFavs = await favoritesQuery.ToListAsync();
@@ -291,7 +296,7 @@ namespace WebBanDienThoai.Controllers
                 }
 
                 var variantToAdd = await _context.ProductVariants
-                                    .Where(v => v.ProductId == id && v.IsActive)
+                                    .Where(v => v.ProductId == id && v.IsActive && v.Product.IsActive)
                                     .Select(v => v.VariantId)
                                     .FirstOrDefaultAsync();
 
