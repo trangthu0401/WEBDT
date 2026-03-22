@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using WebBanDienThoai.Models; // Cần using Models
@@ -7,6 +8,7 @@ namespace WebBanDienThoai.Models.ViewModels
 {
     // === 1. DÙNG CHO TRANG INDEX (HIỂN THỊ) ===
     // (Model chính cho Views/ProductVariant/Index.cshtml)
+  
     public class ProductVariantIndexViewModel
     {
         public Product Product { get; set; } = new Product(); // Thông tin sản phẩm cha
