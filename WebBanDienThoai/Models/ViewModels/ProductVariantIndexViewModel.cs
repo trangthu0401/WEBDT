@@ -25,21 +25,29 @@ namespace WebBanDienThoai.Models.ViewModels
         public int ProductId { get; set; }
 
         [Required(ErrorMessage = "Màu sắc là bắt buộc")]
-        public string? Color { get; set; }
+        [StringLength(50)]
+        public string Color { get; set; }  // ← Non-nullable
 
         [Required(ErrorMessage = "Dung lượng là bắt buộc")]
-        public string? Storage { get; set; }
-        public string? Ram { get; set; }
+        [StringLength(20)]
+        public string Storage { get; set; }  // ← Non-nullable
+
+        [StringLength(20)]
+        public string Ram { get; set; }
 
         [Required(ErrorMessage = "Giá là bắt buộc")]
+        [Range(1, double.MaxValue, ErrorMessage = "Giá phải > 0")]  // ← Force > 0
         public decimal Price { get; set; }
+
+        [Range(0, double.MaxValue)]
         public decimal? DiscountPrice { get; set; }
 
         [Required(ErrorMessage = "Tồn kho là bắt buộc")]
+        [Range(0, int.MaxValue, ErrorMessage = "Tồn kho không âm")]  // ← Force >= 0
         public int Stock { get; set; }
-        public IFormFile? ImageFile { get; set; }
-    }
 
+        public IFormFile ImageFile { get; set; }
+    }
     // === 3. DÙNG CHO FORM EDIT (SỬA) ===
     // (Model cho Modal "Sửa Biến thể")
     public class ProductVariantEditViewModel

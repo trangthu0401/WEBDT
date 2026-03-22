@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,16 +16,12 @@ using WebBanDienThoai.Models.ViewModels;
 
 namespace WebBanDienThoai.Controllers
 {
-    // GHI CHÚ: Tên Controller đã được đổi thành "ProductVariant"
     [Authorize(Roles = "Admin")]
-
     public class ProductVariantController : Controller
     {
-        // GHI CHÚ: Sửa lại tên DbContext cho đúng
         private readonly DemoWebBanDienThoaiDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        // GHI CHÚ: Sửa lại tên DbContext cho đúng
         public ProductVariantController(DemoWebBanDienThoaiDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
@@ -32,9 +29,14 @@ namespace WebBanDienThoai.Controllers
         }
 
         // --- 1. DANH SÁCH BIẾN THỂ (Trang chi tiết) ---
-        // GET: /ProductVariant/Index/5
         public async Task<IActionResult> Index(int productId)
         {
+            if (productId <= 0)
+            {
+                TempData["StatusMessage"] = "Lỗi: Sản phẩm không hợp lệ.";
+                return RedirectToAction("Index", "Product");
+            }
+
             try
             {
                 var product = await _context.Products
@@ -44,15 +46,14 @@ namespace WebBanDienThoai.Controllers
 
                 if (product == null)
                 {
-                    return NotFound();
+                    TempData["StatusMessage"] = "Lỗi: Không tìm thấy sản phẩm.";
+                    return RedirectToAction("Index", "Product");
                 }
 
-                // GHI CHÚ: Sửa sang ViewModel mới (ProductVariantIndexViewModel)
                 var viewModel = new ProductVariantIndexViewModel
                 {
                     Product = product,
                     Variants = product.ProductVariants.ToList(),
-                    // GHI CHÚ: Đổi tên 'AddVariantForm' -> 'CreateForm'
                     CreateForm = new ProductVariantCreateViewModel { ProductId = productId }
                 };
 
@@ -61,139 +62,161 @@ namespace WebBanDienThoai.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Lỗi khi lấy chi tiết sản phẩm: {ex.Message}");
-                return View("Error", new { message = $"Lỗi khi lấy chi tiết sản phẩm: {ex.Message}" });
+                TempData["StatusMessage"] = $"Lỗi: {ex.Message}";
+                return RedirectToAction("Index", "Product");
             }
         }
 
         // --- 2. THÊM BIẾN THỂ MỚI ---
-        // POST: /ProductVariant/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // GHI CHÚ: Sửa sang ViewModel mới (ProductVariantCreateViewModel)
         public async Task<IActionResult> Create(ProductVariantCreateViewModel viewModel)
         {
-            if (ModelState.IsValid)
+            // ← KIỂM TRA MODELSTATE CHI TIẾT
+            if (!ModelState.IsValid)
             {
-                try
+                var errors = new List<string>();
+                foreach (var modelState in ModelState.Values)
                 {
-                    string? variantImagePath = null;
-                    if (viewModel.ImageFile != null)
+                    foreach (var error in modelState.Errors)
                     {
-                        variantImagePath = await UploadFile(viewModel.ImageFile);
+                        errors.Add(error.ErrorMessage);
                     }
-
-                    // GHI CHÚ: Giữ nguyên logic xử lý "GB" của bạn
-                    string storageValue = viewModel.Storage ?? string.Empty;
-                    string ramValue = viewModel.Ram ?? string.Empty;
-
-                    var newVariant = new ProductVariant
-                    {
-                        ProductId = viewModel.ProductId,
-                        Color = viewModel.Color ?? string.Empty,
-                        Storage = storageValue.Replace("GB", "").Trim(),
-                        RAM = ramValue.Replace("GB", "").Trim(),
-                        Price = viewModel.Price,
-                        DiscountPrice = viewModel.DiscountPrice,
-                        Stock = viewModel.Stock,
-                        ImageUrl = variantImagePath,
-                        IsActive = true,
-                        CreatedDate = DateTime.Now
-                    };
-
-                    _context.ProductVariants.Add(newVariant);
-                    await _context.SaveChangesAsync();
-
-                    TempData["StatusMessage"] = "Thêm biến thể mới thành công!";
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Lỗi khi thêm biến thể: {ex.Message}");
-                    TempData["StatusMessage"] = $"Lỗi khi thêm biến thể: {ex.Message}";
-                }
+                TempData["StatusMessage"] = "Lỗi: " + string.Join(" | ", errors);
+                return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
-            else
+
+            // ← KIỂM TRA LOGIC THÊM
+            if (viewModel.Price <= 0)
             {
-                TempData["StatusMessage"] = "Lỗi: Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường.";
+                TempData["StatusMessage"] = "Lỗi: Giá phải lớn hơn 0.";
+                return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
 
-            // GHI CHÚ: Sửa lại tên tham số (id -> productId)
+            if (viewModel.Stock < 0)
+            {
+                TempData["StatusMessage"] = "Lỗi: Tồn kho không được âm.";
+                return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
+            }
+
+            try
+            {
+                string? variantImagePath = null;
+                if (viewModel.ImageFile != null)
+                {
+                    variantImagePath = await UploadFile(viewModel.ImageFile);
+                }
+
+                string storageValue = viewModel.Storage?.Trim() ?? string.Empty;
+                string ramValue = viewModel.Ram?.Trim() ?? string.Empty;
+
+                var newVariant = new ProductVariant
+                {
+                    ProductId = viewModel.ProductId,
+                    Color = viewModel.Color?.Trim() ?? string.Empty,
+                    Storage = storageValue.Replace("GB", "").Trim(),
+                    RAM = ramValue.Replace("GB", "").Trim(),
+                    Price = viewModel.Price,
+                    DiscountPrice = viewModel.DiscountPrice,
+                    Stock = viewModel.Stock,
+                    ImageUrl = variantImagePath,
+                    IsActive = true,
+                    CreatedDate = DateTime.Now
+                };
+
+                _context.ProductVariants.Add(newVariant);
+                await _context.SaveChangesAsync();
+
+                TempData["StatusMessage"] = "✅ Thêm biến thể mới thành công!";
+            }
+            catch (DbUpdateException dbEx)
+            {
+                Console.WriteLine($"DbUpdateException: {dbEx.Message}");
+                Console.WriteLine($"Inner: {dbEx.InnerException?.Message}");
+                TempData["StatusMessage"] = $"❌ Lỗi database: {dbEx.InnerException?.Message ?? dbEx.Message}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi thêm biến thể: {ex.Message}");
+                TempData["StatusMessage"] = $"❌ Lỗi: {ex.Message}";
+            }
+
             return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
         }
 
         // --- 3. SỬA BIẾN THỂ ---
-        // POST: /ProductVariant/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // GHI CHÚ: Sửa sang ViewModel mới (ProductVariantEditViewModel)
         public async Task<IActionResult> Edit(ProductVariantEditViewModel viewModel)
         {
-            if (viewModel.Stock < 0 || viewModel.Price < 0)
+            if (viewModel.Price < 0 || viewModel.Stock < 0)
             {
-                TempData["StatusMessage"] = "Lỗi: Giá hoặc Tồn kho không thể là số âm.";
+                TempData["StatusMessage"] = "Lỗi: Giá hoặc Tồn kho không thể âm.";
                 return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
 
-            // GHI CHÚ: Thêm check ModelState (cho [Required])
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
+                var errors = new List<string>();
+                foreach (var modelState in ModelState.Values)
                 {
-                    var variantToUpdate = await _context.ProductVariants.FindAsync(viewModel.VariantId);
-
-                    if (variantToUpdate == null)
+                    foreach (var error in modelState.Errors)
                     {
-                        TempData["StatusMessage"] = "Lỗi: Không tìm thấy biến thể.";
-                        return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
+                        errors.Add(error.ErrorMessage);
                     }
-
-                    // GHI CHÚ: Cập nhật từ ViewModel
-                    variantToUpdate.Color = viewModel.Color;
-                    variantToUpdate.Storage = viewModel.Storage;
-                    variantToUpdate.RAM = viewModel.Ram;
-                    variantToUpdate.Price = viewModel.Price;
-                    variantToUpdate.DiscountPrice = viewModel.DiscountPrice;
-                    variantToUpdate.Stock = viewModel.Stock;
-                    variantToUpdate.UpdatedDate = DateTime.Now; // (Nên thêm)
-
-                    _context.ProductVariants.Update(variantToUpdate);
-                    await _context.SaveChangesAsync();
-
-                    TempData["StatusMessage"] = "Cập nhật biến thể (ID: " + viewModel.VariantId + ") thành công.";
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Lỗi khi sửa biến thể ID {viewModel.VariantId}: {ex.Message}");
-                    TempData["StatusMessage"] = "Lỗi khi cập nhật biến thể: " + ex.Message;
-                }
+                TempData["StatusMessage"] = "Lỗi: " + string.Join(" | ", errors);
+                return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
             }
-            else
+
+            try
             {
-                TempData["StatusMessage"] = "Lỗi: Dữ liệu sửa không hợp lệ.";
+                var variantToUpdate = await _context.ProductVariants.FindAsync(viewModel.VariantId);
+
+                if (variantToUpdate == null)
+                {
+                    TempData["StatusMessage"] = "❌ Lỗi: Không tìm thấy biến thể.";
+                    return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
+                }
+
+                variantToUpdate.Color = viewModel.Color?.Trim() ?? string.Empty;
+                variantToUpdate.Storage = viewModel.Storage?.Trim() ?? string.Empty;
+                variantToUpdate.RAM = viewModel.Ram?.Trim() ?? string.Empty;
+                variantToUpdate.Price = viewModel.Price;
+                variantToUpdate.DiscountPrice = viewModel.DiscountPrice;
+                variantToUpdate.Stock = viewModel.Stock;
+                variantToUpdate.UpdatedDate = DateTime.Now;
+
+                _context.ProductVariants.Update(variantToUpdate);
+                await _context.SaveChangesAsync();
+
+                TempData["StatusMessage"] = "✅ Cập nhật biến thể thành công!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi sửa biến thể: {ex.Message}");
+                TempData["StatusMessage"] = $"❌ Lỗi: {ex.Message}";
             }
 
             return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
         }
 
         // --- 4. XÓA BIẾN THỂ ---
-        // POST: /ProductVariant/Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // GHI CHÚ: Sửa tham số (id -> variantId, thêm productId)
         public async Task<IActionResult> Delete(int variantId, int productId)
         {
-            // Tìm biến thể trong CSDL
             var variantToDelete = await _context.ProductVariants.FindAsync(variantId);
 
-            // Xử lý nếu không tìm thấy (trường hợp này hiếm khi xảy ra)
             if (variantToDelete == null)
             {
-                TempData["errorMessage"] = "Lỗi: Không tìm thấy biến thể để xóa.";
+                TempData["StatusMessage"] = "❌ Lỗi: Không tìm thấy biến thể để xóa.";
                 if (productId > 0)
                     return RedirectToAction(nameof(Index), new { productId = productId });
                 return RedirectToAction("Index", "Product");
             }
 
-            // Gán lại productId để đảm bảo chuyển hướng về đúng trang
             if (productId == 0)
             {
                 productId = variantToDelete.ProductId;
@@ -201,82 +224,85 @@ namespace WebBanDienThoai.Controllers
 
             try
             {
-                // Thực hiện xóa
                 _context.ProductVariants.Remove(variantToDelete);
                 await _context.SaveChangesAsync();
 
-                TempData["errorMessage"] = "Đã xóa biến thể thành công.";
+                TempData["StatusMessage"] = "✅ Đã xóa biến thể thành công.";
             }
-            catch (DbUpdateException dbEx) // Bắt lỗi từ CSDL (quan trọng nhất)
+            catch (DbUpdateException dbEx)
             {
-                // Lấy lỗi gốc bên trong (thường là SqlException)
                 var baseException = dbEx.GetBaseException() as SqlException;
 
-                // Mã 547 là mã lỗi "Vi phạm ràng buộc khóa ngoại" của SQL Server
                 if (baseException != null && baseException.Number == 547)
                 {
-                    // Lấy nội dung thông báo lỗi
                     string errorMessage = baseException.Message;
 
-                    // KIỂM TRA CHÍNH XÁC LỖI TỪ BẢNG NÀO
                     if (errorMessage.Contains("OrderDetails"))
                     {
-                        TempData["errorMessage"] = "Lỗi: Không thể xóa. Biến thể này đã tồn tại trong 'Chi tiết Đơn hàng' của khách.";
+                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể này đã tồn tại trong 'Chi tiết Đơn hàng'.";
                     }
                     else if (errorMessage.Contains("CartItems"))
                     {
-                        TempData["errorMessage"] = "Lỗi: Không thể xóa. Biến thể này đang nằm trong 'Giỏ hàng' của một khách hàng.";
+                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể này trong 'Giỏ hàng' khách.";
                     }
                     else if (errorMessage.Contains("ReviewDetails"))
                     {
-                        TempData["errorMessage"] = "Lỗi: Không thể xóa. Biến thể này đã được 'Đánh giá' bởi khách hàng.";
+                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể này đã được 'Đánh giá'.";
                     }
                     else if (errorMessage.Contains("FavoriteDetails"))
                     {
-                        TempData["errorMessage"] = "Lỗi: Không thể xóa. Biến thể này nằm trong 'Danh sách Yêu thích' của khách hàng.";
+                        TempData["StatusMessage"] = "❌ Không thể xóa. Biến thể trong 'Danh sách Yêu thích'.";
                     }
                     else
                     {
-                        // Lỗi 547 mà không xác định được (trường hợp dự phòng)
-                        TempData["errorMessage"] = "Lỗi: Không thể xóa do vi phạm ràng buộc dữ liệu không xác định.";
-                    } 
+                        TempData["StatusMessage"] = "❌ Không thể xóa do ràng buộc dữ liệu.";
+                    }
                 }
                 else
                 {
-                    // Các lỗi CSDL khác
-                    Console.WriteLine($"Lỗi DbUpdateException khi xóa: {dbEx.Message}");
-                    TempData["errorMessage"] = "Lỗi cơ sở dữ liệu khi xóa.";
+                    Console.WriteLine($"DbUpdateException: {dbEx.Message}");
+                    TempData["StatusMessage"] = $"❌ Lỗi database: {dbEx.InnerException?.Message}";
                 }
             }
-            catch (Exception ex) // Bắt các lỗi chung khác
+            catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi chung khi xóa biến thể ID {variantId}: {ex.Message}");
-                TempData["StatusMessage"] = "Lỗi không xác định khi xóa biến thể.";
+                Console.WriteLine($"Lỗi khi xóa: {ex.Message}");
+                TempData["StatusMessage"] = $"❌ Lỗi: {ex.Message}";
             }
 
-            // Luôn chuyển hướng về trang chi tiết sản phẩm
             return RedirectToAction(nameof(Index), new { productId = productId });
         }
 
-        // --- 5. HÀM HỖ TRỢ (PRIVATE) ---
+        // --- 5. HÀM HỖ TRỢ ---
         private async Task<string?> UploadFile(IFormFile file)
         {
-            string uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, "images", "products");
-
-            if (!Directory.Exists(uploadDir))
+            try
             {
-                Directory.CreateDirectory(uploadDir);
+                if (file == null || file.Length == 0)
+                    return null;
+
+                string uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, "images", "products");
+
+                if (!Directory.Exists(uploadDir))
+                {
+                    Directory.CreateDirectory(uploadDir);
+                }
+
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(file.FileName);
+                string filePath = Path.Combine(uploadDir, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                return "/images/products/" + uniqueFileName;
             }
-
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(file.FileName);
-            string filePath = Path.Combine(uploadDir, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            catch (Exception ex)
             {
-                await file.CopyToAsync(fileStream);
+                Console.WriteLine($"Lỗi upload file: {ex.Message}");
+                return null;
             }
-
-            return "/images/products/" + uniqueFileName;
         }
     }
 }
