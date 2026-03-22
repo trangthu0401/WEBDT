@@ -68,10 +68,18 @@ namespace WebBanDienThoai.Controllers
         }
 
         // --- 2. THÊM BIẾN THỂ MỚI ---
+        // --- 2. THÊM BIẾN THỂ MỚI ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductVariantCreateViewModel viewModel)
         {
+            // ← SỬA: Dùng viewModel.ProductId thay vì productId
+            if (viewModel.ProductId <= 0)
+            {
+                TempData["StatusMessage"] = "Lỗi: Sản phẩm không hợp lệ.";
+                return RedirectToAction("Index", "Product");
+            }
+
             // ← KIỂM TRA MODELSTATE CHI TIẾT
             if (!ModelState.IsValid)
             {
@@ -144,7 +152,6 @@ namespace WebBanDienThoai.Controllers
 
             return RedirectToAction(nameof(Index), new { productId = viewModel.ProductId });
         }
-
         // --- 3. SỬA BIẾN THỂ ---
         [HttpPost]
         [ValidateAntiForgeryToken]
