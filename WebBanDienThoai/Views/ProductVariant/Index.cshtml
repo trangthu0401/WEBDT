@@ -168,8 +168,7 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <!-- GHI CHÚ: Đã sửa asp-for trỏ vào CreateForm -->
-                    <input type="hidden" asp-for="CreateForm.ProductId" />
-
+                    <input type="hidden" name="CreateForm.ProductId" value="@Model.Product.ProductId" />
                     <div class="row">
                         <div class="col-md-6">
                             <h6 class="mb-3 text-danger">Thông số biến thể</h6>
