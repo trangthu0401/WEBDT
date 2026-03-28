@@ -1,0 +1,45 @@
+﻿[
+  {
+    "TestCaseID": "TC_ORD_01",
+    "Tab": "Tất cả",
+    "ExpectedResult": "Show_All_Orders"
+  },
+  {
+    "TestCaseID": "TC_ORD_02",
+    "Tab": "Chờ xác nhận",
+    "ExpectedResult": "Show_Only_Pending_Orders"
+  },
+  {
+    "TestCaseID": "TC_ORD_05",
+    "Tab": "Chờ xác nhận",
+    "Action": "Check_Cancel_Button",
+    "ExpectedResult": "Button_Is_Visible_And_Enabled"
+  },
+  {
+    "TestCaseID": "TC_ORD_07",
+    "CancelReason": "Đổi ý không mua",
+    "ExpectedResult": "Order_Cancelled_Successfully"
+  },
+  {
+    "TestCaseID": "TC_ORD_09",
+    "CancelReason": "Lý do khác",
+    "TextareaInput": "Hàng giao chậm quá",
+    "ExpectedResult": "Order_Cancelled_Successfully"
+  },
+  {
+    "TestCaseID": "TC_ORD_10",
+    "CancelReason": "Lý do khác",
+    "TextareaInput": "",
+    "ExpectedResult": "Error_Missing_Reason"
+  },
+  {
+    "TestCaseID": "TC_ORD_12",
+    "SearchKeyword": "1024",
+    "ExpectedResult": "Show_Order_1024_Only"
+  },
+  {
+    "TestCaseID": "TC_ORD_15",
+    "Action": "Click_Page_2",
+    "ExpectedResult": "Show_Next_10_Orders"
+  }
+]

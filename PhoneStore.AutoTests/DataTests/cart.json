@@ -1,0 +1,30 @@
+﻿[
+  {
+    "TestCaseID": "TC_CART_01",
+    "CurrentCartQty": 1,
+    "Action": "Add_Same_Product",
+    "ExpectedResult": "Cart_Quantity_Becomes_2"
+  },
+  {
+    "TestCaseID": "TC_CART_02",
+    "Action": "Click_Plus_Button",
+    "ExpectedResult": "Total_Price_Increased"
+  },
+  {
+    "TestCaseID": "TC_CART_03",
+    "Action": "Click_Minus_Button",
+    "ExpectedResult": "Total_Price_Decreased"
+  },
+  {
+    "TestCaseID": "TC_CART_05",
+    "Action": "Click_Delete_And_Confirm_OK",
+    "ExpectedResult": "Product_Removed_From_Cart"
+  },
+  {
+    "TestCaseID": "TC_CART_07",
+    "Stock": 3,
+    "CurrentCartQty": 2,
+    "Action": "Click_Plus_Button_Twice",
+    "ExpectedResult": "Cannot_Exceed_Stock_Limit"
+  }
+]

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36408.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebBanDienThoai", "WebBanDienThoai\WebBanDienThoai.csproj", "{86BEBED9-B43B-4966-80D2-986B48366BE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhoneStore.AutoTests", "PhoneStore.AutoTests\PhoneStore.AutoTests.csproj", "{7475C522-FB56-4DCD-8ACC-9E0489E11852}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{86BEBED9-B43B-4966-80D2-986B48366BE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86BEBED9-B43B-4966-80D2-986B48366BE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86BEBED9-B43B-4966-80D2-986B48366BE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7475C522-FB56-4DCD-8ACC-9E0489E11852}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7475C522-FB56-4DCD-8ACC-9E0489E11852}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7475C522-FB56-4DCD-8ACC-9E0489E11852}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7475C522-FB56-4DCD-8ACC-9E0489E11852}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

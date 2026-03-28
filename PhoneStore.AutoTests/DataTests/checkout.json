@@ -1,0 +1,61 @@
+﻿[
+  {
+    "TestCaseID": "TC_CHK_01",
+    "CartStatus": "Empty",
+    "Action": "Direct_URL_Access",
+    "ExpectedResult": "Redirect_To_Cart"
+  },
+  {
+    "TestCaseID": "TC_CHK_02",
+    "FullName": "Nguyễn Văn A",
+    "Phone": "0901234567",
+    "Province": "TPHCM",
+    "District": "Quận 1",
+    "Ward": "Phường Tân Định",
+    "Address": "Số 1 Lê Duẩn",
+    "ExpectedResult": "Order_Success"
+  },
+  {
+    "TestCaseID": "TC_CHK_05",
+    "Phone": "090abc12",
+    "ExpectedResult": "Error_Invalid_Phone"
+  },
+  {
+    "TestCaseID": "TC_CHK_06",
+    "Phone": "090123",
+    "ExpectedResult": "Error_Phone_Too_Short"
+  },
+  {
+    "TestCaseID": "TC_CHK_08",
+    "Stock": 2,
+    "ManipulatedQty": 5,
+    "ExpectedResult": "Error_Exceed_Inventory"
+  },
+  {
+    "TestCaseID": "TC_CHK_09",
+    "Province": "Hà Nội",
+    "ExpectedResult": "District_List_Loaded"
+  },
+  {
+    "TestCaseID": "TC_CHK_14",
+    "FullName": "Nguyễn Văn A",
+    "Phone": "0901234567",
+    "Address": "",
+    "ExpectedResult": "Error_Missing_Address"
+  },
+  {
+    "TestCaseID": "TC_CHK_16",
+    "PaymentMethod": "Chuyển khoản ngân hàng (VNPay/Momo)",
+    "ExpectedResult": "Order_Success_With_QR"
+  },
+  {
+    "TestCaseID": "TC_CHK_17",
+    "DiscountCode": "SALE100",
+    "ExpectedResult": "Discount_Applied_Successfully"
+  },
+  {
+    "TestCaseID": "TC_CHK_18",
+    "DiscountCode": "EXPIRED",
+    "ExpectedResult": "Error_Invalid_Discount_Code"
+  }
+]
