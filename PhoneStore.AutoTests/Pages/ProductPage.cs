@@ -1,4 +1,4 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
 
 namespace PhoneStore.AutoTests.Pages
 {
@@ -30,6 +30,11 @@ namespace PhoneStore.AutoTests.Pages
             {
                 try { driver.FindElement(By.XPath($"//a[contains(text(), '{storage}')]")).Click(); } catch { }
             }
+        }
+
+        public void AcceptAlert()
+        {
+            try { new OpenQA.Selenium.Support.UI.WebDriverWait(driver, System.TimeSpan.FromSeconds(3)).Until(SeleniumExtras.WaitHelpers.ExpectedConditions.AlertIsPresent()).Accept(); } catch { }
         }
     }
 }

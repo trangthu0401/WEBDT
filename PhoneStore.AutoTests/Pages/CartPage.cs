@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
+using PhoneStore.AutoTests.Utilities;
 
 namespace PhoneStore.AutoTests.Pages
 {
@@ -15,7 +16,7 @@ namespace PhoneStore.AutoTests.Pages
         public void ClickMuaNgay()
         {
             try { driver.FindElement(btnMuaNgay).Click(); }
-            catch { driver.Navigate().GoToUrl("https://localhost:7033/Checkout"); }
+            catch { driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Checkout"); }
         }
 
         // BỔ SUNG: Chọn sản phẩm theo ID checkbox (như cb-1041 trong CSV)
@@ -41,6 +42,11 @@ namespace PhoneStore.AutoTests.Pages
                 // Nếu ID thay đổi theo DB, ta tick cái đầu tiên tìm thấy
                 driver.FindElement(By.CssSelector("input[type='checkbox']")).Click();
             }
+        }
+
+        public void AcceptAlert()
+        {
+            try { new OpenQA.Selenium.Support.UI.WebDriverWait(driver, System.TimeSpan.FromSeconds(3)).Until(SeleniumExtras.WaitHelpers.ExpectedConditions.AlertIsPresent()).Accept(); } catch { }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -41,7 +41,7 @@ namespace PhoneStore.AutoTests.Core
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
             // Bay vào trang chủ
-            driver.Navigate().GoToUrl("https://localhost:7033/");
+            driver.Navigate().GoToUrl(ConfigHelper.BaseUrl);
         }
 
         [TearDown]
@@ -62,14 +62,16 @@ namespace PhoneStore.AutoTests.Core
                 // Ghi vào file Excel .xlsx
                 ExcelHelper.LogTestResult(testName, status.ToString(), error, screenshotPath);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi trong quá trình Teardown: {ex.Message}");
+            }
             finally
             {
                 // ĐẢM BẢO ĐÓNG TRÌNH DUYỆT 100%
                 if (driver != null)
                 {
                     driver.Quit();
-                    driver.Dispose();
                 }
             }
         }

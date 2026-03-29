@@ -1,5 +1,6 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
 using System;
 
 namespace PhoneStore.AutoTests.Pages
@@ -9,21 +10,25 @@ namespace PhoneStore.AutoTests.Pages
         private IWebDriver driver;
         public OrderHistoryPage(IWebDriver driver) => this.driver = driver;
 
-        // --- LOCATORS (Cập nhật chuẩn theo file CSV mới nhất) ---
+        // --- LOCATORS ---
         private By drpStatus = By.Name("statusFilter");
+        private By drpDatePreset = By.Name("datePreset");
         private By txtStartDate = By.Id("startDate");
         private By txtEndDate = By.Id("endDate");
 
-        private By btnHuyDonHang = By.CssSelector(".btn-cancel-pop");
-        // Locator cho lý do hủy (Tìm label chứa text lý do)
-        private By btnXacNhanHuy = By.XPath("//button[contains(text(),'Xác nhận hủy')]");
+        // Lấy nút Hủy đơn hàng đầu tiên tìm thấy
+        private By btnHuyDonHang = By.XPath("(//button[contains(@class,'btn-cancel-pop') or contains(text(),'Hủy')])[1]");
+        private By btnXacNhanHuy = By.XPath("//button[contains(text(),'Xác nhận') or contains(@class,'confirm')]");
         private By btnSweetAlertOK = By.CssSelector(".swal2-confirm");
 
         // --- ACTIONS ---
-        public void LocDonHang(string status, string startDate, string endDate)
+        public void LocDonHang(string status, string datePreset, string startDate, string endDate)
         {
             if (!string.IsNullOrEmpty(status))
                 new SelectElement(driver.FindElement(drpStatus)).SelectByText(status);
+
+            if (!string.IsNullOrEmpty(datePreset))
+                new SelectElement(driver.FindElement(drpDatePreset)).SelectByText(datePreset);
 
             if (!string.IsNullOrEmpty(startDate))
             {
@@ -40,15 +45,23 @@ namespace PhoneStore.AutoTests.Pages
             }
         }
 
+        public bool IsCancelButtonPresent()
+        {
+            try { return driver.FindElement(btnHuyDonHang).Displayed; }
+            catch { return false; }
+        }
+
         public void ClickHuyDon() => driver.FindElement(btnHuyDonHang).Click();
 
         public void ChonLyDoVaXacNhan(string lyDo)
         {
-            // Tìm và click vào lý do cụ thể (vd: "Tìm thấy giá tốt hơn")
             try
             {
-                driver.FindElement(By.XPath($"//label[contains(text(),'{lyDo}')]")).Click();
-                System.Threading.Thread.Sleep(500);
+                if (!string.IsNullOrEmpty(lyDo))
+                {
+                    driver.FindElement(By.XPath($"//label[contains(text(),'{lyDo}')]")).Click();
+                    System.Threading.Thread.Sleep(500);
+                }
                 driver.FindElement(btnXacNhanHuy).Click();
             }
             catch { }
@@ -58,8 +71,18 @@ namespace PhoneStore.AutoTests.Pages
         {
             try
             {
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
                 wait.Until(d => d.FindElement(btnSweetAlertOK)).Click();
+            }
+            catch { }
+        }
+
+        public void CloseSweetAlert()
+        {
+            try
+            {
+                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
+                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(btnSweetAlertOK)).Click();
             }
             catch { }
         }

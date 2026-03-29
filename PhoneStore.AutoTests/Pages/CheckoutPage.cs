@@ -1,4 +1,4 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI; // Cần thư viện này để tương tác với Dropdown (thẻ <select>)
 
 namespace PhoneStore.AutoTests.Pages
@@ -97,6 +97,16 @@ namespace PhoneStore.AutoTests.Pages
         public void ClickDatHang()
         {
             driver.FindElement(btnDatHang).Click();
+        }
+
+        public void CloseSweetAlert()
+        {
+            try
+            {
+                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
+                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".swal2-confirm"))).Click();
+            }
+            catch { }
         }
     }
 }

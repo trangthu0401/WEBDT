@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using PhoneStore.AutoTests.Core;
 using PhoneStore.AutoTests.Pages;
@@ -45,17 +45,17 @@ namespace PhoneStore.AutoTests.Tests
             if (isLoggedIn)
             {
                 // Nếu JSON yêu cầu đăng nhập thì mới chạy luồng này
-                driver.Navigate().GoToUrl("https://localhost:7033/");
+                driver.Navigate().GoToUrl(ConfigHelper.BaseUrl);
                 homePage.ClickMenuTaiKhoan();
                 Thread.Sleep(500);
                 homePage.ClickDangNhap();
                 Thread.Sleep(500);
-                loginPage.Login("4556666666", "123456"); // Đổi pass thật của bạn
+                loginPage.Login(ConfigHelper.TestUserPhone, ConfigHelper.TestUserPassword);
                 Thread.Sleep(1500);
             }
 
-            // Bay thẳng vào trang sản phẩm số 2 (Mã 1 đã bị khóa)
-            driver.Navigate().GoToUrl("https://localhost:7033/Home/ProductDetail/3");
+            // Bay thẳng vào trang sản phẩm số 3
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/3");
             Thread.Sleep(2000);
 
             // Tự động tìm và chọn Màu sắc / Dung lượng (Nếu có cấu hình trong JSON)
@@ -86,7 +86,7 @@ namespace PhoneStore.AutoTests.Tests
             }
 
             // Tắt alert thông báo "Thêm thành công" nếu nó hiện ra
-            try { driver.SwitchTo().Alert().Accept(); Thread.Sleep(500); } catch { }
+            productPage.AcceptAlert();
 
 
             // =======================================================

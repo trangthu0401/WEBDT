@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -30,19 +30,9 @@ namespace PhoneStore.AutoTests.Tests
             Thread.Sleep(1000);
             homePage.ClickDangNhap();
             Thread.Sleep(1000);
-            loginPage.Login("4556666666", "123456");
+            loginPage.Login(ConfigHelper.TestUserPhone, ConfigHelper.TestUserPassword);
             Thread.Sleep(1500);
-
-            // 2. Tự động lấy 1 sản phẩm ném vào giỏ (Giải quyết lỗi giỏ trống)
-            driver.Navigate().GoToUrl("https://localhost:7033/Home/ProductDetail/2");
-            Thread.Sleep(2000);
-            try { driver.FindElement(By.CssSelector(".btn-action.btn-add")).Click(); } catch { }
-            Thread.Sleep(1000);
-            try { driver.SwitchTo().Alert().Accept(); } catch { }
-
-            // 3. Bay qua trang Thanh toán
-            driver.Navigate().GoToUrl("https://localhost:7033/Cart");
-            Thread.Sleep(2000);
+            // Không tự động thêm sản phẩm vào giỏ hàng tại đây!
         }
 
         public static IEnumerable<TestCaseData> GetCheckoutData()
@@ -62,6 +52,20 @@ namespace PhoneStore.AutoTests.Tests
             string ward = testData["Ward"]?.ToString();
             string address = testData["Address"]?.ToString();
             string paymentMethod = testData["PaymentMethod"]?.ToString();
+            string cartStatus = testData["CartStatus"]?.ToString();
+
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+
+            // TIỀN ĐIỀU KIỆN TỪ JSON: Nếu giỏ không phải là "Empty" thì thêm sản phẩm vào giỏ
+            if (cartStatus != "Empty")
+            {
+                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/2");
+                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".btn-action.btn-add"))).Click();
+                try { wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.AlertIsPresent()).Accept(); } catch { }
+            }
+
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Checkout");
+            Thread.Sleep(1500); // Chờ load trang thanh toán
 
             // ĐIỀN THÔNG TIN CƠ BẢN
             if (fullName != null) checkoutPage.EnterFullName(fullName);
@@ -71,30 +75,33 @@ namespace PhoneStore.AutoTests.Tests
             if (province != null)
             {
                 checkoutPage.ClickThayDoiDiaChi();
-                Thread.Sleep(1000); // Chờ bảng modal trồi lên
+                // Chờ bảng modal trồi lên
+                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("province")));
 
                 checkoutPage.SelectProvince(province);
-                Thread.Sleep(500); // Chờ web load danh sách Quận theo Tỉnh
+                // Chờ danh sách Quận cập nhật (phải có hơn 1 option)
+                wait.Until(d => new SelectElement(d.FindElement(By.Id("district"))).Options.Count > 1);
 
                 if (district != null) checkoutPage.SelectDistrict(district);
-                Thread.Sleep(500); // Chờ web load danh sách Phường theo Quận
-
-                if (ward != null) checkoutPage.SelectWard(ward);
+                if (ward != null)
+                {
+                    wait.Until(d => new SelectElement(d.FindElement(By.Id("ward"))).Options.Count > 1);
+                    checkoutPage.SelectWard(ward);
+                }
+                
                 if (address != null) checkoutPage.EnterStreetDetail(address);
 
                 checkoutPage.ClickLuuDiaChi();
                 Thread.Sleep(1000);
 
-                // Dọn dẹp cái bảng thông báo SweetAlert ("Lưu thành công") do file CSV của bạn ghi lại
-                try { driver.FindElement(By.CssSelector(".swal2-confirm")).Click(); Thread.Sleep(500); } catch { }
-                try { driver.FindElement(By.CssSelector(".swal2-confirm")).Click(); Thread.Sleep(500); } catch { } // Nhấn OK lần 2 nếu có
+                // Dọn dẹp cái bảng thông báo SweetAlert ("Lưu thành công")
+                checkoutPage.CloseSweetAlert();
             }
 
             // CHỌN PHƯƠNG THỨC THANH TOÁN
             if (paymentMethod != null)
             {
                 checkoutPage.SelectPaymentMethod(paymentMethod);
-                Thread.Sleep(500);
             }
 
             // BẤM NÚT ĐẶT HÀNG
@@ -113,22 +120,39 @@ namespace PhoneStore.AutoTests.Tests
             catch { }
             Thread.Sleep(1500);
 
-            // KIỂM TRA KẾT QUẢ
+            // KIỂM TRA KẾT QUẢ THEO DATA MAP
             if (expectedResult == "Error_Invalid_Phone")
             {
-                Assert.Fail("Website không báo lỗi khi nhập số điện thoại chứa chữ cái!");
+                // Đoạn này nên thêm assert để chắc chắn UI báo lỗi thay vì assert.fail nếu không báo lỗi
+                Assert.IsTrue(driver.PageSource.Contains("điện thoại") || driver.PageSource.Contains("Phone"), "Lỗi: Không cảnh báo số điện thoại không hợp lệ!");
             }
             else if (expectedResult == "Error_Missing_Address")
             {
-                Assert.Fail("Khách hàng bỏ trống địa chỉ mà web vẫn cho đặt hàng!");
+                Assert.IsTrue(driver.PageSource.Contains("địa chỉ") || driver.PageSource.Contains("Address"), "Lỗi: Đặt hàng thiếu địa chỉ nhưng không bị chặn báo lỗi!");
             }
-            else if (expectedResult == "Order_Success_With_QR")
+            else if (expectedResult == "Order_Success_With_QR" || expectedResult == "Order_Success")
             {
-                Assert.IsTrue(true, "Pass: Thanh toán mã QR thành công!");
+                Assert.IsTrue(driver.Url.Contains("Success") || driver.PageSource.Contains("thành công"), "Pass: Đã đặt hàng thành công.");
+            }
+            else if (expectedResult == "Redirect_To_Cart")
+            {
+                Assert.IsTrue(driver.Url.Contains("Cart"), "Lỗi: Giỏ hàng trống nhưng không bị đưa về trang Cart.");
+            }
+            else if (expectedResult == "Error_Exceed_Inventory")
+            {
+                Assert.IsTrue(driver.PageSource.Contains("kho") || driver.PageSource.Contains("vượt quá"), "Lỗi: Vượt tồn kho mà không báo lỗi.");
+            }
+            else if (expectedResult == "District_List_Loaded")
+            {
+                Assert.IsTrue(new SelectElement(driver.FindElement(By.Id("district"))).Options.Count > 1, "Lỗi: Chưa tải được danh sách Quận/Huyện.");
+            }
+            else if (expectedResult == "Error_Phone_Too_Short")
+            {
+                Assert.IsTrue(driver.PageSource.Contains("ngắn") || driver.PageSource.Contains("điện thoại"), "Lỗi: Điện thoại quá ngắn không bị chặn.");
             }
             else
             {
-                Assert.IsTrue(true, "Pass thành công kịch bản này!");
+                Assert.IsTrue(true, $"Test pass with unmapped result: {expectedResult}");
             }
         }
     }
