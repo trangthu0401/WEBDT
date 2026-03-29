@@ -17,8 +17,8 @@ namespace PhoneStore.AutoTests.Utilities
 
             // 2. Lấy đường dẫn gốc của Project (Thoát khỏi cái lồng bin/Debug/net8.0)
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            // Lùi 3 cấp để về đúng thư mục PhoneStore.AutoTests
-            string projectDir = Directory.GetParent(baseDir)?.Parent?.Parent?.FullName ?? baseDir;
+            // Lùi 3 cấp để về đúng thư mục PhoneStore.AutoTests (Sử dụng Path.GetFullPath để tương thích chuẩn với dấu \\ ở cuối)
+            string projectDir = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\"));
 
             // 3. Kiểm tra và tạo thư mục Reports ngay ngoài Project
             string reportFolder = Path.Combine(projectDir, "Reports");

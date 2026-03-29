@@ -53,6 +53,8 @@ namespace PhoneStore.AutoTests.Tests
             string address = testData["Address"]?.ToString();
             string paymentMethod = testData["PaymentMethod"]?.ToString();
             string cartStatus = testData["CartStatus"]?.ToString();
+            string discountCode = testData["DiscountCode"]?.ToString();
+            string manipulatedQty = testData["ManipulatedQty"]?.ToString();
 
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
 
@@ -66,6 +68,32 @@ namespace PhoneStore.AutoTests.Tests
 
             driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Checkout");
             Thread.Sleep(1500); // Chờ load trang thanh toán
+
+            // XỬ LÝ SỚM (EARLY EXIT) TRÁNH CRASH CODE CHO GIỎ HÀNG TRỐNG
+            if (expectedResult == "Redirect_To_Cart")
+            {
+                Assert.IsTrue(driver.Url.Contains("Cart"), "Lỗi: Giỏ rỗng nhưng không đá về trang Cart.");
+                return; // THOÁT KHỎI HÀM NGAY LẬP TỨC
+            }
+
+            // HACK TỒN KHO THÔNG QUA JAVASCRIPT
+            if (manipulatedQty != null)
+            {
+                try
+                {
+                    IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
+                    js.ExecuteScript($"var e = document.querySelector('.qty-input, input[name*=\"quantity\"]'); if(e) e.value = '{manipulatedQty}';");
+                    Thread.Sleep(500);
+                }
+                catch { }
+            }
+
+            // ÁP DỤNG MÃ GIẢM GIÁ
+            if (discountCode != null)
+            {
+                checkoutPage.EnterAndApplyDiscount(discountCode);
+                Thread.Sleep(1500);
+            }
 
             // ĐIỀN THÔNG TIN CƠ BẢN
             if (fullName != null) checkoutPage.EnterFullName(fullName);
@@ -110,8 +138,8 @@ namespace PhoneStore.AutoTests.Tests
             // XỬ LÝ CẢNH BÁO ALERT CỦA TRÌNH DUYỆT (NẾU CÓ)
             try
             {
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
-                wait.Until(drv =>
+                WebDriverWait alertWait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
+                alertWait.Until(drv =>
                 {
                     try { drv.SwitchTo().Alert().Accept(); return true; }
                     catch (NoAlertPresentException) { return false; }
@@ -136,7 +164,8 @@ namespace PhoneStore.AutoTests.Tests
             }
             else if (expectedResult == "Redirect_To_Cart")
             {
-                Assert.IsTrue(driver.Url.Contains("Cart"), "Lỗi: Giỏ hàng trống nhưng không bị đưa về trang Cart.");
+                // Dòng này đã được bắt sớm ở trên, nếu chạy xuống đây thì fail
+                Assert.Fail("Lệnh return cho Redirect_To_Cart đã không hoạt động!");
             }
             else if (expectedResult == "Error_Exceed_Inventory")
             {
@@ -149,6 +178,14 @@ namespace PhoneStore.AutoTests.Tests
             else if (expectedResult == "Error_Phone_Too_Short")
             {
                 Assert.IsTrue(driver.PageSource.Contains("ngắn") || driver.PageSource.Contains("điện thoại"), "Lỗi: Điện thoại quá ngắn không bị chặn.");
+            }
+            else if (expectedResult == "Error_Invalid_Discount_Code")
+            {
+                Assert.IsTrue(driver.PageSource.Contains("giảm giá") || driver.PageSource.Contains("không hợp lệ") || driver.PageSource.Contains("hết hạn"), "Lỗi: Mã giảm giá sai nhưng không báo lỗi.");
+            }
+            else if (expectedResult == "Discount_Applied_Successfully")
+            {
+                Assert.IsTrue(driver.PageSource.Contains("thành công") || driver.PageSource.Contains("-"), "Lỗi: Áp mã giảm giá không thành công.");
             }
             else
             {

@@ -53,7 +53,7 @@ namespace PhoneStore.AutoTests.Pages
 
         public void ClickHuyDon() => driver.FindElement(btnHuyDonHang).Click();
 
-        public void ChonLyDoVaXacNhan(string lyDo)
+        public void ChonLyDoVaXacNhan(string lyDo, string detailReason = null)
         {
             try
             {
@@ -62,6 +62,18 @@ namespace PhoneStore.AutoTests.Pages
                     driver.FindElement(By.XPath($"//label[contains(text(),'{lyDo}')]")).Click();
                     System.Threading.Thread.Sleep(500);
                 }
+
+                if (!string.IsNullOrEmpty(detailReason))
+                {
+                    try
+                    {
+                        var textarea = driver.FindElement(By.CssSelector("textarea"));
+                        textarea.Clear();
+                        textarea.SendKeys(detailReason);
+                    }
+                    catch { }
+                }
+
                 driver.FindElement(btnXacNhanHuy).Click();
             }
             catch { }

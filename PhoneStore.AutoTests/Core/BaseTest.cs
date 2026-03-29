@@ -72,6 +72,7 @@ namespace PhoneStore.AutoTests.Core
                 if (driver != null)
                 {
                     driver.Quit();
+                    driver.Dispose();
                 }
             }
         }

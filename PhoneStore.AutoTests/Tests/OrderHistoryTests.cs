@@ -1,5 +1,6 @@
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using OpenQA.Selenium;
 using PhoneStore.AutoTests.Core;
 using PhoneStore.AutoTests.Pages;
 using PhoneStore.AutoTests.Utilities;

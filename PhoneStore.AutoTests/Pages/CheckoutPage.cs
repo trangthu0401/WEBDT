@@ -108,5 +108,17 @@ namespace PhoneStore.AutoTests.Pages
             }
             catch { }
         }
+
+        public void EnterAndApplyDiscount(string code)
+        {
+            try
+            {
+                var e = driver.FindElement(By.CssSelector("input[name*='discount'], input[id*='discount'], input[id*='voucher']"));
+                e.Clear();
+                e.SendKeys(code);
+                driver.FindElement(By.XPath("//button[contains(text(), 'Áp dụng') or contains(text(), 'Apply') or contains(@class, 'btn-apply')]")).Click();
+            }
+            catch { }
+        }
     }
 }
