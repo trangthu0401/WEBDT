@@ -1,0 +1,22 @@
+﻿[
+  {
+    "TestCaseID": "FILTER_APPLE",
+    "BrandName": "Apple"
+  },
+  {
+    "TestCaseID": "FILTER_SAMSUNG",
+    "BrandName": "Samsung"
+  },
+  {
+    "TestCaseID": "FILTER_GOOGLE",
+    "BrandName": "Google"
+  },
+  {
+    "TestCaseID": "FILTER_XIAOMI",
+    "BrandName": "Xiaomi"
+  },
+  {
+    "TestCaseID": "FILTER_OPPO",
+    "BrandName": "OPPO"
+  }
+]

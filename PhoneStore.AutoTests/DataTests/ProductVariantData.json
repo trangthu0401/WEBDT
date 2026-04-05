@@ -1,0 +1,32 @@
+﻿{
+  "TC_PRODUCT_15": {
+    "ProductName": "iPhone 16e",
+    "Color": "Trắng",
+    "Storage": "128",
+    "RAM": "8",
+    "Price": "15000000",
+    "PromoPrice": "",
+    "Stock": "50",
+    "ImagePath": "C:\\ip16e_trang.webp"
+  },
+  "TC_PRODUCT_15_1": {
+    "ProductName": "iPhone 13 Pro Max",
+    "Color": "Xanh Sierra (Sierra Blue)",
+    "Storage": "256",
+    "RAM": "6",
+    "Price": "18500000",
+    "PromoPrice": "17900000",
+    "Stock": "30",
+    "ImagePath": "C:\\ip13pr_xanh.jpg"
+  },
+  "TC_PRODUCT_15_2": {
+    "ProductName": "iPhone 15",
+    "Color": "Vàng",
+    "Storage": "256",
+    "RAM": "6",
+    "Price": "20990000 ",
+    "PromoPrice": "17900000",
+    "Stock": "30",
+    "ImagePath": "C:\\ip15_vang.jpg"
+  }
+}

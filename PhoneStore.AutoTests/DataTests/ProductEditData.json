@@ -1,0 +1,26 @@
+﻿
+//{
+//  "TC_PRODUCT_07": {
+//    "ProductName": "iPhone 13 Pro Max",
+//    "Brand": "Apple",
+//    "Description": "Mẫu iPhone mới nhất bản kinh tế",
+//    "ReleaseDate": "02042021",
+//    "Chipset": "A18 Chip",
+//    "OS": "iOS 15",
+//    "Battery": "3500",
+//    "ImagePath": "C:\\iphone-13-pro-max-den.png"
+//  }
+//}
+
+{
+  "TC_PRODUCT_07": {
+    "ProductName": "iPhone 13 Pro Max",
+    "Brand": "Apple",
+    "Description": "Mẫu iPhone mới nhất bản kinh tế",
+    "ReleaseDate": "02042021",
+    "Chipset": "A18 Chip",
+    "OS": "iOS 15",
+    "Battery": "3500",
+    "ImagePath": "C:\\ip13pr.jpg"
+  }
+}
