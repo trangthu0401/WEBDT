@@ -2,6 +2,7 @@
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System;
+using System.IO; // Quan trọng để xử lý đường dẫn ảnh
 
 namespace PhoneStore.AutoTests.Pages
 {
@@ -13,16 +14,13 @@ namespace PhoneStore.AutoTests.Pages
         public ProductVariantPage(IWebDriver driver)
         {
             this.driver = driver;
-            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
         }
 
         // --- LOCATORS ---
-        // Nút xem biến thể ở dòng đầu tiên của danh sách sản phẩm
         private By btnViewVariant = By.XPath("(//a[contains(@href, 'ProductVariant')])[1]");
-        // Nút mở Modal thêm biến thể
         private By btnOpenAddModal = By.XPath("//button[contains(., 'Thêm Biến Thể')]");
 
-        // Các ô nhập liệu trong Modal (Dùng XPath cho chuẩn)
         private By txtColor = By.XPath("//label[contains(.,'Màu sắc')]/following-sibling::input");
         private By txtStorage = By.XPath("//label[contains(.,'Dung lượng')]/following-sibling::input");
         private By txtRAM = By.XPath("//label[contains(.,'RAM')]/following-sibling::input");
@@ -38,18 +36,16 @@ namespace PhoneStore.AutoTests.Pages
         public void OpenAddModal()
         {
             wait.Until(ExpectedConditions.ElementToBeClickable(btnOpenAddModal)).Click();
-            // Đợi Modal hiện lên bằng cách đợi ô Màu sắc hiển thị
             wait.Until(ExpectedConditions.ElementIsVisible(txtColor));
         }
 
         public void InputVariantDetails(dynamic data)
         {
-            // Nhập các ô text cơ bản
+            // Nhập các ô text
             driver.FindElement(txtColor).SendKeys((string)data.Color);
             driver.FindElement(txtStorage).SendKeys((string)data.Storage);
             driver.FindElement(txtRAM).SendKeys((string)data.RAM);
 
-            // Nhập Giá và Tồn kho dùng hàm Smart (Xóa số 0 mặc định)
             FillInputSmart(txtPrice, (string)data.Price);
 
             if (!string.IsNullOrEmpty((string)data.PromoPrice))
@@ -57,12 +53,15 @@ namespace PhoneStore.AutoTests.Pages
 
             FillInputSmart(txtStock, (string)data.Stock);
 
-            // Up ảnh biến thể
+            // XỬ LÝ ẢNH BIẾN THỂ TỪ PROJECT
             try
             {
-                driver.FindElement(fileImg).SendKeys((string)data.ImagePath);
+                string fileName = (string)data.ImageFileName;
+                string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", fileName);
+                driver.FindElement(fileImg).SendKeys(fullPath);
+                Console.WriteLine("Robot up ảnh biến thể: " + fullPath);
             }
-            catch (Exception ex) { Console.WriteLine("Lỗi ảnh biến thể: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("Lỗi up ảnh biến thể: " + ex.Message); }
         }
 
         private void FillInputSmart(By locator, string value)
@@ -78,7 +77,7 @@ namespace PhoneStore.AutoTests.Pages
 
         public void Save()
         {
-            var btn = driver.FindElement(btnSave);
+            var btn = wait.Until(ExpectedConditions.ElementToBeClickable(btnSave));
             ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn);
             System.Threading.Thread.Sleep(1000);
             btn.Click();

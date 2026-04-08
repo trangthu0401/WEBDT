@@ -1,26 +1,23 @@
-﻿
-//{
-//  "TC_PRODUCT_07": {
-//    "ProductName": "iPhone 13 Pro Max",
-//    "Brand": "Apple",
-//    "Description": "Mẫu iPhone mới nhất bản kinh tế",
-//    "ReleaseDate": "02042021",
-//    "Chipset": "A18 Chip",
-//    "OS": "iOS 15",
-//    "Battery": "3500",
-//    "ImagePath": "C:\\iphone-13-pro-max-den.png"
-//  }
-//}
-
-{
+﻿{
+  //"TC_PRODUCT_07": {
+  //  "ProductName": "Samsung Galaxy Z Flip7",
+  //  "Brand": "Samsung",
+  //  "Description": "Siêu phẩm màn hình gập màu đen lôi cuốn",
+  //  "ReleaseDate": "04042026",
+  //  "Chipset": "Snapdragon 8 Gen 5",
+  //  "OS": "Android 16",
+  //  "Battery": "4500",
+  //  "ImageFileName": "samsungflip7_den.jpg"
+  //},
   "TC_PRODUCT_07": {
-    "ProductName": "iPhone 13 Pro Max",
-    "Brand": "Apple",
-    "Description": "Mẫu iPhone mới nhất bản kinh tế",
-    "ReleaseDate": "02042021",
-    "Chipset": "A18 Chip",
-    "OS": "iOS 15",
-    "Battery": "3500",
-    "ImagePath": "C:\\ip13pr.jpg"
+    "ProductName": "Samsung Galaxy Z Flip7",
+    "Brand": "Samsung",
+    "Description": "Siêu phẩm màn hình gập màu đen lôi cuốn",
+    "ReleaseDate": "04042026",
+    "Chipset": "Snapdragon 8 Gen 5",
+    "OS": "Android 16",
+    "Battery": "4500",
+    "ImageFileName": "samsungflip7.jpg"
   }
+
 }

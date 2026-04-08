@@ -2,6 +2,7 @@
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System;
+using System.IO; // Thêm thư viện này để xử lý đường dẫn
 
 namespace PhoneStore.AutoTests.Pages
 {
@@ -21,7 +22,7 @@ namespace PhoneStore.AutoTests.Pages
         private By txtName = By.Id("Product_Name");
         private By ddBrand = By.Id("Product_BrandId");
         private By txtDesc = By.Id("Product_Description");
-        private By dtpDate = By.Id("Product_ReleaseDate"); // Ô ngày tháng
+        private By dtpDate = By.Id("Product_ReleaseDate");
 
         private By txtChipset = By.XPath("//label[contains(.,'Chipset')]/following-sibling::input");
         private By txtOS = By.XPath("//label[contains(.,'Hệ điều hành')]/following-sibling::input");
@@ -40,12 +41,11 @@ namespace PhoneStore.AutoTests.Pages
             new SelectElement(driver.FindElement(ddBrand)).SelectByText((string)data.Brand);
             FillInputSmart(txtDesc, (string)data.Description);
 
-            // 2. Thông số kỹ thuật - Fix lỗi nhập ngày
+            // 2. Thông số kỹ thuật
             try
             {
                 var dateElem = driver.FindElement(dtpDate);
                 dateElem.Clear();
-                // Gửi từng phím một để tránh bị nhảy số năm lung tung
                 dateElem.SendKeys((string)data.ReleaseDate);
             }
             catch { }
@@ -54,16 +54,22 @@ namespace PhoneStore.AutoTests.Pages
             FillInputSmart(txtOS, (string)data.OS);
             FillInputSmart(txtBattery, (string)data.Battery);
 
-            // 3. XỬ LÝ ẢNH
-            string path = (string)data.ImagePath;
-            if (!string.IsNullOrEmpty(path))
+            // 3. XỬ LÝ ẢNH TỪ PROJECT
+            try
             {
-                try
+                string fileName = (string)data.ImageFileName;
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    driver.FindElement(fileImg).SendKeys(path);
-                    Console.WriteLine("Robot: Đã tải ảnh mới.");
+                    // Tự động tìm đường dẫn trong thư mục bin của Project
+                    string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", fileName);
+
+                    driver.FindElement(fileImg).SendKeys(fullPath);
+                    Console.WriteLine("Robot: Đã tải ảnh từ project: " + fullPath);
                 }
-                catch { }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi up ảnh: " + ex.Message);
             }
         }
 

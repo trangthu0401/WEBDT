@@ -18,7 +18,6 @@ namespace PhoneStore.AutoTests.Tests
         [SetUp]
         public void PreTest()
         {
-            // Đã xóa bỏ LicenseContext ở đây
             loginPage = new LoginPage(driver);
             editPage = new ProductEditPage(driver);
             wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
@@ -33,26 +32,24 @@ namespace PhoneStore.AutoTests.Tests
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("ProductEditData.json", "TC_PRODUCT_07");
 
-            // 1. Vào trang sửa
+            // 1. Vào trang sửa sản phẩm đầu tiên
             editPage.GoToEditFirstProduct();
 
-            // 2. Điền form
+            // 2. Điền form chỉnh sửa (Lấy ảnh từ project)
             editPage.FillEditForm(data);
 
             // 3. Bấm Lưu
             editPage.Save();
 
-            // 4. Nghỉ 3 giây cho server xử lý
+            // 4. Đợi server xử lý
             System.Threading.Thread.Sleep(3000);
 
-            // 5. Đợi quay về trang danh sách (Sửa thành đợi chữ "Product")
-            // Vì web của Vy hiện tại là localhost:7033/Product
+            // 5. Kiểm tra kết quả
             bool isNavigated = wait.Until(d => d.Url.ToLower().Contains("product"));
+            Assert.That(isNavigated, Is.True, "Lỗi: Không quay về trang danh sách!");
+            Assert.That(driver.PageSource.Contains((string)data.ProductName), Is.True, "Lỗi: Tên sản phẩm mới không hiển thị!");
 
-            Assert.That(isNavigated, Is.True, "Lỗi: Robot không thấy quay về trang danh sách sản phẩm!");
-
-            // 6. Kiểm tra tên mới đã xuất hiện chưa
-            Assert.That(driver.PageSource.Contains((string)data.ProductName), Is.True, "Lỗi: Không tìm thấy tên sản phẩm mới trên web!");
+            Console.WriteLine("PASS: Chỉnh sửa sản phẩm thành công!");
         }
     }
 }

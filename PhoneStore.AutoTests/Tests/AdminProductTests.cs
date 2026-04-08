@@ -21,28 +21,32 @@ namespace PhoneStore.AutoTests.Tests
         {
             loginPage = new LoginPage(driver);
             adminPage = new AdminProductPage(driver);
-            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30)); // Tăng lên 30s cho thoải mái
+            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
 
-            // 1. Đăng nhập Admin trước mỗi case
+            // 1. Đăng nhập Admin trước khi thực hiện mỗi Test Case
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Account/Login");
             loginPage.Login("admin@shop.com", "admin123", isAdmin: true);
         }
 
-        // Hàm phụ trợ để tránh lặp code, xử lý đợi URL thông minh hơn
+        // --- HÀM PHỤ TRỢ KIỂM TRA SAU KHI THÊM ---
         private void VerifyAddProductSuccess(string productName)
         {
-            // Nghỉ 3 giây để Server kịp lưu Data và Ảnh
-            Thread.Sleep(3000);
-
-            // Đợi URL chứa chữ "Product" (Vì web Vy quay về /Product chứ không phải /Index)
+            Thread.Sleep(3000); // Chờ server xử lý lưu ảnh và data
             bool isNavigated = wait.Until(d => d.Url.ToLower().Contains("product"));
 
-            Assert.That(isNavigated, Is.True, $"Lỗi: Robot không thấy quay về trang danh sách sau khi thêm {productName}!");
-            Assert.That(driver.PageSource.Contains(productName), Is.True, $"Lỗi: Không tìm thấy tên {productName} trên trang danh sách!");
+            Assert.Multiple(() =>
+            {
+                Assert.That(isNavigated, Is.True, $"Lỗi: Robot không quay về trang danh sách sau khi thêm {productName}!");
+                Assert.That(driver.PageSource.Contains(productName), Is.True, $"Lỗi: Không tìm thấy tên {productName} trên trang danh sách!");
+            });
+
+            Console.WriteLine($"SUCCESS: Đã thêm thành công sản phẩm: {productName}");
         }
 
+        // --- CÁC TEST CASE THÊM MỚI SẢN PHẨM ---
+
         [Test]
-        public void TC_PRODUCT_ADMIN_01_AddFullProduct()
+        public void TC_PRODUCT_ADMIN_01_AddSamsungA56()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01");
@@ -77,11 +81,11 @@ namespace PhoneStore.AutoTests.Tests
             adminPage.InputProductDetails(data);
             adminPage.Save();
 
-            VerifyAddProductSuccess("Samsung Galaxy A06");
+            VerifyAddProductSuccess((string)data.ProductName);
         }
 
         [Test]
-        public void TC_PRODUCT_ADMIN_01_3_Addiphone16e()
+        public void TC_PRODUCT_ADMIN_01_3_AddIphone16e()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_3");
@@ -94,7 +98,7 @@ namespace PhoneStore.AutoTests.Tests
         }
 
         [Test]
-        public void TC_PRODUCT_ADMIN_01_4_Addiphone13promax()
+        public void TC_PRODUCT_ADMIN_01_4_AddIphone13ProMax()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_4");
@@ -107,7 +111,7 @@ namespace PhoneStore.AutoTests.Tests
         }
 
         [Test]
-        public void TC_PRODUCT_ADMIN_01_5_Addiphone16()
+        public void TC_PRODUCT_ADMIN_01_5_AddIphone16()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_5");
@@ -120,7 +124,7 @@ namespace PhoneStore.AutoTests.Tests
         }
 
         [Test]
-        public void TC_PRODUCT_ADMIN_01_6_Addiphone16plus()
+        public void TC_PRODUCT_ADMIN_01_6_AddIphone16Plus()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_6");
@@ -133,7 +137,7 @@ namespace PhoneStore.AutoTests.Tests
         }
 
         [Test]
-        public void TC_PRODUCT_ADMIN_01_7_Addiphone16pro()
+        public void TC_PRODUCT_ADMIN_01_7_AddIphone16Pro()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_7");
@@ -146,10 +150,23 @@ namespace PhoneStore.AutoTests.Tests
         }
 
         [Test]
-        public void TC_PRODUCT_ADMIN_01_8_Addiphone15()
+        public void TC_PRODUCT_ADMIN_01_8_AddIphone15()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_8");
+
+            adminPage.GoToCreatePage();
+            adminPage.InputProductDetails(data);
+            adminPage.Save();
+
+            VerifyAddProductSuccess((string)data.ProductName);
+        }
+
+        [Test]
+        public void TC_PRODUCT_ADMIN_09_AddSamsungZFlip7()
+        {
+            driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
+            var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_09");
 
             adminPage.GoToCreatePage();
             adminPage.InputProductDetails(data);

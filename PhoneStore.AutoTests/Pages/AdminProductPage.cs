@@ -2,6 +2,7 @@
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System;
+using System.IO; // Thư viện để xử lý đường dẫn file
 
 namespace PhoneStore.AutoTests.Pages
 {
@@ -13,26 +14,27 @@ namespace PhoneStore.AutoTests.Pages
         public AdminProductPage(IWebDriver driver)
         {
             this.driver = driver;
-            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
         }
 
-        // Locators dùng XPath cho "bất tử"
+        // Locators
         private By txtName = By.Id("Product_Name");
         private By ddBrand = By.Id("Product_BrandId");
         private By txtDesc = By.Id("Product_Description");
         private By fileImg = By.CssSelector("input[type='file']");
+        private By btnSubmit = By.XPath("//button[contains(.,'Lưu')]");
 
+        // Thông số kỹ thuật
         private By txtChipset = By.XPath("//label[contains(.,'Chipset')]/following-sibling::input");
         private By txtOS = By.XPath("//label[contains(.,'Hệ điều hành')]/following-sibling::input");
         private By txtBattery = By.XPath("//label[contains(.,'Pin')]/following-sibling::input");
 
+        // Biến thể
         private By txtColor = By.XPath("//label[contains(.,'Màu sắc')]/following-sibling::input");
         private By txtStorage = By.XPath("//label[contains(.,'Bộ nhớ trong')]/following-sibling::input");
         private By txtRAM = By.XPath("//label[contains(.,'RAM')]/following-sibling::input");
         private By txtPrice = By.XPath("//label[contains(.,'Giá bán')]/following-sibling::input");
         private By txtStock = By.XPath("//label[contains(.,'Tồn kho')]/following-sibling::input");
-
-        private By btnSubmit = By.XPath("//button[contains(.,'Lưu')]");
 
         public void GoToCreatePage() => wait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("a[href*='Create']"))).Click();
 
@@ -40,17 +42,22 @@ namespace PhoneStore.AutoTests.Pages
         {
             IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
 
-            // 1. Nhập Tên, Hãng, Mô tả
+            // 1. Nhập thông tin cơ bản
             wait.Until(ExpectedConditions.ElementIsVisible(txtName)).SendKeys((string)data.ProductName);
             new SelectElement(driver.FindElement(ddBrand)).SelectByText((string)data.Brand);
             driver.FindElement(txtDesc).SendKeys((string)data.Description);
 
-            // 2. Up ảnh (Vy check kỹ đuôi file .jpg hay .webp nhé)
+            // 2. XỬ LÝ UP ẢNH TỪ PROJECT (Vy nhìn kỹ chỗ này nhé)
             try
             {
-                driver.FindElement(fileImg).SendKeys((string)data.ImagePath);
+                string fileName = (string)data.ImageFileName;
+                // Tự động lấy đường dẫn folder Images trong project
+                string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", fileName);
+
+                driver.FindElement(fileImg).SendKeys(fullPath);
+                Console.WriteLine("Robot up ảnh từ Project: " + fullPath);
             }
-            catch (Exception ex) { Console.WriteLine("Lỗi ảnh: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("Lỗi up ảnh: " + ex.Message); }
 
             // 3. Nhập Thông số kỹ thuật
             driver.FindElement(txtChipset).SendKeys((string)data.Chipset);
@@ -59,7 +66,7 @@ namespace PhoneStore.AutoTests.Pages
 
             js.ExecuteScript("window.scrollTo(0, document.body.scrollHeight);");
 
-            // 4. Nhập Biến thể (Dùng hàm Smart để trình duyệt không báo lỗi "Please fill out")
+            // 4. Nhập Biến thể
             FillInputSmart(txtColor, (string)data.Color);
             FillInputSmart(txtStorage, (string)data.Storage);
             FillInputSmart(txtRAM, (string)data.RAM);
@@ -74,9 +81,8 @@ namespace PhoneStore.AutoTests.Pages
             element.SendKeys(Keys.Control + "a");
             element.SendKeys(Keys.Backspace);
             element.SendKeys(value);
-            // Quan trọng: Nhấn Tab để web xác nhận dữ liệu đã nhập
             element.SendKeys(Keys.Tab);
-            System.Threading.Thread.Sleep(500); // Nghỉ một chút cho web nhận
+            System.Threading.Thread.Sleep(500);
         }
 
         public void Save()
