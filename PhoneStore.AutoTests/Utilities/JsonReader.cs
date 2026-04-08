@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -10,57 +9,48 @@ namespace PhoneStore.AutoTests.Utilities
 {
     public static class JsonReader
     {
+        private static string GetFilePath(string jsonFileName)
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string[] paths = {
+                Path.Combine(baseDir, "DataTests", jsonFileName),
+                Path.Combine(baseDir, "..", "..", "..", "DataTests", jsonFileName),
+                Path.Combine(baseDir, "..", "..", "..", "..", "DataTests", jsonFileName)
+            };
+
+            string filePath = paths.FirstOrDefault(File.Exists);
+            if (filePath == null)
+                throw new FileNotFoundException($"Hổng thấy file {jsonFileName}. Vy nhớ chuột phải file JSON chọn Properties -> Copy if newer nhé!");
+
+            return filePath;
+        }
+
+        // Hàm dành riêng cho Admin (Lấy 1 ID cụ thể)
+        public static dynamic GetTestRow(string jsonFileName, string testCaseID)
+        {
+            string jsonContent = File.ReadAllText(GetFilePath(jsonFileName));
+            JObject jsonObj = JObject.Parse(jsonContent);
+
+            var data = jsonObj[testCaseID];
+            if (data == null)
+                throw new Exception($"Lỗi: Không tìm thấy nhãn '{testCaseID}' trong file JSON!");
+
+            return data.ToObject<dynamic>();
+        }
+
+        // Hàm dành cho các test cũ (Fix lỗi CS0117)
         public static IEnumerable<TestCaseData> GetTestData(string jsonFileName)
         {
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
-            var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
-            var testDir = (TestContext.CurrentContext?.TestDirectory) ?? baseDir;
-
-            // Candidate folders to search (include both TestData and DataTests)
-            var candidates = new[]
+            string jsonContent = File.ReadAllText(GetFilePath(jsonFileName));
+            if (jsonContent.Trim().StartsWith("["))
             {
-                Path.Combine(baseDir, "TestData", jsonFileName),
-                Path.Combine(baseDir, "DataTests", jsonFileName),
-                Path.Combine(testDir, "TestData", jsonFileName),
-                Path.Combine(testDir, "DataTests", jsonFileName),
-                Path.Combine(assemblyDir, "TestData", jsonFileName),
-                Path.Combine(assemblyDir, "DataTests", jsonFileName)
-            }.Distinct().ToList();
-
-            // Also attempt to walk up from baseDir safely (avoid NullReference)
-            try
-            {
-                var dir = new DirectoryInfo(baseDir);
-                for (int i = 0; i < 4 && dir?.Parent != null; i++)
-                {
-                    dir = dir.Parent;
-                    if (dir == null) break;
-                    candidates.Add(Path.Combine(dir.FullName, "TestData", jsonFileName));
-                    candidates.Add(Path.Combine(dir.FullName, "DataTests", jsonFileName));
-                }
+                foreach (var item in JArray.Parse(jsonContent))
+                    yield return new TestCaseData(item.ToObject<dynamic>());
             }
-            catch
+            else
             {
-                // ignore any unexpected path traversal errors; candidates already populated
-            }
-
-            string filePath = candidates.FirstOrDefault(File.Exists);
-
-            if (filePath == null)
-            {
-                throw new FileNotFoundException(
-                    "Không tìm thấy file dữ liệu. Đã thử các đường dẫn:\n" + string.Join("\n", candidates));
-            }
-
-            string jsonContent = File.ReadAllText(filePath);
-            JArray jsonArray = JArray.Parse(jsonContent);
-
-            foreach (JToken token in jsonArray)
-            {
-                JObject item = (JObject)token;
-                string testCaseID = item["TestCaseID"]?.ToString() ?? "Unknown_TestCase";
-
-                yield return new TestCaseData(item).SetName(testCaseID);
+                foreach (var prop in JObject.Parse(jsonContent).Properties())
+                    yield return new TestCaseData(prop.Value.ToObject<dynamic>()).SetName(prop.Name);
             }
         }
     }

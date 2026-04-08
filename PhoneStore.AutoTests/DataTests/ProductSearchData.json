@@ -1,0 +1,22 @@
+﻿[
+  {
+    "TestCaseID": "SEARCH_35",
+    "SearchID": "35",
+    "ExpectedName": "Sản phẩm 35"
+  },
+  {
+    "TestCaseID": "SEARCH_34",
+    "SearchID": "34",
+    "ExpectedName": "Sản phẩm 34"
+  },
+  {
+    "TestCaseID": "SEARCH_30",
+    "SearchID": "30",
+    "ExpectedName": "Samsung A56"
+  },
+  {
+    "TestCaseID": "SEARCH_27",
+    "SearchID": "27",
+    "ExpectedName": "Samsung Galaxy A06"
+  }
+]

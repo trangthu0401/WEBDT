@@ -1,0 +1,35 @@
+﻿[
+  {
+    "TestName": "Register_Valid",
+    "FullName": "Nguyen Van A",
+    "Phone": "0912345678",
+    "Gender": "Nam",
+    "Dob": "01/01/2000",
+    "Email": "user1@gmail.com",
+    "Password": "123456",
+    "ConfirmPassword": "123456",
+    "Expected": "success"
+  },
+  {
+    "TestName": "Register_Missing_Name",
+    "FullName": "",
+    "Phone": "0912345678",
+    "Gender": "Nam",
+    "Dob": "01/01/2000",
+    "Email": "user2@gmail.com",
+    "Password": "123456",
+    "ConfirmPassword": "123456",
+    "Expected": "fail"
+  },
+  {
+    "TestName": "Register_Password_NotMatch",
+    "FullName": "Nguyen Van B",
+    "Phone": "0912345679",
+    "Gender": "Nam",
+    "Dob": "01/01/2000",
+    "Email": "user3@gmail.com",
+    "Password": "123456",
+    "ConfirmPassword": "654321",
+    "Expected": "fail"
+  }
+]

@@ -1,0 +1,23 @@
+﻿{
+  //"TC_PRODUCT_07": {
+  //  "ProductName": "Samsung Galaxy Z Flip7",
+  //  "Brand": "Samsung",
+  //  "Description": "Siêu phẩm màn hình gập màu đen lôi cuốn",
+  //  "ReleaseDate": "04042026",
+  //  "Chipset": "Snapdragon 8 Gen 5",
+  //  "OS": "Android 16",
+  //  "Battery": "4500",
+  //  "ImageFileName": "samsungflip7_den.jpg"
+  //},
+  "TC_PRODUCT_07": {
+    "ProductName": "Samsung Galaxy Z Flip7",
+    "Brand": "Samsung",
+    "Description": "Siêu phẩm màn hình gập màu đen lôi cuốn",
+    "ReleaseDate": "04042026",
+    "Chipset": "Snapdragon 8 Gen 5",
+    "OS": "Android 16",
+    "Battery": "4500",
+    "ImageFileName": "samsungflip7.jpg"
+  }
+
+}

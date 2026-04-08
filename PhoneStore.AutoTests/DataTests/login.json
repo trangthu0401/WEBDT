@@ -1,0 +1,26 @@
+﻿[
+  {
+    "TestName": "Login_Valid",
+    "Email": "admin@shop.com",
+    "Password": "admin123",
+    "Expected": "success"
+  },
+  {
+    "TestName": "Login_Wrong_Password",
+    "Email": "admin@shop.com",
+    "Password": "123456",
+    "Expected": "fail"
+  },
+  {
+    "TestName": "Login_Empty_Email",
+    "Email": "",
+    "Password": "123456",
+    "Expected": "fail"
+  },
+  {
+    "TestName": "Login_Empty_Password",
+    "Email": "admin@shop.com",
+    "Password": "",
+    "Expected": "fail"
+  }
+]
