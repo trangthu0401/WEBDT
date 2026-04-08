@@ -1,47 +1,37 @@
 ﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
+using System;
 
 namespace PhoneStore.AutoTests.Pages
 {
     public class LoginPage
     {
         private IWebDriver driver;
+        private WebDriverWait wait;
 
         public LoginPage(IWebDriver driver)
         {
             this.driver = driver;
+            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
         }
 
-        // --- 1. Locators ---
-        private By txtEmailOrPhone = By.Id("EmailOrPhone");
+        private By txtEmail = By.Id("EmailOrPhone"); // nhớ đúng id nha
         private By txtPassword = By.Id("Password");
-        private By btnSubmitLogin = By.XPath("//button[contains(text(),'Đăng nhập')]");
+        private By btnLogin = By.XPath("//button[contains(text(),'Đăng nhập')]");
 
-        // --- 2. Actions ---
-        public void EnterEmailOrPhone(string emailOrPhone)
+        public void Login(string email, string password)
         {
-            var element = driver.FindElement(txtEmailOrPhone);
-            element.Clear();
-            element.SendKeys(emailOrPhone);
-        }
+            // 🔥 CHỜ ELEMENT HIỆN RA RỒI NHẬP NGAY
+            var emailBox = wait.Until(ExpectedConditions.ElementIsVisible(txtEmail));
+            emailBox.Clear();
+            emailBox.SendKeys(email);
 
-        public void EnterPassword(string password)
-        {
-            var element = driver.FindElement(txtPassword);
-            element.Clear();
-            element.SendKeys(password);
-        }
+            var passBox = wait.Until(ExpectedConditions.ElementIsVisible(txtPassword));
+            passBox.Clear();
+            passBox.SendKeys(password);
 
-        public void ClickSubmitLogin()
-        {
-            driver.FindElement(btnSubmitLogin).Click();
-        }
-
-        // Hàm gộp thao tác đăng nhập cho Test Case ngắn gọn hơn
-        public void Login(string username, string password)
-        {
-            EnterEmailOrPhone(username);
-            EnterPassword(password);
-            ClickSubmitLogin();
+            wait.Until(ExpectedConditions.ElementToBeClickable(btnLogin)).Click();
         }
     }
 }

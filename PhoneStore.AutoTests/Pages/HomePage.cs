@@ -15,6 +15,7 @@ namespace PhoneStore.AutoTests.Pages
         private By btnTaiKhoan = By.XPath("//span[contains(text(),'Tài khoản')]");
         private By linkDangNhap = By.XPath("//a[contains(text(),'Đăng nhập')]");
         private By iconGioHang = By.XPath("//span[contains(text(),'Giỏ hàng')]");
+        private By linkDangKy = By.XPath("//a[contains(text(),'Đăng ký')]");
 
         // Lấy sản phẩm đầu tiên trong mục Bán chạy
         private By firstProduct = By.CssSelector("section.top-selling-section img");
@@ -28,6 +29,11 @@ namespace PhoneStore.AutoTests.Pages
         public void ClickDangNhap()
         {
             driver.FindElement(linkDangNhap).Click();
+        }
+
+        public void ClickDangKy()
+        {
+            driver.FindElement(linkDangKy).Click();
         }
 
         public void ClickGioHang()
