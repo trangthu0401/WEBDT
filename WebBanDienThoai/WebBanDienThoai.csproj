@@ -26,6 +26,10 @@
 		</PackageReference>
 
 		<PackageReference Include="Microsoft.VisualStudio.Services.Client" Version="19.225.1" />
+
+		<PackageReference Include="NUnit" Version="3.14.0" />
+
+		<PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="146.0.7680.16500" />
 		<PackageReference Include="Stripe.net" Version="49.1.0" />
 	</ItemGroup>
 

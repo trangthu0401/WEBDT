@@ -1,0 +1,8 @@
+﻿{
+  "TC_PRODUCT_08": {
+    "ProductName": "iPhone 13 Pro Max",
+    "TargetColor": "Xanh Rêu", //"Xanh Sierra (Sierra Blue)",
+    "ProductDetailUrl": "/Home/ProductDetail/35",
+    "ExpectedStatus": "Hidden"
+  }
+}

@@ -4,18 +4,19 @@ using PhoneStore.AutoTests.Pages;
 using PhoneStore.AutoTests.Utilities;
 using OpenQA.Selenium;
 using System.Threading;
+using PhoneStore.AutoTests.Utilities; // Để dùng được ConfigHelper
 
 namespace PhoneStore.AutoTests.Tests
 {
     [TestFixture]
     public class LoginTests : BaseTest
     {
-        private HomePage homePage;
         private LoginPage loginPage;
 
         [SetUp]
         public void Init()
         {
+            homePage = new HomePage(driver);
             homePage = new HomePage(driver);
             loginPage = new LoginPage(driver);
 

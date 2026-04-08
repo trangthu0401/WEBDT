@@ -1,0 +1,17 @@
+﻿[
+  {
+    "TestCaseID": "EMPTY_01",
+    "Keyword": "99999999",
+    "Note": "Tìm ID không tồn tại"
+  },
+  {
+    "TestCaseID": "EMPTY_02",
+    "Keyword": "Nokia Chuồng Gà",
+    "Note": "Tìm tên không có trong shop"
+  },
+  {
+    "TestCaseID": "EMPTY_03",
+    "Keyword": "@#$%^&*",
+    "Note": "Tìm ký tự đặc biệt"
+  }
+]
