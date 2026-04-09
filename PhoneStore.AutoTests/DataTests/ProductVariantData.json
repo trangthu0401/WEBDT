@@ -28,7 +28,7 @@
     "PromoPrice": "17900000",
     "Stock": "30",
     "ImageFileName": "ip15_vang.jpg"
-  },
+  }, 
   "TC_PRODUCT_15_3": {
     "ProductName": "Samsung Galaxy Z Flip7",
     "Color": "Xanh Sky",
@@ -38,5 +38,15 @@
     "PromoPrice": "24990000",
     "Stock": "20",
     "ImageFileName": "samsungflip7_xanh.jpg"
+  },
+  "TC_PRODUCT_15_4": {
+    "ProductName": "Samsung Galaxy Z Fold7",
+    "Color": "Xanh Navi ",
+    "Storage": "512",
+    "RAM": "12",
+    "Price": "26990000",
+    "PromoPrice": "24990000",
+    "Stock": "20",
+    "ImageFileName": "SamsungZFold7_xanhnavi.jpg"
   }
 }

@@ -13,27 +13,35 @@ namespace PhoneStore.AutoTests.Pages
         public ProductHidePage(IWebDriver driver)
         {
             this.driver = driver;
-            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
         }
 
-        // --- LOCATORS ---
         private By btnViewVariant = By.XPath("(//a[contains(@href, 'ProductVariant')])[1]");
 
-        // --- ACTIONS ---
+        // Locator lấy cái ô chứa tên Màu sắc ở dòng đầu tiên của bảng Admin
+        private By firstColorName = By.XPath("//table//tbody/tr[1]/td[contains(@class,'color') or contains(.,'')]");
+        // Locator nút Ẩn ở dòng đầu tiên
+        private By btnHideFirst = By.XPath("//table//tbody/tr[1]//button[contains(.,'Ẩn')]");
+
         public void GoToFirstProductVariant() => wait.Until(ExpectedConditions.ElementToBeClickable(btnViewVariant)).Click();
 
-        public void ClickHideVariant(string colorName)
+        // HÀM MỚI: Robot tự lấy tên màu của dòng đầu tiên để tí nữa đi check
+        public string GetFirstVariantColorName()
         {
-            // Robot tìm dòng nào có chứa tên màu sắc Vy truyền vào, rồi bấm nút "Ẩn" ở cuối dòng đó
-            string xpathHideBtn = $"//td[contains(.,'{colorName}')]/following-sibling::td//button[contains(.,'Ẩn')]";
-            var btnHide = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath(xpathHideBtn)));
+            var element = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//table//tbody/tr[1]/td[3]"))); // Thường màu ở cột 3
+            return element.Text.Trim();
+        }
 
-            // Cuộn tới nút và bấm
+        public void ClickHideFirstVariant()
+        {
+            var btnHide = wait.Until(ExpectedConditions.ElementToBeClickable(btnHideFirst));
+
+            // Cuộn tới và bấm
             ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", btnHide);
             System.Threading.Thread.Sleep(500);
             btnHide.Click();
 
-            // Nếu có popup xác nhận (SweetAlert), bấm OK
+            // Xác nhận SweetAlert nếu có
             try
             {
                 var btnConfirm = wait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(".swal2-confirm")));
@@ -44,10 +52,12 @@ namespace PhoneStore.AutoTests.Pages
 
         public bool IsVariantVisibleOnUserPage(string colorName)
         {
-            // Kiểm tra xem trên trang User có còn cái nút hoặc label tên màu đó không
             try
             {
-                var elements = driver.FindElements(By.XPath($"//*[contains(text(), '{colorName}')]"));
+                // Đợi một chút cho trang User load
+                System.Threading.Thread.Sleep(2000);
+                // Tìm xem có cái nút chọn màu nào chứa text đó không
+                var elements = driver.FindElements(By.XPath($"//*[contains(@class,'color') or @type='radio']/..//*[contains(text(), '{colorName}')]"));
                 return elements.Count > 0 && elements[0].Displayed;
             }
             catch

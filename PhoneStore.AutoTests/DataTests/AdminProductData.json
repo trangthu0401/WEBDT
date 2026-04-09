@@ -125,7 +125,7 @@
     "Storage": "128GB",
     "RAM": "8GB"
   },
-  "TC_PRODUCT_ADMIN_09": {
+  "TC_PRODUCT_ADMIN_01_09": {
     "ProductName": "Samsung Galaxy Z Flip7",
     "Brand": "Samsung",
     "Description": "Siêu phẩm màn hình gập 2026",
@@ -138,5 +138,20 @@
     "Color": "Cam",
     "Storage": "512GB",
     "RAM": "12GB"
+  },
+  "TC_PRODUCT_ADMIN_01_10": {
+    "ProductName": "Samsung Galaxy Z Fold7",
+    "Brand": "Samsung",
+    "Description": "Siêu phẩm màn hình gập đỉnh cao 2026",
+    "Price": "40990000",
+    "Stock": "80",
+    "ImageFileName": "SamsungZFold7_den.jpg",
+    "Chipset": "Snapdragon 8 Gen 5 for Galaxy",
+    "OS": "Android 16",
+    "Battery": "4600",
+    "Color": "Đen Phantom",
+    "Storage": "512GB",
+    "RAM": "12GB"
   }
+
 }

@@ -81,6 +81,21 @@ namespace PhoneStore.AutoTests.Tests
 
             System.Threading.Thread.Sleep(3000);
             Assert.That(driver.PageSource.Contains((string)data.Color), Is.True, "Lỗi: Không tìm thấy màu sắc biến thể mới!");
+
+        }
+        [Test]
+        public void TC_PRODUCT_15_4_AddVariant_AddZFold7()
+        {
+            driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product/Index");
+            var data = JsonReader.GetTestRow("ProductVariantData.json", "TC_PRODUCT_15_4");
+
+            variantPage.GoToFirstProductVariant();
+            variantPage.OpenAddModal();
+            variantPage.InputVariantDetails(data);
+            variantPage.Save();
+
+            System.Threading.Thread.Sleep(3000);
+            Assert.That(driver.PageSource.Contains((string)data.Color), Is.True, "Lỗi: Không tìm thấy màu sắc biến thể mới!");
         }
     }
 }

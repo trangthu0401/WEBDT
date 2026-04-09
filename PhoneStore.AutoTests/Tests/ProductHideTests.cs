@@ -28,26 +28,29 @@ namespace PhoneStore.AutoTests.Tests
         }
 
         [Test]
-        public void TC_PRODUCT_08_HideVariantAndCheckOnUserPage()
+        public void TC_PRODUCT_08_HideFirstVariantAndCheck()
         {
             var data = JsonReader.GetTestRow("ProductHideData.json", "TC_PRODUCT_08");
-            string colorToHide = (string)data.TargetColor;
 
-            // BƯỚC 2: Vào Admin ẩn biến thể
+            // BƯỚC 1: Vào Admin
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
             hidePage.GoToFirstProductVariant();
-            hidePage.ClickHideVariant(colorToHide);
 
-            System.Threading.Thread.Sleep(2000); // Đợi hệ thống cập nhật DB
+            // BƯỚC 2: Robot tự lấy tên màu ở dòng 1 để tí nữa đối chiếu
+            string colorToHide = hidePage.GetFirstVariantColorName();
+            Console.WriteLine($"Robot chọn ẩn màu: {colorToHide}");
 
-            // BƯỚC 3: Sang trang User kiểm tra
-            driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + (string)data.ProductDetailUrl);
+            // BƯỚC 3: Bấm ẩn dòng đầu tiên
+            hidePage.ClickHideFirstVariant();
             System.Threading.Thread.Sleep(2000);
 
-            // Kiểm tra: Hy vọng là KHÔNG tìm thấy (IsVisible == false)
+            // BƯỚC 4: Sang trang User kiểm tra (Dùng URL từ JSON)
+            driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + (string)data.ProductDetailUrl);
+
+            // Kiểm tra: Hy vọng là KHÔNG tìm thấy màu đó nữa
             bool isStillThere = hidePage.IsVariantVisibleOnUserPage(colorToHide);
 
-            Assert.That(isStillThere, Is.False, $"Lỗi: Biến thể màu '{colorToHide}' vẫn còn hiện ở trang User sau khi đã Ẩn!");
+            Assert.That(isStillThere, Is.False, $"Lỗi: Biến thể '{colorToHide}' vẫn còn hiện ở trang User sau khi đã Ẩn!");
         }
     }
 }

@@ -163,10 +163,23 @@ namespace PhoneStore.AutoTests.Tests
         }
 
         [Test]
-        public void TC_PRODUCT_ADMIN_09_AddSamsungZFlip7()
+        public void TC_PRODUCT_ADMIN_01_09_AddSamsungZFlip7()
         {
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
-            var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_09");
+            var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_09");
+
+            adminPage.GoToCreatePage();
+            adminPage.InputProductDetails(data);
+            adminPage.Save();
+
+            VerifyAddProductSuccess((string)data.ProductName);
+        }
+
+        [Test]
+        public void TC_PRODUCT_ADMIN_01_10_AddZFold7Den()
+        {
+            driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Product");
+            var data = JsonReader.GetTestRow("AdminProductData.json", "TC_PRODUCT_ADMIN_01_10");
 
             adminPage.GoToCreatePage();
             adminPage.InputProductDetails(data);

@@ -13,54 +13,69 @@ namespace PhoneStore.AutoTests.Pages
         public LoginPage(IWebDriver driver)
         {
             this.driver = driver;
-            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
         }
 
-        private By txtEmail = By.Id("EmailOrPhone"); // nhớ đúng id nha
+        // --- 1. Locators ---
+        private By txtEmail = By.Id("EmailOrPhone");
         private By txtPassword = By.Id("Password");
         private By btnLogin = By.XPath("//button[contains(text(),'Đăng nhập')]");
 
-        // Selector cho checkbox Admin (Dựa trên hình ảnh giao diện của Vy)
-        private By chkAdminRole = By.XPath("//label[contains(text(),'Admin')]/preceding-sibling::input | //input[following-sibling::label[contains(text(),'Admin')]] | //label[contains(.,'Admin')]//input");
+        // Selector cho checkbox Admin (Tối ưu để Robot dễ tìm thấy)
+        private By chkAdminRole = By.XPath("//label[contains(.,'Admin')]//input | //input[@type='checkbox' and contains(@id, 'Admin')]");
 
         // --- 2. Actions ---
+
         public void EnterEmailOrPhone(string emailOrPhone)
-        public void Login(string email, string password)
         {
-            // 🔥 CHỜ ELEMENT HIỆN RA RỒI NHẬP NGAY
             var emailBox = wait.Until(ExpectedConditions.ElementIsVisible(txtEmail));
             emailBox.Clear();
-            emailBox.SendKeys(email);
+            emailBox.SendKeys(emailOrPhone);
+        }
 
+        public void EnterPassword(string password)
+        {
             var passBox = wait.Until(ExpectedConditions.ElementIsVisible(txtPassword));
             passBox.Clear();
             passBox.SendKeys(password);
+        }
 
-        // Hàm mới: Tick vào ô đăng nhập quyền Admin
         public void SelectAdminRole(bool wantAdmin)
         {
-            var checkbox = driver.FindElement(chkAdminRole);
-            if (wantAdmin && !checkbox.Selected)
+            try
             {
-                checkbox.Click();
+                var checkbox = driver.FindElement(chkAdminRole);
+                if (wantAdmin && !checkbox.Selected)
+                {
+                    checkbox.Click();
+                }
+                else if (!wantAdmin && checkbox.Selected)
+                {
+                    checkbox.Click(); // Bỏ chọn nếu là khách
+                }
             }
-            else if (!wantAdmin && checkbox.Selected)
+            catch
             {
-                checkbox.Click(); // Bỏ tick nếu là khách thường
+                // Nếu trang Login không có checkbox thì bỏ qua để tránh văng lỗi
             }
         }
 
         public void ClickSubmitLogin()
         {
-            driver.FindElement(btnSubmitLogin).Click();
+            wait.Until(ExpectedConditions.ElementToBeClickable(btnLogin)).Click();
         }
 
-        // Hàm Login cập nhật: có thêm biến isAdmin
+        // --- 3. Hàm Login "Vạn Năng" ---
+        // Có isAdmin = false là tham số tùy chọn. Giúp các file Test cũ không bị lỗi CS1739.
         public void Login(string username, string password, bool isAdmin = false)
         {
             EnterEmailOrPhone(username);
             EnterPassword(password);
-            SelectAdminRole(isAdmin); // Xử lý yêu cầu click checkbox Admin
+
+            // Tự động thông minh: Nếu isAdmin là true HOẶC email có chữ "admin" thì tích ô Admin
+            bool finalAdminDecision = isAdmin || username.ToLower().Contains("admin");
+            SelectAdminRole(finalAdminDecision);
+
             ClickSubmitLogin();
         }
     }

@@ -28,7 +28,7 @@ namespace PhoneStore.AutoTests.Tests
             Thread.Sleep(1000);
             homePage.ClickDangNhap();
             Thread.Sleep(1000);
-            loginPage.Login("4556666666", "123456");
+            loginPage.Login("nguyentrathanhvy2005@gmail.com", "123456");
             Thread.Sleep(2000);
 
             // 2. Đi thẳng vào trang Giỏ hàng
