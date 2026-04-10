@@ -1,5 +1,6 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using PhoneStore.AutoTests.Utilities;
 using SeleniumExtras.WaitHelpers;
 using System;
 
@@ -8,95 +9,180 @@ namespace PhoneStore.AutoTests.Pages
     public class OrderHistoryPage
     {
         private IWebDriver driver;
-        public OrderHistoryPage(IWebDriver driver) => this.driver = driver;
+        private WebDriverWait wait;
 
-        // --- LOCATORS ---
-        private By drpStatus = By.Name("statusFilter");
-        private By drpDatePreset = By.Name("datePreset");
-        private By txtStartDate = By.Id("startDate");
-        private By txtEndDate = By.Id("endDate");
-
-        // Lấy nút Hủy đơn hàng đầu tiên tìm thấy
-        private By btnHuyDonHang = By.XPath("(//button[contains(@class,'btn-cancel-pop') or contains(text(),'Hủy')])[1]");
-        private By btnXacNhanHuy = By.XPath("//button[contains(text(),'Xác nhận') or contains(@class,'confirm')]");
-        private By btnSweetAlertOK = By.CssSelector(".swal2-confirm");
-
-        // --- ACTIONS ---
-        public void LocDonHang(string status, string datePreset, string startDate, string endDate)
+        public OrderHistoryPage(IWebDriver driver)
         {
-            if (!string.IsNullOrEmpty(status))
-                new SelectElement(driver.FindElement(drpStatus)).SelectByText(status);
-
-            if (!string.IsNullOrEmpty(datePreset))
-                new SelectElement(driver.FindElement(drpDatePreset)).SelectByText(datePreset);
-
-            if (!string.IsNullOrEmpty(startDate))
-            {
-                var start = driver.FindElement(txtStartDate);
-                start.Clear();
-                start.SendKeys(startDate);
-            }
-
-            if (!string.IsNullOrEmpty(endDate))
-            {
-                var end = driver.FindElement(txtEndDate);
-                end.Clear();
-                end.SendKeys(endDate);
-            }
+            this.driver = driver;
+            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
         }
 
-        public bool IsCancelButtonPresent()
+        public void GoToOrderHistory()
         {
-            try { return driver.FindElement(btnHuyDonHang).Displayed; }
-            catch { return false; }
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/OrderCustomer/History");
+            wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").Equals("complete"));
+            System.Threading.Thread.Sleep(500);
         }
 
-        public void ClickHuyDon() => driver.FindElement(btnHuyDonHang).Click();
+        // ========== LOCATORS (dựa trên file record) ==========
+        // Ô tìm kiếm ID
+        private By searchInput = By.XPath("//input[@placeholder='Nhập id đơn hàng']");
 
-        public void ChonLyDoVaXacNhan(string lyDo, string detailReason = null)
+        // Dropdown lọc
+        private By statusFilter = By.XPath("//select[@name='statusFilter']");
+        private By paymentFilter = By.XPath("//select[@name='paymentMethod']");
+        private By datePreset = By.XPath("//select[@name='datePreset']");
+
+        // Nút lọc (submit)
+        private By filterButton = By.XPath("//input[@type='submit']");
+
+        // Bảng đơn hàng
+        private By tableRows = By.XPath("//table//tbody/tr");
+        private By emptyMessage = By.XPath("//*[contains(text(),'Không tìm thấy đơn hàng') or contains(text(),'Chưa có đơn hàng')]");
+
+        // Nút hủy trên dòng đầu tiên
+        private By firstRowCancelButton = By.XPath("(//button[@class='btn-cancel-pop'])[1]");
+
+        // Popup hủy đơn
+        private By cancelReasonLabel = By.XPath("//label[normalize-space()='{0}']");
+        private By otherReasonTextarea = By.XPath("//textarea[@id='otherReason']");
+        private By confirmCancelButton = By.XPath("//button[contains(text(),'Xác nhận hủy')]");
+        private By okSweetAlert = By.XPath("//button[normalize-space()='OK']");
+
+        // Modal chi tiết đơn hàng (khi click vào mã đơn)
+        private By modalCloseButton = By.XPath("//button[@aria-label='Close']");
+        private By modalSubtotal = By.XPath("//*[contains(text(),'Tạm tính')]/following-sibling::*");
+        private By modalShipping = By.XPath("//*[contains(text(),'Phí vận chuyển')]/following-sibling::*");
+        private By modalTotal = By.XPath("//*[contains(text(),'Tổng cộng')]/following-sibling::*");
+
+        // Phân trang (nếu có)
+        private By page2Link = By.XPath("//a[contains(text(),'2')]");
+
+        // ========== ACTIONS ==========
+        public void SearchByOrderId(string orderId)
+        {
+            var input = wait.Until(ExpectedConditions.ElementIsVisible(searchInput));
+            input.Clear();
+            input.SendKeys(orderId);
+            input.SendKeys(Keys.Enter);
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void SelectStatus(string statusText)
+        {
+            var select = new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(statusFilter)));
+            select.SelectByText(statusText);
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void SelectPaymentMethod(string paymentText)
+        {
+            var select = new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(paymentFilter)));
+            select.SelectByText(paymentText);
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void SelectDatePreset(string preset)
+        {
+            var select = new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(datePreset)));
+            select.SelectByText(preset);
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void ClickFilter()
+        {
+            wait.Until(ExpectedConditions.ElementToBeClickable(filterButton)).Click();
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public int GetOrderCount()
+        {
+            try { wait.Until(d => d.FindElements(tableRows).Count >= 0); } catch { }
+            return driver.FindElements(tableRows).Count;
+        }
+
+        public bool IsEmptyMessageDisplayed() => driver.FindElements(emptyMessage).Count > 0;
+
+        public string GetFirstOrderStatus()
         {
             try
             {
-                if (!string.IsNullOrEmpty(lyDo))
-                {
-                    driver.FindElement(By.XPath($"//label[contains(text(),'{lyDo}')]")).Click();
-                    System.Threading.Thread.Sleep(500);
-                }
-
-                if (!string.IsNullOrEmpty(detailReason))
-                {
-                    try
-                    {
-                        var textarea = driver.FindElement(By.CssSelector("textarea"));
-                        textarea.Clear();
-                        textarea.SendKeys(detailReason);
-                    }
-                    catch { }
-                }
-
-                driver.FindElement(btnXacNhanHuy).Click();
+                var statusCell = driver.FindElement(By.XPath("//tbody/tr[1]/td[6]"));
+                return statusCell.Text.Trim();
             }
-            catch { }
+            catch { return string.Empty; }
         }
 
-        public void ClickOKPopup()
+        public string GetFirstOrderId()
         {
             try
             {
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
-                wait.Until(d => d.FindElement(btnSweetAlertOK)).Click();
+                var idCell = driver.FindElement(By.XPath("//tbody/tr[1]/td[1]"));
+                return idCell.Text.Trim().Replace("#", "");
             }
+            catch { return string.Empty; }
+        }
+
+        public void ClickFirstCancelButton()
+        {
+            wait.Until(ExpectedConditions.ElementToBeClickable(firstRowCancelButton)).Click();
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void SelectCancelReason(string reason)
+        {
+            var reasonXpath = By.XPath($"//label[normalize-space()='{reason}']");
+            wait.Until(ExpectedConditions.ElementToBeClickable(reasonXpath)).Click();
+        }
+
+        public void EnterCancelDetail(string detail)
+        {
+            var textarea = wait.Until(ExpectedConditions.ElementIsVisible(otherReasonTextarea));
+            textarea.Clear();
+            textarea.SendKeys(detail);
+        }
+
+        public void ConfirmCancel()
+        {
+            wait.Until(ExpectedConditions.ElementToBeClickable(confirmCancelButton)).Click();
+        }
+
+        public void ClickOkSweetAlert()
+        {
+            try { wait.Until(ExpectedConditions.ElementToBeClickable(okSweetAlert)).Click(); }
             catch { }
         }
 
-        public void CloseSweetAlert()
+        // Mở modal chi tiết bằng cách click vào mã đơn hàng đầu tiên
+        public void ClickFirstOrderId()
         {
-            try
-            {
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
-                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(btnSweetAlertOK)).Click();
-            }
+            var idCell = driver.FindElement(By.XPath("//tbody/tr[1]/td[1]"));
+            idCell.Click();
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void CloseModal()
+        {
+            try { wait.Until(ExpectedConditions.ElementToBeClickable(modalCloseButton)).Click(); }
             catch { }
+            System.Threading.Thread.Sleep(300);
+        }
+
+        public decimal GetModalSubtotal() => ParseMoney(modalSubtotal);
+        public decimal GetModalShipping() => ParseMoney(modalShipping);
+        public decimal GetModalTotal() => ParseMoney(modalTotal);
+
+        public void ClickPage2()
+        {
+            wait.Until(ExpectedConditions.ElementToBeClickable(page2Link)).Click();
+            System.Threading.Thread.Sleep(500);
+        }
+
+        private decimal ParseMoney(By locator)
+        {
+            string text = wait.Until(ExpectedConditions.ElementExists(locator)).Text;
+            text = text.Replace(",", "").Replace("₫", "").Replace("đ", "").Trim();
+            return decimal.Parse(text);
         }
     }
 }

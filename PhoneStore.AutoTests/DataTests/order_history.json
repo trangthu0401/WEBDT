@@ -41,5 +41,22 @@
     "TestCaseID": "TC_ORD_15",
     "Action": "Click_Page_2",
     "ExpectedResult": "Show_Next_10_Orders"
+  },
+  {
+    "TestCaseID": "TC_ORD_24",
+    "Action": "Cancel_Order",
+    "CancelReason": "Không còn nhu cầu",
+    "ExpectedResult": "Order_Cancelled_Successfully_With_Message"
+  },
+  {
+    "TestCaseID": "TC_ORD_25",
+    "Action": "View_Order_Detail",
+    "ExpectedResult": "Total_Price_Equals_Subtotal_Plus_Shipping"
+  },
+  {
+    "TestCaseID": "TC_ORD_26",
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-12-31",
+    "ExpectedResult": "Show_Orders_In_Date_Range"
   }
 ]

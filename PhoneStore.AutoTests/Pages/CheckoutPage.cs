@@ -198,5 +198,110 @@ namespace PhoneStore.AutoTests.Pages
             address.Click();
             Thread.Sleep(500);
         }
+        // ========== PHƯƠNG THỨC LẤY THÔNG TIN TỰ ĐỘNG ĐIỀN (CHO TC_CHK_24) ==========
+        public string GetFullNameValue()
+        {
+            if (!IsElementPresent(txtFullName, 3)) return "Field not found";
+            var e = driver.FindElement(txtFullName);
+            return e.GetAttribute("value") ?? e.Text;
+        }
+
+        public bool IsFullNameReadOnly()
+        {
+            if (!IsElementPresent(txtFullName, 3)) return false;
+            var e = driver.FindElement(txtFullName);
+            return e.GetAttribute("readonly") != null || e.GetAttribute("disabled") != null;
+        }
+
+        public string GetPhoneValue()
+        {
+            if (!IsElementPresent(txtPhone, 3)) return "Field not found";
+            var e = driver.FindElement(txtPhone);
+            return e.GetAttribute("value") ?? e.Text;
+        }
+
+        public bool IsPhoneReadOnly()
+        {
+            if (!IsElementPresent(txtPhone, 3)) return false;
+            var e = driver.FindElement(txtPhone);
+            return e.GetAttribute("readonly") != null || e.GetAttribute("disabled") != null;
+        }
+
+        // ========== KIỂM TRA DANH SÁCH QUẬN/HUYỆN (CHO TC_CHK_26) ==========
+        public int GetDistrictOptionsCount()
+        {
+            try
+            {
+                var select = new SelectElement(driver.FindElement(cboDistrict));
+                return select.Options.Count;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        public bool IsDistrictListLoaded()
+        {
+            return GetDistrictOptionsCount() > 1; // >1 nghĩa là đã có dữ liệu (không chỉ placeholder)
+        }
+
+        // ========== KIỂM TRA LỖI KHI THIẾU TỈNH (CHO TC_CHK_33) ==========
+        public string GetErrorMessage()
+        {
+            try
+            {
+                var errorElem = driver.FindElement(By.CssSelector(".field-validation-error, .text-danger, .alert-danger"));
+                return errorElem.Text;
+            }
+            catch { return ""; }
+        }
+
+        public bool IsSweetAlertErrorDisplayed(string expectedKeyword = "")
+        {
+            try
+            {
+                var swal = driver.FindElement(By.CssSelector(".swal2-popup"));
+                string text = swal.Text.ToLower();
+                if (!string.IsNullOrEmpty(expectedKeyword))
+                    return text.Contains(expectedKeyword.ToLower());
+                return true;
+            }
+            catch { return false; }
+        }
+        // Thêm vào cuối class CheckoutPage
+        public bool IsWardMissingErrorDisplayed()
+        {
+            try
+            {
+                // Kiểm tra alert trước
+                var alert = driver.SwitchTo().Alert();
+                string alertText = alert.Text.ToLower();
+                alert.Accept();
+                return alertText.Contains("phường") || alertText.Contains("xã") || alertText.Contains("chọn");
+            }
+            catch
+            {
+                // Nếu không có alert, kiểm tra text trên page
+                string pageText = driver.PageSource.ToLower();
+                return pageText.Contains("phường") || pageText.Contains("xã") || pageText.Contains("chọn");
+            }
+        }
+
+        public bool IsProvinceMissingErrorDisplayed()
+        {
+            try
+            {
+                var swal = driver.FindElement(By.CssSelector(".swal2-popup"));
+                string swalText = swal.Text.ToLower();
+                return swalText.Contains("tỉnh") || swalText.Contains("thành phố");
+            }
+            catch
+            {
+                string pageText = driver.PageSource.ToLower();
+                return pageText.Contains("tỉnh") || pageText.Contains("thành phố");
+            }
+        }
+
     }
 }

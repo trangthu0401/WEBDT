@@ -1,12 +1,48 @@
 ﻿[
   {
+    "TestCaseID": "TC_PROD_01",
+    "IsLoggedIn": false,
+    "Action": "Click_MuaNgay",
+    "ExpectedResult": "Redirect_To_Login"
+  },
+  {
     "TestCaseID": "TC_PROD_03",
+    "IsLoggedIn": true,
+    "Action": "Click_ThemVaoGio",
     "Color": "",
-    "Storage": ""
+    "Storage": "",
+    "ExpectedResult": "Cart_Count_Increased"
   },
   {
     "TestCaseID": "TC_PROD_04",
+    "IsLoggedIn": true,
+    "Action": "Click_ThemVaoGio",
     "Color": "Trắng",
-    "Storage": "512GB"
+    "Storage": "512GB",
+    "ExpectedResult": "Cart_Count_Increased_With_Variant"
+  },
+  {
+    "TestCaseID": "TC_PROD_05",
+    "IsLoggedIn": true,
+    "Action": "Click_Minus_Button_3_Times",
+    "ExpectedResult": "Quantity_Stays_1"
+  },
+  {
+    "TestCaseID": "TC_PROD_07",
+    "Stock": 0,
+    "Action": "Check_Add_To_Cart_Button",
+    "ExpectedResult": "Button_Disabled"
+  },
+  {
+    "TestCaseID": "TC_PROD_10",
+    "Stock": 5,
+    "Action": "Click_Plus_Button_5_Times",
+    "ExpectedResult": "Button_Plus_Disabled_At_5"
+  },
+  {
+    "TestCaseID": "TC_PROD_16",
+    "IsLoggedIn": true,
+    "Action": "Click_ThemVaoGio",
+    "ExpectedResult": "Stay_On_ProductDetail_And_Show_Success_Message"
   }
 ]

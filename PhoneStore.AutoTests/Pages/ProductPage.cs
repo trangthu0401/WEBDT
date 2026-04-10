@@ -83,5 +83,54 @@ namespace PhoneStore.AutoTests.Pages
             try { wait.Until(ExpectedConditions.AlertIsPresent()).Accept(); }
             catch { }
         }
+        public int GetStockQuantity()
+        {
+            try
+            {
+                var stockElem = driver.FindElement(By.XPath("//span[contains(@class,'stock') or contains(@id,'stock')]"));
+                string stockText = stockElem.Text;
+                // Giả sử text "Còn lại: 50 sản phẩm" -> lấy số
+                var match = System.Text.RegularExpressions.Regex.Match(stockText, @"\d+");
+                return match.Success ? int.Parse(match.Value) : int.MaxValue;
+            }
+            catch { return int.MaxValue; }
+        }
+        // Locator cho nút Thêm vào giỏ (có thể bị disabled)
+        private By btnAddToCartDisabled = By.XPath("//button[contains(@class, 'add') and @disabled]");
+        private By btnBuyNowDisabled = By.XPath("//button[contains(@class, 'buy') and @disabled]");
+
+        // Kiểm tra nút Thêm vào giỏ có bị disabled không
+        public bool IsAddToCartDisabled()
+        {
+            try
+            {
+                var btn = driver.FindElement(btnThemVaoGio);
+                return btn.GetAttribute("disabled") != null || btn.GetAttribute("class").Contains("disabled");
+            }
+            catch { return true; }
+        }
+
+        // Kiểm tra nút Mua ngay có bị disabled không
+        public bool IsBuyNowDisabled()
+        {
+            try
+            {
+                var btn = driver.FindElement(btnMuaNgay);
+                return btn.GetAttribute("disabled") != null || btn.GetAttribute("class").Contains("disabled");
+            }
+            catch { return true; }
+        }
+
+        // Lấy số lượng tối đa có thể chọn (stock) - đã có GetStockQuantity, nhưng có thể cải thiện
+        // Thêm method chờ nút (+) bị disabled
+        public bool IsPlusButtonDisabled()
+        {
+            try
+            {
+                var btn = driver.FindElement(btnTangSoLuong);
+                return btn.GetAttribute("disabled") != null || btn.GetAttribute("class").Contains("disabled");
+            }
+            catch { return true; }
+        }
     }
 }

@@ -16,8 +16,7 @@ namespace PhoneStore.AutoTests.Tests
         private CartPage cartPage;
         private ProductPage productPage;
 
-        // Sản phẩm mặc định dùng để thêm vào giỏ (chọn ID chắc chắn tồn tại)
-        private const int DEFAULT_PRODUCT_ID = 1; // 👈 Thay bằng ID sản phẩm thật của bạn
+        private const int DEFAULT_PRODUCT_ID = 1;
 
         [SetUp]
         public void SetupCheckoutEnv()
@@ -32,9 +31,6 @@ namespace PhoneStore.AutoTests.Tests
             Thread.Sleep(2000);
         }
 
-        /// <summary>
-        /// Thêm sản phẩm vào giỏ và chuyển đến trang Cart
-        /// </summary>
         private void ThemDoVaoGioVaVaoCart(int productId = DEFAULT_PRODUCT_ID)
         {
             driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/{productId}");
@@ -54,16 +50,17 @@ namespace PhoneStore.AutoTests.Tests
             while (driver.PageSource.Contains("btn-trash"))
             {
                 cartPage.ClickXoaSanPham();
-                try { cartPage.ConfirmXoaSweetAlert(); } catch { }
+                cartPage.ConfirmXoaSweetAlert();
                 Thread.Sleep(1000);
             }
 
             driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/OrderCustomer/Checkout");
             Thread.Sleep(2000);
 
-            Assert.IsTrue(driver.Url.ToLower().Contains("cart"),
+            Assert.That(driver.Url.ToLower(), Does.Contain("cart"),
                 "Lỗi: Giỏ hàng trống nhưng vẫn vào trang thanh toán!");
         }
+
         [Test]
         [Property("TC_ID", "TC_CHK_02")]
         public void TC_CHK_02_QuyTrinhDatHangChuan_TuGioHang()
@@ -87,21 +84,18 @@ namespace PhoneStore.AutoTests.Tests
                 data["Address"].ToString()
             );
 
-            checkoutPage.DongThongBao();        // đóng sweetalert lưu địa chỉ
+            checkoutPage.DongThongBao();
             checkoutPage.SelectAddressByStreet(data["Address"].ToString());
 
-            // 6. Chọn COD và đặt hàng
             checkoutPage.SelectPaymentMethod(isCOD: true);
             checkoutPage.ClickDatHang();
-            checkoutPage.DongThongBao(); // đóng thông báo đặt hàng thành công
+            checkoutPage.DongThongBao();
 
-            // 7. Chờ chuyển về trang chủ
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
             wait.Until(d => d.Url.ToLower().Contains("/home/index"));
 
-            Assert.IsTrue(driver.Url.ToLower().Contains("/home/index"),
+            Assert.That(driver.Url.ToLower(), Does.Contain("/home/index"),
                 "Lỗi: Đặt hàng không chuyển về trang chủ!");
-
         }
 
         [Test]
@@ -110,43 +104,93 @@ namespace PhoneStore.AutoTests.Tests
         {
             var data = JsonReader.GetTestRow("checkout.json", "TC_CHK_11");
 
-            // 1. Thêm sản phẩm vào giỏ và vào checkout
             ThemDoVaoGioVaVaoCart();
             cartPage.ClickMuaNgay();
             Thread.Sleep(2000);
 
-            // 2. Nhập họ tên, SĐT (lấy từ JSON hoặc default)
-            string fullName = data.ContainsKey("FullName") ? data["FullName"].ToString() : "Nguyễn Văn A";
-            string phone = data.ContainsKey("Phone") ? data["Phone"].ToString() : "0901234567";
-            checkoutPage.EnterFullName(fullName);
-            checkoutPage.EnterPhone(phone);
+            checkoutPage.EnterFullName(data["FullName"].ToString());
+            checkoutPage.EnterPhone(data["Phone"].ToString());
 
-            // 3. Mở modal địa chỉ và thêm mới
             checkoutPage.ClickThayDoiDiaChi();
             checkoutPage.ClickThemDiaChiMoi();
 
-            // 4. Chọn tỉnh, huyện, điền số nhà nhưng bỏ qua phường/xã
             checkoutPage.SelectProvince(data["Province"].ToString());
             checkoutPage.SelectDistrict(data["District"].ToString());
             checkoutPage.EnterStreetDetail(data["Street"].ToString());
             checkoutPage.ClickLuuDiaChi();
             Thread.Sleep(1500);
 
-            // 5. Kiểm tra cảnh báo lỗi
-            bool isErrorDisplayed = false;
-            try
+            bool isErrorDisplayed = checkoutPage.IsWardMissingErrorDisplayed();
+            Assert.That(isErrorDisplayed, Is.True, "Hệ thống không cảnh báo khi thiếu Phường/Xã!");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_CHK_24")]
+        public void TC_CHK_24_ThongTinTuDongDien_TuProfile_Readonly()
+        {
+            ThemDoVaoGioVaVaoCart();
+            cartPage.ClickMuaNgay();
+            Thread.Sleep(2000);
+
+            string expectedFullName = "Nguyễn Văn A";
+            string expectedPhone = "0901234567";
+
+            Assert.Multiple(() =>
             {
-                string alertText = driver.SwitchTo().Alert().Text.ToLower();
-                isErrorDisplayed = alertText.Contains("phường") || alertText.Contains("xã") || alertText.Contains("chọn");
-                driver.SwitchTo().Alert().Accept();
-            }
-            catch
+                Assert.That(checkoutPage.GetFullNameValue(), Is.EqualTo(expectedFullName), "Họ tên không khớp với profile!");
+                Assert.That(checkoutPage.IsFullNameReadOnly(), Is.True, "Trường Họ tên không bị readonly!");
+                Assert.That(checkoutPage.GetPhoneValue(), Is.EqualTo(expectedPhone), "SĐT không khớp với profile!");
+                Assert.That(checkoutPage.IsPhoneReadOnly(), Is.True, "Trường SĐT không bị readonly!");
+            });
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_CHK_26")]
+        public void TC_CHK_26_LoadDanhSachQuanKhiChonTinh()
+        {
+            ThemDoVaoGioVaVaoCart();
+            cartPage.ClickMuaNgay();
+            Thread.Sleep(2000);
+
+            checkoutPage.ClickThayDoiDiaChi();
+            checkoutPage.ClickThemDiaChiMoi();
+            checkoutPage.SelectProvince("Thành phố Hà Nội");
+
+            Assert.That(checkoutPage.IsDistrictListLoaded(), Is.True, "Dropdown Quận/Huyện không được load dữ liệu!");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_CHK_33")]
+        public void TC_CHK_33_ThieuTinh_ChanDatHang()
+        {
+            ThemDoVaoGioVaVaoCart();
+            cartPage.ClickMuaNgay();
+            Thread.Sleep(2000);
+
+            checkoutPage.ClickDatHang();
+            Thread.Sleep(1500);
+
+            Assert.That(checkoutPage.IsProvinceMissingErrorDisplayed(), Is.True,
+                "Hệ thống không báo lỗi khi thiếu Tỉnh/Thành phố!");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_SEC_06")]
+        public void TC_SEC_06_ChanTruyCapCheckout_KhiGioTrong()
+        {
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
+            while (driver.FindElements(By.CssSelector(".btn-trash, .btn-remove")).Count > 0)
             {
-                string pageText = driver.PageSource.ToLower();
-                isErrorDisplayed = pageText.Contains("phường") || pageText.Contains("xã") || pageText.Contains("chọn");
+                cartPage.ClickXoaSanPham();
+                cartPage.ConfirmXoaSweetAlert();
+                Thread.Sleep(1000);
             }
 
-            Assert.IsTrue(isErrorDisplayed, "Lỗi: Hệ thống không cảnh báo khi thiếu Phường/Xã!");
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/OrderCustomer/Checkout");
+            Thread.Sleep(2000);
+
+            Assert.That(driver.Url.ToLower(), Does.Contain("cart").Or.Contains("home"),
+                "Lỗi bảo mật: Vẫn vào được Checkout khi giỏ hàng trống!");
         }
     }
 }

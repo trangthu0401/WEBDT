@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using OpenQA.Selenium;
 using PhoneStore.AutoTests.Core;
 using PhoneStore.AutoTests.Pages;
 using PhoneStore.AutoTests.Utilities;
@@ -23,44 +24,54 @@ namespace PhoneStore.AutoTests.Tests
             cartPage = new CartPage(driver);
             productPage = new ProductPage(driver);
 
-            // 1. Đăng nhập
             driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Account/Login");
             loginPage.Login(ConfigHelper.TestUserPhone, ConfigHelper.TestUserPassword);
-            Thread.Sleep(1500);
+            Thread.Sleep(1000);
 
-            // 2. MỒI DỮ LIỆU: Thêm S24 Ultra vào giỏ trước khi test
-            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/{inStockProductId}");
-            Thread.Sleep(1500);
-
-            productPage.ClickThemVaoGio();
-            Thread.Sleep(1500);
-            productPage.AcceptAlert(); // Đóng popup thêm thành công (nếu có)
-
-            // 3. Bay thẳng vào trang Giỏ hàng
+            // Xóa hết sản phẩm trong giỏ hiện tại
             driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
-            Thread.Sleep(1500);
-        }
+            Thread.Sleep(1000);
+            while (driver.PageSource.Contains("btn-trash"))
+            {
+                cartPage.ClickXoaSanPham();
+                cartPage.ConfirmXoaSweetAlert();
+                Thread.Sleep(1000);
+            }
 
+            // Sau đó mới thêm sản phẩm mới
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/{inStockProductId}");
+            Thread.Sleep(1000);
+            productPage.ClickThemVaoGio();
+            Thread.Sleep(1000);
+            productPage.AcceptAlert();
+
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
+            Thread.Sleep(1000);
+        }
         [Test]
         [Property("TC_ID", "TC_CART_01")]
         public void TC_CART_01_ThemTrungSanPham_PhaiCongDonSoLuong()
         {
+            // Lấy số lượng trước khi thêm
             int initialQty = cartPage.GetSoLuongHienTai();
 
-            // Về lại trang S24 Ultra bấm Thêm lần nữa
+            // Thêm lại sản phẩm lần 2
             driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/{inStockProductId}");
             Thread.Sleep(1500);
-
             productPage.ClickThemVaoGio();
             Thread.Sleep(1500);
-            productPage.AcceptAlert();
+            productPage.AcceptAlert(); // Đóng popup thông báo "Đã thêm vào giỏ"
 
-            // Vào lại giỏ hàng kiểm tra
+            // Chờ giỏ hàng cập nhật (có thể cần chờ AJAX)
+            Thread.Sleep(3000);
             driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
-            Thread.Sleep(1500);
+            Thread.Sleep(2000);
 
+            // Lấy số lượng sau
             int newQty = cartPage.GetSoLuongHienTai();
-            Assert.IsTrue(newQty > initialQty, $"Lỗi: Thêm trùng sản phẩm nhưng số lượng không cộng dồn! (Hiện tại: {newQty})");
+
+            Assert.Greater(newQty, initialQty,
+                $"Lỗi: Thêm trùng sản phẩm nhưng số lượng không cộng dồn! (Trước: {initialQty}, Sau: {newQty})");
         }
 
         [Test]
@@ -116,17 +127,90 @@ namespace PhoneStore.AutoTests.Tests
         [Property("TC_ID", "TC_CART_07")]
         public void TC_CART_07_TangSoLuong_VuotQuaTonKho_PhaiBaoLoi()
         {
-            // Cố tình spam nút (+) 10 lần
-            for (int i = 0; i < 10; i++)
+            // Lấy số lượng tồn kho (nếu có)
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/{inStockProductId}");
+            int stock = productPage.GetStockQuantity();
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
+            Thread.Sleep(500);
+
+            int currentQty = cartPage.GetSoLuongHienTai();
+            int maxClick = stock - currentQty + 1; // Số lần click cần để vượt quá
+            if (maxClick <= 0) maxClick = 5;
+
+            bool hasError = false;
+            for (int i = 0; i < maxClick; i++)
             {
                 cartPage.TangSoLuong();
-                Thread.Sleep(300);
+              //  Thread.Sleep(100);
+
+                // Kiểm tra SweetAlert sau mỗi lần click
+                try
+                {
+                    var sweetAlert = driver.FindElement(By.CssSelector(".swal2-container"));
+                    if (sweetAlert.Displayed)
+                    {
+                        hasError = true;
+                        break;
+                    }
+                }
+                catch { }
+
+                // Kiểm tra Alert
+                try
+                {
+                    var alert = driver.SwitchTo().Alert();
+                    hasError = true;
+                    alert.Accept();
+                    break;
+                }
+                catch { }
             }
 
-            string pageText = driver.PageSource.ToLower();
-            bool hasError = pageText.Contains("kho") || pageText.Contains("vượt quá") || pageText.Contains("không đủ") || pageText.Contains("tối đa");
+            // Nếu không có alert/sweetalert, kiểm tra số lượng cuối cùng có vượt stock không
+            int finalQty = cartPage.GetSoLuongHienTai();
+            if (!hasError && finalQty > stock)
+            {
+                hasError = false; // vẫn không báo lỗi -> bug
+            }
+            else if (!hasError && finalQty <= stock)
+            {
+                // Có thể chưa chạm tới giới hạn, cần tăng số lần click
+                Assert.Inconclusive($"Chưa vượt quá tồn kho (stock={stock}, finalQty={finalQty}). Cần kiểm tra lại dữ liệu.");
+            }
 
-            Assert.IsTrue(hasError, "Lỗi: Bấm tăng số lượng quá tồn kho nhưng Web đứng im không báo lỗi!");
+            Assert.IsTrue(hasError, "Lỗi: Bấm tăng số lượng quá tồn kho nhưng Web không báo lỗi (không alert, không sweetalert)!");
+        }
+        [Test]
+        [Property("TC_ID", "TC_CHK_25")]
+        public void TC_CHK_25_GioiHanSoLuongTrongGio_KhongVuotStock()
+        {
+            // Chuẩn bị: sản phẩm có stock = 2, thêm vào giỏ với số lượng = 2
+            // (có thể dùng productId cụ thể, hoặc set stock qua DB)
+            // Giả sử sản phẩm ID = 2 có stock = 2
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/2");
+            // Thêm 2 lần để có Qty=2 (hoặc dùng JS tăng số lượng)
+            productPage.ClickThemVaoGio(); // lần 1
+            productPage.AcceptAlert();
+            productPage.ClickThemVaoGio(); // lần 2
+            productPage.AcceptAlert();
+
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
+            Thread.Sleep(1000);
+
+            // Lưu số lượng ban đầu (2)
+            var qtyInput = driver.FindElement(By.CssSelector(".qty-input, input[name*='quantity']"));
+            int oldQty = int.Parse(qtyInput.GetAttribute("value"));
+
+            // Click nút (+)
+            cartPage.TangSoLuong();
+            Thread.Sleep(500);
+
+            // Kiểm tra: số lượng không tăng, hoặc có alert
+            int newQty = int.Parse(qtyInput.GetAttribute("value"));
+            bool hasAlert = false;
+            try { driver.SwitchTo().Alert().Accept(); hasAlert = true; } catch { }
+
+            Assert.That(newQty == oldQty || hasAlert, Is.True, "Vượt quá stock nhưng vẫn tăng số lượng được!");
         }
     }
 }

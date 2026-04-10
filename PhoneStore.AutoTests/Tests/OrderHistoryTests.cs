@@ -1,10 +1,11 @@
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
 using PhoneStore.AutoTests.Core;
 using PhoneStore.AutoTests.Pages;
 using PhoneStore.AutoTests.Utilities;
-using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Threading;
 
 namespace PhoneStore.AutoTests.Tests
@@ -12,140 +13,244 @@ namespace PhoneStore.AutoTests.Tests
     [TestFixture]
     public class OrderHistoryTests : BaseTest
     {
-        private HomePage homePage;
         private LoginPage loginPage;
         private OrderHistoryPage orderHistoryPage;
 
-        // Gọi thêm 2 Page này để làm Tiền điều kiện (Mua hàng)
-        private ProductPage productPage;
-        private CheckoutPage checkoutPage;
-
         [SetUp]
-        public void InitPages()
+        public void KhoiTao()
         {
-            homePage = new HomePage(driver);
             loginPage = new LoginPage(driver);
             orderHistoryPage = new OrderHistoryPage(driver);
-            productPage = new ProductPage(driver);
-            checkoutPage = new CheckoutPage(driver);
 
-            // Đăng nhập 1 lần duy nhất để chuẩn bị môi trường
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl);
-            homePage.ClickMenuTaiKhoan();
+            driver.FindElement(By.XPath("//span[contains(text(),'Tài khoản')]")).Click();
             Thread.Sleep(500);
-            homePage.ClickDangNhap();
+            driver.FindElement(By.XPath("//a[contains(text(),'Đăng nhập')]")).Click();
             Thread.Sleep(500);
             loginPage.Login(ConfigHelper.TestUserPhone, ConfigHelper.TestUserPassword);
             Thread.Sleep(2000);
         }
 
-        public static IEnumerable<TestCaseData> GetOrderHistoryData()
+        private string NormalizeString(string input)
         {
-            return JsonReader.GetTestData("order_history.json");
+            if (string.IsNullOrEmpty(input)) return input;
+            string normalized = input.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+            foreach (char c in normalized)
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                    sb.Append(c);
+            return sb.ToString().Normalize(NormalizationForm.FormC).ToUpperInvariant();
         }
 
-        [Test, TestCaseSource(nameof(GetOrderHistoryData))]
-        public void AutoRun_OrderHistory_DataDriven(JObject testData)
+        private void TaoDonHangMoi()
         {
-            // Bóc tách dữ liệu
-            string expectedResult = testData["ExpectedResult"]?.ToString();
-            string tabName = testData["Tab"]?.ToString();
-            string action = testData["Action"]?.ToString();
-            string cancelReason = testData["CancelReason"]?.ToString();
-            string textareaInput = testData["TextareaInput"]?.ToString();
-            string searchKeyword = testData["SearchKeyword"]?.ToString();
-
-            // ===============================================================
-            // TIỀN ĐIỀU KIỆN (PRE-CONDITION): TỰ ĐỘNG ĐẶT HÀNG TRƯỚC
-            // ===============================================================
-            // Chỉ đặt hàng nếu Kịch bản yêu cầu kiểm tra hoặc thực hiện Hủy đơn
-            if (!string.IsNullOrEmpty(cancelReason) || action == "Check_Cancel_Button")
-            {
-                // Thay ID 2 thành ID 5 vì mã 2 đã hết hàng (Stock=0)
-                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/5");
-                OpenQA.Selenium.Support.UI.WebDriverWait wait = new OpenQA.Selenium.Support.UI.WebDriverWait(driver, System.TimeSpan.FromSeconds(5));
-                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".btn-action.btn-buy"))).Click();
-                Thread.Sleep(2000); // Chờ load trang thanh toán
-
-                // Bấm Đặt hàng luôn (Do đã Login, địa chỉ có sẵn)
-                try { driver.FindElement(By.XPath("//button[contains(text(), 'Đặt hàng') or contains(text(), 'Thanh toán')]")).Click(); } catch { }
-                Thread.Sleep(1500);
-
-                // Dọn dẹp các Popup thông báo đặt hàng thành công
-                try { driver.SwitchTo().Alert().Accept(); Thread.Sleep(500); } catch { }
-                orderHistoryPage.CloseSweetAlert();
-            }
-
-            // ===============================================================
-            // BẮT ĐẦU TEST LỊCH SỬ ĐƠN HÀNG (CẬP NHẬT ĐƯỜNG DẪN MỚI)
-            // ===============================================================
-            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/OrderCustomer/History");
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/5");
+            var wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(5));
+            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".btn-action.btn-buy"))).Click();
             Thread.Sleep(2000);
+            driver.FindElement(By.XPath("//button[contains(text(),'Đặt hàng')]")).Click();
+            Thread.Sleep(1500);
+            orderHistoryPage.ClickOkSweetAlert();
+        }
 
-            // 1. Chuyển Tab trạng thái
-            if (!string.IsNullOrEmpty(tabName))
-            {
-                try { driver.FindElement(By.XPath($"//a[contains(text(), '{tabName}')]")).Click(); Thread.Sleep(1500); } catch { }
-            }
+        [Test]
+        [Property("TC_ID", "TC_ORD_01")]
+        public void TC_ORD_01_HienThiTatCaDonHang()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            Assert.Greater(orderHistoryPage.GetOrderCount(), 0, "Không hiển thị đơn hàng nào");
+        }
 
-            // TÌM KIẾM ĐƠN HÀNG (Nếu có JSON)
-            if (!string.IsNullOrEmpty(searchKeyword))
-            {
-                try
-                {
-                    var input = driver.FindElement(By.CssSelector("input[type='search'], input[name='search']"));
-                    input.Clear();
-                    input.SendKeys(searchKeyword);
-                    input.SendKeys(Keys.Enter);
-                    Thread.Sleep(1500);
-                }
-                catch { }
-            }
+        [Test]
+        [Property("TC_ID", "TC_ORD_02")]
+        public void TC_ORD_02_LocDonChoXacNhan()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            orderHistoryPage.SelectStatus("Chờ xác nhận");
+            int count = orderHistoryPage.GetOrderCount();
+            Assert.Greater(count, 0, "Không có đơn hàng nào sau khi lọc Chờ xác nhận");
+            string firstStatus = orderHistoryPage.GetFirstOrderStatus();
+            Assert.AreEqual(NormalizeString("Chờ xác nhận"), NormalizeString(firstStatus), "Trạng thái dòng đầu không đúng");
+        }
 
-            // 2. Chạy hành động Hủy đơn hoặc phân trang
-            if (!string.IsNullOrEmpty(cancelReason))
-            {
-                try
-                {
-                    orderHistoryPage.ClickHuyDon();
-                    Thread.Sleep(1000);
-                    orderHistoryPage.ChonLyDoVaXacNhan(cancelReason, textareaInput);
-                    Thread.Sleep(1000);
-                    orderHistoryPage.ClickOKPopup();
-                    Thread.Sleep(1000);
-                }
-                catch { }
-            }
-            else if (action == "Check_Cancel_Button")
-            {
-                Assert.IsTrue(orderHistoryPage.IsCancelButtonPresent(), "Lỗi: Không tìm thấy nút Hủy đơn trên hệ thống!");
-            }
-            else if (action == "Click_Page_2")
-            {
-                try { driver.FindElement(By.XPath($"//a[contains(text(), '2') or contains(@class, 'page-link') and text()='2']")).Click(); Thread.Sleep(1500); } catch { }
-            }
-
-            // 3. SO SÁNH KẾT QUẢ ĐÚNG SAI
-            if (expectedResult == "Order_Cancelled_Successfully")
-            {
-                Assert.IsTrue(driver.PageSource.Contains("Đã hủy") || driver.PageSource.Contains("Thành công"), "Pass: Đã hủy đơn hàng thành công!");
-            }
-            else if (expectedResult == "Error_Missing_Reason")
-            {
-                Assert.IsTrue(driver.PageSource.Contains("lý do") || driver.PageSource.Contains("Reason"), "Lỗi: Hệ thống nuốt lỗi khi bỏ trống lý do hủy.");
-            }
-            else if (expectedResult == "Show_All_Orders" || expectedResult == "Show_Only_Pending_Orders")
-            {
-                Assert.IsTrue(true, $"Pass view: {expectedResult}");
-            }
-            else if (expectedResult == "Show_Order_1024_Only" || expectedResult == "Show_Next_10_Orders")
-            {
-                Assert.IsTrue(true, $"Pass filter/pagination: {expectedResult}");
-            }
+        [Test]
+        [Property("TC_ID", "TC_ORD_03")]
+        public void TC_ORD_03_LocDonDangGiao()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            orderHistoryPage.SelectStatus("Đang giao");
+            int count = orderHistoryPage.GetOrderCount();
+            if (count == 0)
+                Assert.IsTrue(orderHistoryPage.IsEmptyMessageDisplayed(), "Không có đơn đang giao nhưng không hiển thị thông báo");
             else
             {
-                Assert.IsTrue(true, "Pass: Test kịch bản lọc History thành công.");
+                string firstStatus = orderHistoryPage.GetFirstOrderStatus();
+                Assert.AreEqual(NormalizeString("Đang giao"), NormalizeString(firstStatus));
             }
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_04")]
+        public void TC_ORD_04_XemChiTietDonHang()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            if (orderHistoryPage.GetOrderCount() == 0) Assert.Inconclusive("Không có đơn hàng để xem chi tiết");
+            orderHistoryPage.ClickFirstOrderId();
+            decimal total = orderHistoryPage.GetModalTotal();
+            Assert.That(total, Is.GreaterThan(0), "Tổng tiền không hợp lệ trong modal chi tiết");
+            orderHistoryPage.CloseModal();
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_05")]
+        public void TC_ORD_05_NutHuyHienThi()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            if (orderHistoryPage.GetOrderCount() == 0) Assert.Inconclusive("Không có đơn hàng để kiểm tra nút hủy");
+            // Kiểm tra nút hủy có tồn tại trên dòng đầu không
+            Assert.DoesNotThrow(() => orderHistoryPage.ClickFirstCancelButton(), "Không tìm thấy nút hủy trên dòng đơn hàng");
+            // Đóng popup hủy nếu bị mở (có thể click Cancel)
+            try
+            {
+                driver.FindElement(By.XPath("//button[contains(text(),'Hủy')]")).Click();
+            }
+            catch { }
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_07")]
+        public void TC_ORD_07_HuyDonVoiLyDoCoSan()
+        {
+            TaoDonHangMoi();
+            orderHistoryPage.GoToOrderHistory();
+            orderHistoryPage.SelectStatus("Chờ xác nhận");
+            orderHistoryPage.ClickFirstCancelButton();
+            orderHistoryPage.SelectCancelReason("Tìm thấy giá tốt hơn");
+            orderHistoryPage.ConfirmCancel();
+            orderHistoryPage.ClickOkSweetAlert();
+            orderHistoryPage.SelectStatus("Đã hủy");
+            Assert.Greater(orderHistoryPage.GetOrderCount(), 0, "Đơn hàng không xuất hiện trong danh sách đã hủy");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_09")]
+        public void TC_ORD_09_HuyDonVoiLyDoKhac()
+        {
+            TaoDonHangMoi();
+            orderHistoryPage.GoToOrderHistory();
+            orderHistoryPage.SelectStatus("Chờ xác nhận");
+            orderHistoryPage.ClickFirstCancelButton();
+            orderHistoryPage.SelectCancelReason("Lý do khác");
+            orderHistoryPage.EnterCancelDetail("Hàng giao chậm quá");
+            orderHistoryPage.ConfirmCancel();
+            orderHistoryPage.ClickOkSweetAlert();
+            orderHistoryPage.SelectStatus("Đã hủy");
+            Assert.Greater(orderHistoryPage.GetOrderCount(), 0);
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_10")]
+        public void TC_ORD_10_HuyDonBoTrongTextarea()
+        {
+            TaoDonHangMoi();
+            orderHistoryPage.GoToOrderHistory();
+            orderHistoryPage.SelectStatus("Chờ xác nhận");
+            orderHistoryPage.ClickFirstCancelButton();
+            orderHistoryPage.SelectCancelReason("Lý do khác");
+            orderHistoryPage.EnterCancelDetail("");
+            orderHistoryPage.ConfirmCancel();
+            // Kiểm tra lỗi hiển thị (SweetAlert error)
+            string error = driver.FindElement(By.CssSelector(".swal2-error")).Text;
+            Assert.IsTrue(error.Contains("bỏ trống") || error.Contains("không được để trống"));
+            // Đóng alert
+            orderHistoryPage.ClickOkSweetAlert();
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_12")]
+        public void TC_ORD_12_TimKiemTheoMaDon()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            if (orderHistoryPage.GetOrderCount() == 0) Assert.Inconclusive("Không có đơn hàng để lấy ID");
+            string firstId = orderHistoryPage.GetFirstOrderId();
+            orderHistoryPage.SearchByOrderId(firstId);
+            Assert.AreEqual(1, orderHistoryPage.GetOrderCount(), $"Tìm kiếm ID {firstId} không trả về đúng 1 kết quả");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_13")]
+        public void TC_ORD_13_TimKiemMaDonKhongTonTai()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            orderHistoryPage.SearchByOrderId("999999");
+            Assert.IsTrue(orderHistoryPage.IsEmptyMessageDisplayed(), "Không hiển thị thông báo khi không tìm thấy");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_15")]
+        public void TC_ORD_15_PhanTrang()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            int beforeCount = orderHistoryPage.GetOrderCount();
+            if (beforeCount == 0) Assert.Inconclusive("Không có đơn hàng để phân trang");
+            // Giả sử có nút phân trang số 2
+            try
+            {
+                orderHistoryPage.ClickPage2();
+                int afterCount = orderHistoryPage.GetOrderCount();
+                Assert.AreNotEqual(beforeCount, afterCount, "Phân trang không hoạt động");
+            }
+            catch
+            {
+                Assert.Inconclusive("Không tìm thấy nút phân trang");
+            }
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_16")]
+        public void TC_ORD_16_ChiTietPhiVanChuyen()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            if (orderHistoryPage.GetOrderCount() == 0) Assert.Inconclusive("Không có đơn hàng để kiểm tra");
+            orderHistoryPage.ClickFirstOrderId();
+            decimal subtotal = orderHistoryPage.GetModalSubtotal();
+            decimal shipping = orderHistoryPage.GetModalShipping();
+            decimal total = orderHistoryPage.GetModalTotal();
+            Assert.That(total, Is.EqualTo(subtotal + shipping).Within(0.01m), "Tổng tiền không bằng Tạm tính + Phí vận chuyển");
+            orderHistoryPage.CloseModal();
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_19")]
+        public void TC_ORD_19_NutQuayLaiDanhSach()
+        {
+            orderHistoryPage.GoToOrderHistory();
+            if (orderHistoryPage.GetOrderCount() == 0) Assert.Inconclusive("Không có đơn hàng để kiểm tra");
+            orderHistoryPage.ClickFirstOrderId();
+            orderHistoryPage.CloseModal(); // Đóng modal quay lại danh sách
+            Assert.IsTrue(driver.Url.Contains("History"), "Không quay lại danh sách đơn hàng");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_ORD_22")]
+        public void TC_ORD_22_HienThiLyDoHuyTrongChiTiet()
+        {
+            TaoDonHangMoi();
+            orderHistoryPage.GoToOrderHistory();
+            orderHistoryPage.SelectStatus("Chờ xác nhận");
+            orderHistoryPage.ClickFirstCancelButton();
+            orderHistoryPage.SelectCancelReason("Lý do khác");
+            orderHistoryPage.EnterCancelDetail("Test reason 123");
+            orderHistoryPage.ConfirmCancel();
+            orderHistoryPage.ClickOkSweetAlert();
+
+            orderHistoryPage.SelectStatus("Đã hủy");
+            orderHistoryPage.ClickFirstOrderId();
+            // Tìm dòng lý do hủy trong modal
+            var reasonElem = driver.FindElement(By.XPath("//*[contains(text(),'Lý do hủy')]/following-sibling::*"));
+            string reason = reasonElem.Text.Trim();
+            Assert.AreEqual("Test reason 123", reason, "Lý do hủy không hiển thị chính xác");
+            orderHistoryPage.CloseModal();
         }
     }
 }

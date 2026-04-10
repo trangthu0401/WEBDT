@@ -54,31 +54,62 @@ namespace PhoneStore.AutoTests.Pages
             catch { }
         }
 
+
+        // Lấy số lượng của sản phẩm đầu tiên (giả định chỉ có 1 loại sản phẩm)
         public int GetSoLuongHienTai()
         {
             try
             {
-                string val = wait.Until(ExpectedConditions.ElementIsVisible(txtSoLuong)).GetAttribute("value");
+                // Tìm input số lượng (có thể là input với id bắt đầu bằng "qty-" hoặc class "quantity")
+                var qtyInput = wait.Until(ExpectedConditions.ElementExists(By.CssSelector("input[id^='qty-'], input.quantity")));
+                string val = qtyInput.GetAttribute("value");
                 return int.TryParse(val, out int qty) ? qty : 0;
             }
             catch { return 0; }
+        }
+
+        // Đếm số lượng sản phẩm (dòng) trong giỏ
+        public int GetSoLuongSanPham()
+        {
+            try
+            {
+                // Locator cho mỗi dòng sản phẩm (thường là <tr> hoặc div có class cart-item)
+                var rows = driver.FindElements(By.CssSelector(".cart-item, .product-row, tr.cart-item"));
+                return rows.Count;
+            }
+            catch { return 0; }
+        }
+
+        // Nếu có nhiều sản phẩm, lấy số lượng của sản phẩm theo tên
+        public int GetSoLuongTheoTenSanPham(string productName)
+        {
+            var qtyInput = wait.Until(ExpectedConditions.ElementExists(
+                By.XPath($"//tr[contains(.,'{productName}')]//input[starts-with(@id,'qty-')]")));
+            string val = qtyInput.GetAttribute("value");
+            return int.TryParse(val, out int qty) ? qty : 0;
         }
 
         public string GetTongTienHienTai()
         {
             try
             {
-                // Quét tìm tất cả các chữ chứa ký hiệu tiền tệ (₫) trên màn hình. 
-                // Dựa vào file CSV dòng 34, giá tiền hiển thị dạng 36,000,000₫
-                var elements = driver.FindElements(By.XPath("//*[contains(text(), '₫') or contains(text(), 'VNĐ')]"));
-                if (elements.Count > 0)
-                {
-                    // Lấy cục tiền ở dưới cùng (thường là Tổng tiền thanh toán)
-                    return elements[elements.Count - 1].Text;
-                }
-                return "0";
+                // Dùng locator chính xác từ id grandTotalDisplay
+                var totalElement = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("grandTotalDisplay")));
+                return totalElement.Text.Trim();
             }
-            catch { return "0"; }
+            catch
+            {
+                // Fallback: tìm element chứa ₫ hoặc VNĐ
+                try
+                {
+                    var elements = driver.FindElements(By.XPath("//*[contains(text(), '₫') or contains(text(), 'VNĐ')]"));
+                    if (elements.Count > 0)
+                        return elements[elements.Count - 1].Text.Trim();
+                }
+                catch { }
+                return "";
+            }
         }
+
     }
 }
