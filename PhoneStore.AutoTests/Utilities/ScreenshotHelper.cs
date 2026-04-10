@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using NUnit.Framework;
+using OpenQA.Selenium;
 using System;
 using System.IO;
 
@@ -6,7 +7,8 @@ namespace PhoneStore.AutoTests.Utilities
 {
     public class ScreenshotHelper
     {
-        public static string TakeScreenshot(IWebDriver driver, string testName)
+        // Bổ sung thêm biến tcId để lấy tên siêu ngắn
+        public static string TakeScreenshot(IWebDriver driver, string testName, string tcId = null)
         {
             if (driver == null) return string.Empty;
 
@@ -19,24 +21,27 @@ namespace PhoneStore.AutoTests.Utilities
                 // 2. Trỏ đường dẫn ra thư mục Screenshots ở project gốc
                 string screenshotFolder = Path.Combine(projectDir, "Screenshots");
 
-                // 3. KIỂM TRA FOLDER ẢNH TỒN TẠI CHƯA -> CHƯA THÌ TẠO MỚI
                 if (!Directory.Exists(screenshotFolder))
                 {
                     Directory.CreateDirectory(screenshotFolder);
                 }
 
-                // Chỉnh lại tên file cho hợp lệ (tránh các ký tự đặc biệt)
-                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string safeTestName = testName.Replace("\"", "").Replace("\\", "").Replace("/", "");
-                string fileName = $"{safeTestName}_{timestamp}.png";
+                // 3. RÚT GỌN TÊN ẢNH
+                // Nếu có TC_ID (VD: TC_PROD_03) thì dùng nó. Nếu không có thì lấy đoạn text trước dấu ngoặc đơn của tên hàm.
+                string shortName = !string.IsNullOrEmpty(tcId) ? tcId : testName.Split('(')[0];
 
+                // Dọn dẹp ký tự cấm của Windows
+                string safeTestName = string.Join("_", shortName.Split(Path.GetInvalidFileNameChars()));
+
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileName = $"{safeTestName}_{timestamp}.png";
                 string filePath = Path.Combine(screenshotFolder, fileName);
 
                 // 4. Chụp và lưu ảnh
                 Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
                 screenshot.SaveAsFile(filePath);
 
-                return filePath; // Trả về đường dẫn để ExcelHelper lưu làm link
+                return filePath;
             }
             catch (Exception ex)
             {

@@ -4,6 +4,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using PhoneStore.AutoTests.Utilities;
 using System;
+using System.IO;
 
 namespace PhoneStore.AutoTests.Core
 {
@@ -11,64 +12,69 @@ namespace PhoneStore.AutoTests.Core
     {
         protected IWebDriver driver;
 
+        [OneTimeSetUp]
+        public void GlobalSetup()
+        {
+            // Tên file Excel thiết kế test case của bạn (để ở thư mục gốc Project)
+            ExcelHelper.InitExistingExcel("ST-FunctionalTestCase-BDCLPM.xlsx");
+        }
+
+        [OneTimeTearDown]
+        public void GlobalTearDown()
+        {
+            // Bắt buộc phải có hàm này thì Excel mới được lưu
+            ExcelHelper.SaveAndClose();
+        }
+
         [SetUp]
         public void Setup()
         {
-            // ================================================================
-            // TẠO CẤU HÌNH TRỊ MỌI LOẠI THÔNG BÁO CỦA TRÌNH DUYỆT CHROME
-            // ================================================================
             ChromeOptions options = new ChromeOptions();
-
-            // 1. Tắt bảng hỏi "Lưu mật khẩu không?"
             options.AddUserProfilePreference("credentials_enable_service", false);
             options.AddUserProfilePreference("profile.password_manager_enabled", false);
-
-            // 2. TẮT BẢNG CẢNH BÁO "LỘ MẬT KHẨU" (CHANGE YOUR PASSWORD) NÀY NHÉ!
             options.AddUserProfilePreference("profile.password_manager_leak_detection", false);
             options.AddUserProfilePreference("safebrowsing.enabled", false);
-
-            // 3. Tắt luôn các thông báo xin quyền (Vị trí, Notifications...)
             options.AddArgument("--disable-notifications");
-
-            // 4. Ẩn dòng chữ "Chrome is being controlled by automated test software"
             options.AddExcludedArgument("enable-automation");
 
-            // Truyền cấu hình vào "Tài xế" Chrome
             driver = new ChromeDriver(options);
-
-            // Các thiết lập cơ bản khác
             driver.Manage().Window.Maximize();
-            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
-            // Bay vào trang chủ
-            driver.Navigate().GoToUrl(ConfigHelper.BaseUrl);
+            // Giới hạn thời gian tránh treo web
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+            driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
         }
 
         [TearDown]
         public void Teardown()
         {
-            string screenshotPath = "";
             var status = TestContext.CurrentContext.Result.Outcome.Status;
-            var testName = TestContext.CurrentContext.Test.Name;
             var error = TestContext.CurrentContext.Result.Message ?? "";
+
+            // Lấy ra TC_ID để truyền qua hàm chụp ảnh và hàm ghi Excel
+            var tcId = TestContext.CurrentContext.Test.Properties.Get("TC_ID")?.ToString();
+            var rawTestName = TestContext.CurrentContext.Test.Name;
 
             try
             {
-                if (status == NUnit.Framework.Interfaces.TestStatus.Failed)
+                if (status == TestStatus.Failed)
                 {
-                    // Chụp ảnh và lưu vào folder Screenshots trong Project
-                    screenshotPath = ScreenshotHelper.TakeScreenshot(driver, testName);
+                    // Truyền tcId vào để cắt ngắn tên file ảnh
+                    ScreenshotHelper.TakeScreenshot(driver, rawTestName, tcId);
                 }
-                // Ghi vào file Excel .xlsx
-                ExcelHelper.LogTestResult(testName, status.ToString(), error, screenshotPath);
+
+                if (!string.IsNullOrEmpty(tcId))
+                {
+                    string statusStr = (status == TestStatus.Passed) ? "Passed" : "Failed";
+                    ExcelHelper.UpdateTestResult(tcId, statusStr, error);
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi trong quá trình Teardown: {ex.Message}");
+                Console.WriteLine($"Lỗi Teardown: {ex.Message}");
             }
             finally
             {
-                // ĐẢM BẢO ĐÓNG TRÌNH DUYỆT 100%
                 if (driver != null)
                 {
                     driver.Quit();

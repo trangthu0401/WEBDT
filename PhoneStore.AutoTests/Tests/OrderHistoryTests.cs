@@ -61,8 +61,8 @@ namespace PhoneStore.AutoTests.Tests
             // Chỉ đặt hàng nếu Kịch bản yêu cầu kiểm tra hoặc thực hiện Hủy đơn
             if (!string.IsNullOrEmpty(cancelReason) || action == "Check_Cancel_Button")
             {
-                // Bay tới trang sản phẩm và bấm Mua Ngay
-                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/2");
+                // Thay ID 2 thành ID 5 vì mã 2 đã hết hàng (Stock=0)
+                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/5");
                 OpenQA.Selenium.Support.UI.WebDriverWait wait = new OpenQA.Selenium.Support.UI.WebDriverWait(driver, System.TimeSpan.FromSeconds(5));
                 wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".btn-action.btn-buy"))).Click();
                 Thread.Sleep(2000); // Chờ load trang thanh toán
@@ -77,9 +77,9 @@ namespace PhoneStore.AutoTests.Tests
             }
 
             // ===============================================================
-            // BẮT ĐẦU TEST LỊCH SỬ ĐƠN HÀNG
+            // BẮT ĐẦU TEST LỊCH SỬ ĐƠN HÀNG (CẬP NHẬT ĐƯỜNG DẪN MỚI)
             // ===============================================================
-            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/OrderHistory");
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/OrderCustomer/History");
             Thread.Sleep(2000);
 
             // 1. Chuyển Tab trạng thái
@@ -91,13 +91,15 @@ namespace PhoneStore.AutoTests.Tests
             // TÌM KIẾM ĐƠN HÀNG (Nếu có JSON)
             if (!string.IsNullOrEmpty(searchKeyword))
             {
-                try { 
+                try
+                {
                     var input = driver.FindElement(By.CssSelector("input[type='search'], input[name='search']"));
                     input.Clear();
                     input.SendKeys(searchKeyword);
                     input.SendKeys(Keys.Enter);
                     Thread.Sleep(1500);
-                } catch { }
+                }
+                catch { }
             }
 
             // 2. Chạy hành động Hủy đơn hoặc phân trang
@@ -138,7 +140,7 @@ namespace PhoneStore.AutoTests.Tests
             }
             else if (expectedResult == "Show_Order_1024_Only" || expectedResult == "Show_Next_10_Orders")
             {
-                 Assert.IsTrue(true, $"Pass filter/pagination: {expectedResult}");
+                Assert.IsTrue(true, $"Pass filter/pagination: {expectedResult}");
             }
             else
             {

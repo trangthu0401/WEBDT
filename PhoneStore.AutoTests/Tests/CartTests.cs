@@ -1,10 +1,7 @@
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using OpenQA.Selenium;
 using PhoneStore.AutoTests.Core;
 using PhoneStore.AutoTests.Pages;
 using PhoneStore.AutoTests.Utilities;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace PhoneStore.AutoTests.Tests
@@ -12,116 +9,124 @@ namespace PhoneStore.AutoTests.Tests
     [TestFixture]
     public class CartTests : BaseTest
     {
-        private HomePage homePage;
         private LoginPage loginPage;
         private CartPage cartPage;
+        private ProductPage productPage;
+
+        // Dùng đúng con Samsung S24 Ultra (ID=5) trong file record CSV của bạn
+        private string inStockProductId = "5";
 
         [SetUp]
         public void InitAndGoToCart()
         {
-            homePage = new HomePage(driver);
             loginPage = new LoginPage(driver);
             cartPage = new CartPage(driver);
+            productPage = new ProductPage(driver);
 
-            // 1. Đăng nhập để thấy giỏ hàng cá nhân
-            homePage.ClickMenuTaiKhoan();
-            Thread.Sleep(1000);
-            homePage.ClickDangNhap();
-            Thread.Sleep(1000);
-            loginPage.Login("nguyentrathanhvy2005@gmail.com", "123456");
-            Thread.Sleep(2000);
+            // 1. Đăng nhập
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Account/Login");
+            loginPage.Login(ConfigHelper.TestUserPhone, ConfigHelper.TestUserPassword);
+            Thread.Sleep(1500);
 
-            // 2. Đi thẳng vào trang Giỏ hàng
-            driver.Navigate().GoToUrl("https://localhost:7033/Cart");
-            Thread.Sleep(2000);
+            // 2. MỒI DỮ LIỆU: Thêm S24 Ultra vào giỏ trước khi test
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/{inStockProductId}");
+            Thread.Sleep(1500);
+
+            productPage.ClickThemVaoGio();
+            Thread.Sleep(1500);
+            productPage.AcceptAlert(); // Đóng popup thêm thành công (nếu có)
+
+            // 3. Bay thẳng vào trang Giỏ hàng
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
+            Thread.Sleep(1500);
         }
 
-        public static IEnumerable<TestCaseData> GetCartData()
+        [Test]
+        [Property("TC_ID", "TC_CART_01")]
+        public void TC_CART_01_ThemTrungSanPham_PhaiCongDonSoLuong()
         {
-            // Đảm bảo bạn đã có file cart.json trong thư mục DataTests/TestData
-            return JsonReader.GetTestData("cart.json");
+            int initialQty = cartPage.GetSoLuongHienTai();
+
+            // Về lại trang S24 Ultra bấm Thêm lần nữa
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/{inStockProductId}");
+            Thread.Sleep(1500);
+
+            productPage.ClickThemVaoGio();
+            Thread.Sleep(1500);
+            productPage.AcceptAlert();
+
+            // Vào lại giỏ hàng kiểm tra
+            driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
+            Thread.Sleep(1500);
+
+            int newQty = cartPage.GetSoLuongHienTai();
+            Assert.IsTrue(newQty > initialQty, $"Lỗi: Thêm trùng sản phẩm nhưng số lượng không cộng dồn! (Hiện tại: {newQty})");
         }
 
-        [Test, TestCaseSource(nameof(GetCartData))]
-        public void AutoRun_Cart_DataDriven(JObject testData)
+        [Test]
+        [Property("TC_ID", "TC_CART_02")]
+        public void TC_CART_02_NhanNutTangSoLuong_TongTienPhaiTangLen()
         {
-            string action = testData["Action"]?.ToString();
-            string expectedResult = testData["ExpectedResult"]?.ToString();
-            int currentCartQty = testData["CurrentCartQty"]?.ToObject<int>() ?? 0;
+            string priceBefore = cartPage.GetTongTienHienTai();
 
-            OpenQA.Selenium.Support.UI.WebDriverWait wait = new OpenQA.Selenium.Support.UI.WebDriverWait(driver, System.TimeSpan.FromSeconds(5));
+            cartPage.TangSoLuong();
+            Thread.Sleep(2000); // Chờ web tính lại giá tiền
 
-            // TIỀN ĐIỀU KIỆN
-            if (currentCartQty > 0)
-            {
-                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/2");
-                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".btn-action.btn-add"))).Click();
-                cartPage.AcceptAlert();
-                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
-            }
+            string priceAfter = cartPage.GetTongTienHienTai();
 
-            // THỰC THI HÀNH ĐỘNG
-            if (action == "Click_MuaNgay")
-            {
-                cartPage.ClickMuaNgay();
-                Thread.Sleep(2000);
-            }
-            else if (action == "Increase_Quantity" || action == "Click_Plus_Button")
+            Assert.AreNotEqual(priceBefore, priceAfter, "Lỗi: Đã bấm tăng (+) số lượng nhưng Tổng tiền không nhúc nhích!");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_CART_03")]
+        public void TC_CART_03_NhanNutGiamSoLuong_TongTienPhaiGiamXuong()
+        {
+            // Tăng lên trước để lát có cái mà giảm
+            cartPage.TangSoLuong();
+            Thread.Sleep(2000);
+
+            string priceBefore = cartPage.GetTongTienHienTai();
+
+            cartPage.GiamSoLuong();
+            Thread.Sleep(2000);
+
+            string priceAfter = cartPage.GetTongTienHienTai();
+
+            Assert.AreNotEqual(priceBefore, priceAfter, "Lỗi: Đã bấm giảm (-) số lượng nhưng Tổng tiền không thay đổi!");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_CART_05")]
+        public void TC_CART_05_XoaSanPham_HienThiThongBaoGioHangTrong()
+        {
+            cartPage.ClickXoaSanPham();
+            Thread.Sleep(1000);
+
+            // XỬ LÝ SWEET ALERT TỪ FILE CSV
+            cartPage.ConfirmXoaSweetAlert();
+            Thread.Sleep(2000);
+
+            string pageText = driver.PageSource.ToLower();
+            bool isEmpty = pageText.Contains("trống") || pageText.Contains("empty") || pageText.Contains("chưa có sản phẩm");
+
+            Assert.IsTrue(isEmpty, "Lỗi: Đã xóa thành công nhưng không thấy thông báo Giỏ hàng trống!");
+        }
+
+        [Test]
+        [Property("TC_ID", "TC_CART_07")]
+        public void TC_CART_07_TangSoLuong_VuotQuaTonKho_PhaiBaoLoi()
+        {
+            // Cố tình spam nút (+) 10 lần
+            for (int i = 0; i < 10; i++)
             {
                 cartPage.TangSoLuong();
-                Thread.Sleep(1000);
-            }
-            else if (action == "Click_Plus_Button_Twice")
-            {
-                cartPage.TangSoLuong();
-                Thread.Sleep(500);
-                cartPage.TangSoLuong();
-                Thread.Sleep(500);
-            }
-            else if (action == "Decrease_Quantity" || action == "Click_Minus_Button")
-            {
-                cartPage.GiamSoLuong();
-                Thread.Sleep(1000);
-            }
-            else if (action == "Remove_Product" || action == "Click_Delete_And_Confirm_OK")
-            {
-                cartPage.ClickXoaSanPham();
-                cartPage.AcceptAlert();
-                Thread.Sleep(1000);
-            }
-            else if (action == "Add_Same_Product")
-            {
-                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Home/ProductDetail/2");
-                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".btn-action.btn-add"))).Click();
-                cartPage.AcceptAlert();
-                driver.Navigate().GoToUrl($"{ConfigHelper.BaseUrl}/Cart");
+                Thread.Sleep(300);
             }
 
-            // KIỂM TRA KẾT QUẢ
-            if (expectedResult == "Redirect_To_Checkout")
-            {
-                Assert.IsTrue(driver.Url.Contains("Checkout"), "Lỗi: Không chuyển hướng sang trang thanh toán!");
-            }
-            else if (expectedResult == "Cart_Empty_Message" || expectedResult == "Product_Removed_From_Cart")
-            {
-                Assert.IsTrue(driver.PageSource.Contains("trống") || driver.PageSource.Contains("empty") || driver.PageSource.Contains("0"), "Lỗi: Không báo giỏ hàng trống");
-            }
-            else if (expectedResult == "Cart_Quantity_Becomes_2")
-            {
-                Assert.IsTrue(driver.PageSource.Contains("2") || driver.PageSource.Contains("value=\"2\""), "Lỗi: Số lượng không tăng thành 2");
-            }
-            else if (expectedResult == "Cannot_Exceed_Stock_Limit")
-            {
-                Assert.IsTrue(driver.PageSource.Contains("kho") || driver.PageSource.Contains("vượt quá") || driver.PageSource.Contains("max"), "Lỗi: Vượt quá tồn kho nhưng không bị cảnh báo");
-            }
-            else if (expectedResult == "Total_Price_Increased" || expectedResult == "Total_Price_Decreased")
-            {
-                Assert.IsTrue(true, $"Pass: {expectedResult}");
-            }
-            else
-            {
-                Assert.IsTrue(true, $"Pass kịch bản chưa map kết quả cụ thể: {expectedResult}");
-            }
+            string pageText = driver.PageSource.ToLower();
+            bool hasError = pageText.Contains("kho") || pageText.Contains("vượt quá") || pageText.Contains("không đủ") || pageText.Contains("tối đa");
+
+            Assert.IsTrue(hasError, "Lỗi: Bấm tăng số lượng quá tồn kho nhưng Web đứng im không báo lỗi!");
         }
     }
 }

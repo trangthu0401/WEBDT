@@ -1,19 +1,23 @@
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI; // Cần thư viện này để tương tác với Dropdown (thẻ <select>)
+using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
+using System;
 
 namespace PhoneStore.AutoTests.Pages
 {
     public class CheckoutPage
     {
         private IWebDriver driver;
+        private WebDriverWait wait;
 
         public CheckoutPage(IWebDriver driver)
         {
             this.driver = driver;
+            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
         }
 
         // ==========================================
-        // 1. LOCATORS (Các phần tử mới từ file CSV)
+        // LOCATORS (Khớp với cấu trúc HTML của bạn)
         // ==========================================
         private By txtFullName = By.XPath("//input[@id='FullName' or @name='FullName' or @id='ReceiverName']");
         private By txtPhone = By.XPath("//input[@id='Phone' or @name='Phone' or @id='ReceiverPhone']");
@@ -25,98 +29,56 @@ namespace PhoneStore.AutoTests.Pages
         private By cboWard = By.Id("ward");
         private By txtStreetDetail = By.Id("streetDetail");
         private By btnLuuDiaChi = By.XPath("//button[contains(text(),'Lưu địa chỉ') or contains(text(),'Thêm địa chỉ')]");
-        private By btnDongModal = By.CssSelector("button[data-bs-dismiss='modal']");
 
-        // Các lựa chọn Thanh toán
-        private By optBanking = By.Id("opt-banking"); // Chuyển khoản QR
-        private By optCOD = By.Id("opt-cod");         // Tiền mặt
-
-        private By btnDatHang = By.XPath("//button[contains(text(), 'Đặt hàng') or contains(text(), 'Thanh toán')]");
+        // Phương thức thanh toán & Đặt hàng
+        private By optBanking = By.Id("opt-banking");
+        private By optCOD = By.Id("opt-cod");
+        private By btnDatHang = By.CssSelector(".btn-place-order, .btn-buy-now"); // Nút 'ĐANG XỬ LÝ...' trong CSV
 
         // ==========================================
-        // 2. ACTIONS (Các thao tác)
+        // ACTIONS
         // ==========================================
         public void EnterFullName(string fullName)
         {
-            try { var e = driver.FindElement(txtFullName); e.Clear(); e.SendKeys(fullName); } catch { }
+            var e = wait.Until(ExpectedConditions.ElementIsVisible(txtFullName));
+            e.Clear(); e.SendKeys(fullName);
         }
 
         public void EnterPhone(string phone)
         {
-            try { var e = driver.FindElement(txtPhone); e.Clear(); e.SendKeys(phone); } catch { }
+            var e = wait.Until(ExpectedConditions.ElementIsVisible(txtPhone));
+            e.Clear(); e.SendKeys(phone);
         }
 
-        // Bấm nút Thay đổi địa chỉ để mở Modal
-        public void ClickThayDoiDiaChi()
+        public void ClickThayDoiDiaChi() => wait.Until(ExpectedConditions.ElementToBeClickable(btnThayDoiDiaChi)).Click();
+
+        public void ChonDiaChiFull(string tinh, string quan, string xa, string soNha)
         {
-            try { driver.FindElement(btnThayDoiDiaChi).Click(); } catch { }
+            new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(cboProvince))).SelectByText(tinh);
+
+            wait.Until(d => new SelectElement(d.FindElement(cboDistrict)).Options.Count > 1);
+            new SelectElement(driver.FindElement(cboDistrict)).SelectByText(quan);
+
+            wait.Until(d => new SelectElement(d.FindElement(cboWard)).Options.Count > 1);
+            new SelectElement(driver.FindElement(cboWard)).SelectByText(xa);
+
+            driver.FindElement(txtStreetDetail).SendKeys(soNha);
+            driver.FindElement(btnLuuDiaChi).Click();
         }
 
-        // Chọn Tỉnh/Thành Phố
-        public void SelectProvince(string province)
+        public void SelectPaymentMethod(bool isCOD)
         {
-            try { new SelectElement(driver.FindElement(cboProvince)).SelectByText(province); } catch { }
+            By target = isCOD ? optCOD : optBanking;
+            wait.Until(ExpectedConditions.ElementToBeClickable(target)).Click();
         }
 
-        // Chọn Quận/Huyện
-        public void SelectDistrict(string district)
-        {
-            try { new SelectElement(driver.FindElement(cboDistrict)).SelectByText(district); } catch { }
-        }
+        public void ClickDatHang() => wait.Until(ExpectedConditions.ElementToBeClickable(btnDatHang)).Click();
 
-        // Chọn Phường/Xã
-        public void SelectWard(string ward)
-        {
-            try { new SelectElement(driver.FindElement(cboWard)).SelectByText(ward); } catch { }
-        }
-
-        // Nhập số nhà
-        public void EnterStreetDetail(string street)
-        {
-            try { var e = driver.FindElement(txtStreetDetail); e.Clear(); e.SendKeys(street); } catch { }
-        }
-
-        public void ClickLuuDiaChi()
-        {
-            try { driver.FindElement(btnLuuDiaChi).Click(); } catch { }
-        }
-
-        // Chọn phương thức thanh toán
-        public void SelectPaymentMethod(string method)
+        public void ConfirmSweetAlert()
         {
             try
             {
-                if (method.Contains("QR") || method.Contains("VNPay") || method.Contains("Chuyển khoản"))
-                    driver.FindElement(optBanking).Click();
-                else
-                    driver.FindElement(optCOD).Click();
-            }
-            catch { }
-        }
-
-        public void ClickDatHang()
-        {
-            driver.FindElement(btnDatHang).Click();
-        }
-
-        public void CloseSweetAlert()
-        {
-            try
-            {
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
-                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.CssSelector(".swal2-confirm"))).Click();
-            }
-            catch { }
-        }
-
-        public void EnterAndApplyDiscount(string code)
-        {
-            try
-            {
-                var e = driver.FindElement(By.CssSelector("input[name*='discount'], input[id*='discount'], input[id*='voucher']"));
-                e.Clear();
-                e.SendKeys(code);
-                driver.FindElement(By.XPath("//button[contains(text(), 'Áp dụng') or contains(text(), 'Apply') or contains(@class, 'btn-apply')]")).Click();
+                wait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(".swal2-confirm"))).Click();
             }
             catch { }
         }
