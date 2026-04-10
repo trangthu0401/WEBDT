@@ -68,5 +68,31 @@ namespace PhoneStore.AutoTests.Pages
 
             System.Threading.Thread.Sleep(3000); // Đợi hệ thống xử lý hủy đơn
         }
+        // Hàm này nhấn xác nhận hủy mà không nhập lý do
+        public void ConfirmCancelWithoutReason()
+        {
+            // 1. Bấm nút "Hủy đơn" để mở Modal
+            var btnOpenCancel = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//button[contains(.,'Hủy đơn')]")));
+            btnOpenCancel.Click();
+
+            System.Threading.Thread.Sleep(2000);
+
+            // 2. Không nhập gì cả, bấm thẳng nút "Xác nhận Hủy"
+            By btnConfirmCancelPath = By.XPath("//div[contains(@class,'modal')]//button[contains(.,'Xác nhận Hủy')]");
+            var btnConfirmCancel = wait.Until(ExpectedConditions.ElementToBeClickable(btnConfirmCancelPath));
+            btnConfirmCancel.Click();
+        }
+
+        // Hàm kiểm tra lỗi validation (thường là thẻ span màu đỏ dưới ô textarea)
+        public bool IsReasonRequiredErrorDisplayed()
+        {
+            try
+            {
+                // Tìm thông báo lỗi dạng: "Vui lòng nhập lý do" hoặc class text-danger
+                var error = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//div[contains(@class,'modal')]//span[contains(@class,'text-danger')] | //div[contains(@class,'modal')]//*[contains(text(),'lý do')]")));
+                return error.Displayed;
+            }
+            catch { return false; }
+        }
     }
 }

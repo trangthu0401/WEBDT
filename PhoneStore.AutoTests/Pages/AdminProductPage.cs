@@ -36,7 +36,28 @@ namespace PhoneStore.AutoTests.Pages
         private By txtPrice = By.XPath("//label[contains(.,'Giá bán')]/following-sibling::input");
         private By txtStock = By.XPath("//label[contains(.,'Tồn kho')]/following-sibling::input");
 
-        public void GoToCreatePage() => wait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector("a[href*='Create']"))).Click();
+        public void GoToCreatePage()
+        {
+            // Thêm 1-2 giây đợi cho trang web ổn định hẳn (vì chạy Localhost hay bị lag nhẹ)
+            System.Threading.Thread.Sleep(2000);
+
+            // XPath này sẽ tìm mọi thẻ <a> có chứa chữ "Thêm" hoặc có link chứa chữ "Create"
+            By btnCreate = By.XPath("//a[contains(@href,'Create')] | //a[contains(.,'Thêm')] | //button[contains(.,'Thêm')]");
+
+            try
+            {
+                var element = wait.Until(ExpectedConditions.ElementToBeClickable(btnCreate));
+                // Cuộn màn hình tới cái nút đó để đảm bảo nó nằm trong tầm mắt Robot
+                ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", element);
+                element.Click();
+            }
+            catch (Exception ex)
+            {
+                // Nếu lỗi, Robot sẽ chụp ảnh và báo cho Vy biết nó đang đứng ở đâu
+                Console.WriteLine("Robot đang đứng ở URL: " + driver.Url);
+                throw new Exception("Vy ơi, không thấy nút Thêm mới đâu hết! Coi chừng bị văng Login rồi.");
+            }
+        }
 
         public void InputProductDetails(dynamic data)
         {
@@ -92,5 +113,14 @@ namespace PhoneStore.AutoTests.Pages
             System.Threading.Thread.Sleep(1000);
             btn.Click();
         }
+        // Thêm locator cho nút Hủy (thường là thẻ a hoặc button cạnh nút Lưu)
+        private By btnCancel = By.XPath("//a[contains(.,'Hủy')] | //a[contains(@href,'Index')]");
+
+        public void Cancel()
+        {
+            driver.FindElement(btnCancel).Click();
+        }
+
+        public string GetPageSource() => driver.PageSource;
     }
 }

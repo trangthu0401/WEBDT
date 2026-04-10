@@ -1,4 +1,20 @@
 ﻿{
+
+  "TC_PRODUCT_06": {
+    "Description": "Kiểm tra truy cập vào trang danh sách biến thể của sản phẩm đầu tiên"
+  },
+
+
+  "TC_PRODUCT_14": {
+    "Color": "Xanh Lá",
+    "Storage": "512GB",
+    "RAM": "16GB",
+    "Price": "25000000",
+    "PromoPrice": "24000000",
+    "Stock": "100",
+    "ImageFileName": "ip16.png"
+  },
+
   "TC_PRODUCT_15": {
     "ProductName": "iPhone 16e",
     "Color": "Trắng",
@@ -9,44 +25,38 @@
     "Stock": "50",
     "ImageFileName": "ip16e_trang.webp"
   },
-  "TC_PRODUCT_15_1": {
-    "ProductName": "iPhone 13 Pro Max",
-    "Color": "Xanh Sierra (Sierra Blue)",
-    "Storage": "256",
-    "RAM": "6",
-    "Price": "18500000",
-    "PromoPrice": "17900000",
-    "Stock": "30",
-    "ImageFileName": "ip13pr_xanh.jpg"
+
+  "TC_PRODUCT_16": {
+    "Color": "",
+    "Storage": "128GB",
+    "RAM": "8GB",
+    "Price": "15000000",
+    "Stock": "50",
+    "ImageFileName": "ip16.png"
   },
-  "TC_PRODUCT_15_2": {
-    "ProductName": "iPhone 15",
-    "Color": "Vàng",
-    "Storage": "256",
-    "RAM": "6",
-    "Price": "20990000",
-    "PromoPrice": "17900000",
-    "Stock": "30",
-    "ImageFileName": "ip15_vang.jpg"
-  }, 
-  "TC_PRODUCT_15_3": {
-    "ProductName": "Samsung Galaxy Z Flip7",
-    "Color": "Xanh Sky",
-    "Storage": "512",
-    "RAM": "12",
-    "Price": "26990000",
-    "PromoPrice": "24990000",
-    "Stock": "20",
-    "ImageFileName": "samsungflip7_xanh.jpg"
+  "TC_PRODUCT_17": {
+    "Color": "Đỏ",
+    "Storage": "128GB",
+    "RAM": "8GB",
+    "Price": "15000000",
+    "Stock": "-10",
+    "ImageFileName": "ip16.png"
   },
-  "TC_PRODUCT_15_4": {
-    "ProductName": "Samsung Galaxy Z Fold7",
-    "Color": "Xanh Navi ",
-    "Storage": "512",
-    "RAM": "12",
-    "Price": "26990000",
-    "PromoPrice": "24990000",
-    "Stock": "20",
-    "ImageFileName": "SamsungZFold7_xanhnavi.jpg"
+  "TC_PRODUCT_18": {
+    "Color": "Xanh",
+    "Storage": "128GB",
+    "RAM": "8GB",
+    "Price": "20000000",
+    "Stock": "10",
+    "ImageFileName": "ip16.png"
+  },
+  "TC_PRODUCT_19": {
+    "Color": "Tím",
+    "Storage": "128GB",
+    "RAM": "8GB",
+    "Price": "20000000",
+    "Stock": "10",
+    "ImageFileName": "test_file_loi.exe"
   }
+
 }

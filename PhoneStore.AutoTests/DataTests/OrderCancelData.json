@@ -1,4 +1,8 @@
 ﻿{
+  "TC_ORDER_10": {
+    "CancelReason": "",
+    "Description": "Hủy đơn nhưng bỏ trống lý do"
+  },
   "TC_ORDER_09": {
     "CancelReason": "Không còn nhu cầu"
   }

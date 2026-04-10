@@ -30,8 +30,23 @@ namespace PhoneStore.AutoTests.Pages
         private By fileImg = By.XPath("//input[@type='file']");
         private By btnSave = By.XPath("//button[contains(., 'Lưu Biến Thể')]");
 
+
+
+
         // --- ACTIONS ---
-        public void GoToFirstProductVariant() => wait.Until(ExpectedConditions.ElementToBeClickable(btnViewVariant)).Click();
+        public void GoToFirstProductVariant()
+        {
+            var btn = wait.Until(ExpectedConditions.ElementToBeClickable(btnViewVariant));
+            // Cuộn tới cho chắc ăn rồi mới click
+            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn);
+            btn.Click();
+        }
+
+        public bool IsAtVariantListPage()
+        {
+            // Kiểm tra URL xem đã nhảy sang trang biến thể chưa
+            return wait.Until(d => d.Url.ToLower().Contains("productvariant"));
+        }
 
         public void OpenAddModal()
         {
@@ -82,5 +97,39 @@ namespace PhoneStore.AutoTests.Pages
             System.Threading.Thread.Sleep(1000);
             btn.Click();
         }
+        // Locator cho nút Xem chi tiết ở dòng đầu tiên (Icon mắt hoặc chữ Xem)
+        private By btnViewDetail = By.XPath("(//a[contains(@href, 'Details')])[1]");
+
+        public void ViewFirstProductDetail()
+        {
+            wait.Until(ExpectedConditions.ElementToBeClickable(btnViewDetail)).Click();
+        }
+
+        public bool IsErrorMessageDisplayed()
+        {
+            try
+            {
+                // Tìm các span validation hoặc message lỗi của hệ thống
+                var error = driver.FindElements(By.XPath("//span[contains(@class,'text-danger')] | //div[contains(@class,'validation-summary-errors')]"));
+                return error.Count > 0 && error[0].Displayed;
+            }
+            catch { return false; }
+        }
+
+        public string GetUploadedFileName()
+        {
+            // Lấy giá trị từ ô input file (thường nó sẽ lưu đường dẫn file)
+            return driver.FindElement(fileImg).GetAttribute("value");
+        }
+
+        public string GetInputValue(By locator)
+        {
+            return driver.FindElement(locator).GetAttribute("value");
+        }
+
+        // Tạo thuộc tính để Test gọi cho dễ
+        public By ColorInput => txtColor;
+        public By StockInput => txtStock;
+
     }
 }

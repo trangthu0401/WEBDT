@@ -1,0 +1,12 @@
+﻿[
+  {
+    "TestCaseID": "TC_PRODUCT_28",
+    "TargetPage": "2",
+    "Description": "Chuyển từ trang 1 sang trang 2"
+  },
+  {
+    "TestCaseID": "TC_PRODUCT_29",
+    "TargetPage": "1",
+    "Description": "Quay lại trang 1 từ trang 2"
+  }
+]

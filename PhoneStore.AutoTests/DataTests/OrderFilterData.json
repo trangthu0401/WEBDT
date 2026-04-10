@@ -1,0 +1,22 @@
+﻿[
+  {
+    "TestCaseID": "TC_ORDER_13",
+    "Status": "Đang giao",
+    "Description": "Lọc đơn hàng trạng thái Đang giao"
+  },
+  {
+    "TestCaseID": "TC_ORDER_14",
+    "Status": "Chờ xác nhận",
+    "Description": "Lọc đơn hàng trạng thái Chờ xác nhận"
+  },
+  {
+    "TestCaseID": "TC_ORDER_15",
+    "Status": "Đã giao",
+    "Description": "Lọc đơn hàng trạng thái Đã giao"
+  },
+  {
+    "TestCaseID": "TC_ORDER_16",
+    "Status": "Đã hủy",
+    "Description": "Lọc đơn hàng trạng thái Đã hủy"
+  }
+]
