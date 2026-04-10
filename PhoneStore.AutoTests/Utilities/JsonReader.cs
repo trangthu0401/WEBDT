@@ -20,25 +20,39 @@ namespace PhoneStore.AutoTests.Utilities
 
             string filePath = paths.FirstOrDefault(File.Exists);
             if (filePath == null)
-                throw new FileNotFoundException($"Hổng thấy file {jsonFileName}. Vy nhớ chuột phải file JSON chọn Properties -> Copy if newer nhé!");
+                throw new FileNotFoundException($"Không tìm thấy file {jsonFileName}. Hãy đặt file trong thư mục DataTests và set Copy if newer.");
 
             return filePath;
         }
 
-        // Hàm dành riêng cho Admin (Lấy 1 ID cụ thể)
+        /// <summary>
+        /// Lấy dòng dữ liệu theo TestCaseID (hỗ trợ cả mảng và object)
+        /// </summary>
         public static dynamic GetTestRow(string jsonFileName, string testCaseID)
         {
             string jsonContent = File.ReadAllText(GetFilePath(jsonFileName));
-            JObject jsonObj = JObject.Parse(jsonContent);
+            jsonContent = jsonContent.Trim();
 
-            var data = jsonObj[testCaseID];
-            if (data == null)
-                throw new Exception($"Lỗi: Không tìm thấy nhãn '{testCaseID}' trong file JSON!");
-
-            return data.ToObject<dynamic>();
+            if (jsonContent.StartsWith("["))
+            {
+                // Dạng mảng các object
+                var array = JArray.Parse(jsonContent);
+                var item = array.FirstOrDefault(x => x["TestCaseID"]?.ToString() == testCaseID);
+                if (item == null)
+                    throw new Exception($"Không tìm thấy TestCaseID '{testCaseID}' trong mảng JSON!");
+                return item.ToObject<dynamic>();
+            }
+            else
+            {
+                // Dạng object với key là TestCaseID
+                var obj = JObject.Parse(jsonContent);
+                var data = obj[testCaseID];
+                if (data == null)
+                    throw new Exception($"Không tìm thấy key '{testCaseID}' trong object JSON!");
+                return data.ToObject<dynamic>();
+            }
         }
 
-        // Hàm dành cho các test cũ (Fix lỗi CS0117)
         public static IEnumerable<TestCaseData> GetTestData(string jsonFileName)
         {
             string jsonContent = File.ReadAllText(GetFilePath(jsonFileName));

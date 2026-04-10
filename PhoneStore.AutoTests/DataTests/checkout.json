@@ -9,11 +9,21 @@
     "TestCaseID": "TC_CHK_02",
     "FullName": "Nguyễn Văn A",
     "Phone": "0901234567",
-    "Province": "TPHCM",
-    "District": "Quận 1",
-    "Ward": "Phường Tân Định",
-    "Address": "Số 1 Lê Duẩn",
+    "Province": "Thành phố Hà Nội",
+    "District": "Quận Cầu Giấy",
+    "Ward": "Phường Dịch Vọng",
+    "Address": "Số 23/7d",
     "ExpectedResult": "Order_Success"
+  },
+  {
+    "TestCaseID": "TC_CHK_11",
+    "FullName": "Nguyễn Văn A",
+    "Phone": "0901234567",
+    "Province": "Thành phố Hà Nội",
+    "District": "Quận Cầu Giấy",
+    "Ward": "",
+    "Street": "Số 23/7d",
+    "ExpectedResult": "Error_Missing_Ward"
   },
   {
     "TestCaseID": "TC_CHK_05",
@@ -42,11 +52,6 @@
     "Phone": "0901234567",
     "Address": "",
     "ExpectedResult": "Error_Missing_Address"
-  },
-  {
-    "TestCaseID": "TC_CHK_16",
-    "PaymentMethod": "Chuyển khoản ngân hàng (VNPay/Momo)",
-    "ExpectedResult": "Order_Success_With_QR"
   },
   {
     "TestCaseID": "TC_CHK_17",

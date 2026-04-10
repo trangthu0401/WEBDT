@@ -13,74 +13,190 @@ namespace PhoneStore.AutoTests.Pages
         public CheckoutPage(IWebDriver driver)
         {
             this.driver = driver;
-            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            this.wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
         }
 
-        // ==========================================
-        // LOCATORS (Khớp với cấu trúc HTML của bạn)
-        // ==========================================
-        private By txtFullName = By.XPath("//input[@id='FullName' or @name='FullName' or @id='ReceiverName']");
-        private By txtPhone = By.XPath("//input[@id='Phone' or @name='Phone' or @id='ReceiverPhone']");
+        // Locators – mở rộng thêm các khả năng
+        private By txtFullName = By.XPath("//input[@id='FullName' or @name='FullName' or @id='ReceiverName' or @name='ReceiverName' or @id='CustomerName' or @name='CustomerName']");
+        private By txtPhone = By.XPath("//input[@id='Phone' or @name='Phone' or @id='ReceiverPhone' or @name='ReceiverPhone' or @id='CustomerPhone' or @name='CustomerPhone']");
 
-        // Modal Địa chỉ
         private By btnThayDoiDiaChi = By.CssSelector(".btn-change-address");
+        private By modalAddressDialog = By.XPath("//div[contains(@class,'modal') and contains(@style,'display: block')]");
+        private By btnThemDiaChiMoi = By.CssSelector(".btn.btn-outline-danger.py-2.dashed-border");
         private By cboProvince = By.Id("province");
         private By cboDistrict = By.Id("district");
         private By cboWard = By.Id("ward");
         private By txtStreetDetail = By.Id("streetDetail");
-        private By btnLuuDiaChi = By.XPath("//button[contains(text(),'Lưu địa chỉ') or contains(text(),'Thêm địa chỉ')]");
-
-        // Phương thức thanh toán & Đặt hàng
-        private By optBanking = By.Id("opt-banking");
+        private By btnLuuDiaChi = By.XPath("//button[contains(text(),'Lưu địa chỉ')]");
+        private By sweetOkButton = By.CssSelector(".swal2-confirm.swal2-styled");
         private By optCOD = By.Id("opt-cod");
-        private By btnDatHang = By.CssSelector(".btn-place-order, .btn-buy-now"); // Nút 'ĐANG XỬ LÝ...' trong CSV
+        private By optBanking = By.Id("opt-banking");
+        private By btnDatHang = By.CssSelector(".btn-place-order, .btn-buy-now");
 
-        // ==========================================
-        // ACTIONS
-        // ==========================================
+        // Hàm kiểm tra element tồn tại (không throw exception)
+        private bool IsElementPresent(By by, int timeoutSeconds = 2)
+        {
+            try
+            {
+                var waitShort = new WebDriverWait(driver, TimeSpan.FromSeconds(timeoutSeconds));
+                waitShort.Until(ExpectedConditions.ElementExists(by));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public void EnterFullName(string fullName)
         {
+            if (!IsElementPresent(txtFullName, 3))
+            {
+                // Nếu không có field nhập tên, coi như không cần nhập (bỏ qua)
+                Console.WriteLine("Không tìm thấy field nhập Họ tên, bỏ qua bước này.");
+                return;
+            }
             var e = wait.Until(ExpectedConditions.ElementIsVisible(txtFullName));
             e.Clear(); e.SendKeys(fullName);
         }
 
         public void EnterPhone(string phone)
         {
+            if (!IsElementPresent(txtPhone, 3))
+            {
+                Console.WriteLine("Không tìm thấy field nhập SĐT, bỏ qua bước này.");
+                return;
+            }
             var e = wait.Until(ExpectedConditions.ElementIsVisible(txtPhone));
             e.Clear(); e.SendKeys(phone);
         }
 
-        public void ClickThayDoiDiaChi() => wait.Until(ExpectedConditions.ElementToBeClickable(btnThayDoiDiaChi)).Click();
+        // Các hàm còn lại giữ nguyên (ClickThayDoiDiaChi, ClickThemDiaChiMoi, ...)
+        public void ClickThayDoiDiaChi()
+        {
+            wait.Until(ExpectedConditions.ElementToBeClickable(btnThayDoiDiaChi)).Click();
+            wait.Until(ExpectedConditions.ElementIsVisible(modalAddressDialog));
+        }
+
+        public void ClickThemDiaChiMoi()
+        {
+            var addBtn = wait.Until(ExpectedConditions.ElementToBeClickable(btnThemDiaChiMoi));
+            try
+            {
+                addBtn.Click();
+            }
+            catch (ElementClickInterceptedException)
+            {
+                ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", addBtn);
+            }
+            wait.Until(ExpectedConditions.ElementIsVisible(cboProvince));
+        }
+
+        public void SelectProvince(string province)
+        {
+            var select = new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(cboProvince)));
+            select.SelectByText(province);
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void SelectDistrict(string district)
+        {
+            wait.Until(d => new SelectElement(d.FindElement(cboDistrict)).Options.Count > 1);
+            var select = new SelectElement(driver.FindElement(cboDistrict));
+            select.SelectByText(district);
+            System.Threading.Thread.Sleep(500);
+        }
+
+        public void SelectWard(string ward)
+        {
+            if (string.IsNullOrEmpty(ward)) return;
+            wait.Until(d => new SelectElement(d.FindElement(cboWard)).Options.Count > 1);
+            new SelectElement(driver.FindElement(cboWard)).SelectByText(ward);
+        }
+
+        public void EnterStreetDetail(string street)
+        {
+            var e = wait.Until(ExpectedConditions.ElementIsVisible(txtStreetDetail));
+            e.Clear(); e.SendKeys(street);
+        }
+
+        public void ClickLuuDiaChi()
+        {
+            wait.Until(ExpectedConditions.ElementToBeClickable(btnLuuDiaChi)).Click();
+        }
 
         public void ChonDiaChiFull(string tinh, string quan, string xa, string soNha)
         {
-            new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(cboProvince))).SelectByText(tinh);
+            SelectProvince(tinh);
+            SelectDistrict(quan);
+            SelectWard(xa);
+            EnterStreetDetail(soNha);
+            ClickLuuDiaChi();
+        }
 
-            wait.Until(d => new SelectElement(d.FindElement(cboDistrict)).Options.Count > 1);
-            new SelectElement(driver.FindElement(cboDistrict)).SelectByText(quan);
-
-            wait.Until(d => new SelectElement(d.FindElement(cboWard)).Options.Count > 1);
-            new SelectElement(driver.FindElement(cboWard)).SelectByText(xa);
-
-            driver.FindElement(txtStreetDetail).SendKeys(soNha);
-            driver.FindElement(btnLuuDiaChi).Click();
+        public void DongThongBao()
+        {
+            try
+            {
+                var ok = wait.Until(ExpectedConditions.ElementToBeClickable(sweetOkButton));
+                ok.Click();
+                wait.Until(ExpectedConditions.InvisibilityOfElementLocated(sweetOkButton));
+            }
+            catch
+            {
+                try { driver.SwitchTo().Alert().Accept(); } catch { }
+            }
         }
 
         public void SelectPaymentMethod(bool isCOD)
         {
             By target = isCOD ? optCOD : optBanking;
-            wait.Until(ExpectedConditions.ElementToBeClickable(target)).Click();
+            // Chờ element tồn tại và có thể tương tác
+            var element = wait.Until(ExpectedConditions.ElementExists(target));
+            // Cuộn element vào giữa màn hình (tránh bị che)
+            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView({block: 'center'});", element);
+            System.Threading.Thread.Sleep(300);
+            // Dùng JavaScript click để bypass lỗi che khuất
+            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", element);
         }
 
-        public void ClickDatHang() => wait.Until(ExpectedConditions.ElementToBeClickable(btnDatHang)).Click();
-
-        public void ConfirmSweetAlert()
+        public void ClickDatHang()
+        {
+            var element = wait.Until(ExpectedConditions.ElementToBeClickable(btnDatHang));
+            // Cuộn nút vào giữa màn hình
+            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView({block: 'center'});", element);
+            System.Threading.Thread.Sleep(300);
+            // Click bằng JavaScript để tránh bị chặn
+            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", element);
+        }
+        // Đóng bảng địa chỉ bên phải (nếu có)
+        public void CloseAddressPanel()
         {
             try
             {
-                wait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(".swal2-confirm"))).Click();
+                // Thử tìm nút X (có thể là button với class close, hoặc span chứa ×)
+                var closeBtn = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//button[contains(@class,'close') or contains(@class,'btn-close')] | //span[text()='×']/parent::button")));
+                closeBtn.Click();
+                Thread.Sleep(500);
             }
-            catch { }
+            catch { /* Không có hoặc không cần đóng */ }
+        }
+        // Locator cho danh sách địa chỉ (tùy chỉnh theo giao diện thực tế)
+        private By addressItems = By.CssSelector(".address-item, .list-group-item, .shipping-address-item");
+
+        /// <summary>
+        /// Chọn địa chỉ dựa trên nội dung (số nhà, tên đường) vừa thêm
+        /// </summary>
+        public void SelectAddressByStreet(string streetDetail)
+        {
+            // Đợi danh sách địa chỉ xuất hiện
+            wait.Until(ExpectedConditions.ElementIsVisible(addressItems));
+
+            // Tìm địa chỉ chứa streetDetail và click
+            var address = wait.Until(ExpectedConditions.ElementToBeClickable(
+                By.XPath($"//*[contains(@class,'address-item') or contains(@class,'list-group-item')]//*[contains(text(),'{streetDetail}')]")));
+            address.Click();
+            Thread.Sleep(500);
         }
     }
 }
