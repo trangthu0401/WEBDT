@@ -92,24 +92,32 @@ namespace PhoneStore.AutoTests.Tests
             // Kỳ vọng bị đá về lại trang Cart vì không có đồ
             Assert.IsTrue(driver.Url.ToLower().Contains("cart"), "Lỗi: Giỏ hàng trống nhưng vẫn cho vào trang Thanh toán!");
         }
-
         [Test]
-        [Property("TC_ID", "TC_CHK_16")]
-        public void TC_CHK_16_DatHang_ThanhToanQR_TuGioHang()
+        [Property("TC_ID", "TC_CHK_13")]
+        public void TC_CHK_13_ValidateForm_HoTenChuaKyTuDacBiet()
         {
+            // Bước 1: Mồi đồ vào giỏ và tiến hành thanh toán
             ThemDoVaoGioVaVaoCart();
-            cartPage.ClickMuaNgay();
+            cartPage.ClickMuaNgay(); // (Hoặc ClickThanhToan() tùy theo tên hàm hiện tại của bạn)
             Thread.Sleep(2000);
 
-            checkoutPage.EnterFullName("Trang Nguyễn");
-            checkoutPage.EnterPhone("0908887776");
+            // Bước 2: Cố tình nhập Họ tên chứa ký tự lạ (dựa theo kịch bản Excel)
+            checkoutPage.EnterFullName("Trang @#$% Nguyễn");
+            checkoutPage.EnterPhone("0901234567");
 
-            checkoutPage.SelectPaymentMethod(isCOD: false); // Chọn QR
+            // Xóa sạch các bước chọn địa chỉ / phương thức thanh toán rườm rà
+            // Chỉ cần điền tên, sđt rồi bấm Đặt hàng luôn để check Validate
             checkoutPage.ClickDatHang();
-            Thread.Sleep(2000);
+            Thread.Sleep(1500);
 
-            Assert.IsTrue(driver.PageSource.Contains("thành công") || driver.PageSource.Contains("QR"),
-                "Lỗi: Đặt hàng QR từ giỏ hàng thất bại!");
+            // Bước 3: Kiểm tra xem web có văng ra câu chửi/báo lỗi hay không
+            string pageSource = driver.PageSource.ToLower();
+            bool hasError = pageSource.Contains("ký tự") ||
+                            pageSource.Contains("hợp lệ") ||
+                            pageSource.Contains("không được chứa") ||
+                            pageSource.Contains("định dạng");
+
+            Assert.IsTrue(hasError, "Lỗi: Nhập Họ tên chứa ký tự đặc biệt (@#$%) nhưng hệ thống KHÔNG chặn báo lỗi!");
         }
     }
 }
