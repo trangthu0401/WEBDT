@@ -25,17 +25,14 @@ namespace PhoneStore.AutoTests.Tests
         [Property("TC_ID", "TC_ORDER_10")]
         public void TC_ORDER_10_Cancel_MissingReason()
         {
-            // 1. Vào trang danh sách đơn
+         
             driver.Navigate().GoToUrl(ConfigHelper.BaseUrl + "/Order/Index");
             System.Threading.Thread.Sleep(2000);
 
-            // 2. Click vào đơn Chờ xác nhận bất kỳ
             cancelPage.ClickFirstWaitingOrder();
-
-            // 3. Thực hiện hủy mà không nhập lý do
+          
             cancelPage.ConfirmCancelWithoutReason();
 
-            // 4. Kiểm tra xem có hiện thông báo lỗi yêu cầu nhập lý do không
             Assert.That(cancelPage.IsReasonRequiredErrorDisplayed(), Is.True,
                 "Lỗi: Hệ thống không hiển thị cảnh báo khi bỏ trống lý do hủy!");
 

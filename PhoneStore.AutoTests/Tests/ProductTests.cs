@@ -34,7 +34,7 @@ namespace PhoneStore.AutoTests.Tests
                 "Lỗi: Khách vãng lai bấm Mua Ngay không bị ép đăng nhập!");
         }
 
-        // ĐÃ XÓA TC_PROD_02 (vì không có chức năng)
+       
 
         public static IEnumerable<TestCaseData> GetVariantData()
         {

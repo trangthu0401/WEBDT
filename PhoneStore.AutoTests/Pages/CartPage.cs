@@ -110,6 +110,9 @@ namespace PhoneStore.AutoTests.Pages
                 return "";
             }
         }
-
+        public int GetSoLuongSanPhamTrongGio()
+        {
+            return driver.FindElements(By.CssSelector(".cart-item, .cart-row, tbody tr")).Count;
+        }
     }
 }

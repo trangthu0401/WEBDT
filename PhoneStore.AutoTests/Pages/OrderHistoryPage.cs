@@ -14,7 +14,7 @@ namespace PhoneStore.AutoTests.Pages
         public OrderHistoryPage(IWebDriver driver)
         {
             this.driver = driver;
-            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
         }
 
         public void GoToOrderHistory()
@@ -24,41 +24,39 @@ namespace PhoneStore.AutoTests.Pages
             System.Threading.Thread.Sleep(500);
         }
 
-        // ========== LOCATORS (dựa trên file record) ==========
-        // Ô tìm kiếm ID
+        // ========== LOCATORS (CHUẨN TỪ CSV RECORD) ==========
+        // Bộ lọc
         private By searchInput = By.XPath("//input[@placeholder='Nhập id đơn hàng']");
-
-        // Dropdown lọc
         private By statusFilter = By.XPath("//select[@name='statusFilter']");
         private By paymentFilter = By.XPath("//select[@name='paymentMethod']");
         private By datePreset = By.XPath("//select[@name='datePreset']");
-
-        // Nút lọc (submit)
-        private By filterButton = By.XPath("//input[@type='submit']");
+        private By filterSubmit = By.XPath("//input[@type='submit']");
 
         // Bảng đơn hàng
         private By tableRows = By.XPath("//table//tbody/tr");
+        private By firstRowIdCell = By.XPath("//tbody/tr[1]/td[1]");
+        private By firstRowStatusCell = By.XPath("//tbody/tr[1]/td[6]");
+        private By firstRowCancelBtn = By.XPath("(//button[@class='btn-cancel-pop'])[1]");
         private By emptyMessage = By.XPath("//*[contains(text(),'Không tìm thấy đơn hàng') or contains(text(),'Chưa có đơn hàng')]");
-
-        // Nút hủy trên dòng đầu tiên
-        private By firstRowCancelButton = By.XPath("(//button[@class='btn-cancel-pop'])[1]");
 
         // Popup hủy đơn
         private By cancelReasonLabel = By.XPath("//label[normalize-space()='{0}']");
         private By otherReasonTextarea = By.XPath("//textarea[@id='otherReason']");
-        private By confirmCancelButton = By.XPath("//button[contains(text(),'Xác nhận hủy')]");
+        private By confirmCancelBtn = By.XPath("//button[contains(text(),'Xác nhận hủy')]");
         private By okSweetAlert = By.XPath("//button[normalize-space()='OK']");
+        private By sweetAlertError = By.CssSelector(".swal2-error");
 
-        // Modal chi tiết đơn hàng (khi click vào mã đơn)
-        private By modalCloseButton = By.XPath("//button[@aria-label='Close']");
+        // Modal chi tiết đơn hàng
+        private By modalCloseBtn = By.XPath("//button[@aria-label='Close']");
         private By modalSubtotal = By.XPath("//*[contains(text(),'Tạm tính')]/following-sibling::*");
         private By modalShipping = By.XPath("//*[contains(text(),'Phí vận chuyển')]/following-sibling::*");
         private By modalTotal = By.XPath("//*[contains(text(),'Tổng cộng')]/following-sibling::*");
+        private By modalCancelReason = By.XPath("//*[contains(text(),'Lý do hủy')]/following-sibling::*");
 
-        // Phân trang (nếu có)
+        // Phân trang
         private By page2Link = By.XPath("//a[contains(text(),'2')]");
 
-        // ========== ACTIONS ==========
+        // ========== HÀNH ĐỘNG ==========
         public void SearchByOrderId(string orderId)
         {
             var input = wait.Until(ExpectedConditions.ElementIsVisible(searchInput));
@@ -72,26 +70,26 @@ namespace PhoneStore.AutoTests.Pages
         {
             var select = new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(statusFilter)));
             select.SelectByText(statusText);
-            System.Threading.Thread.Sleep(500);
+            System.Threading.Thread.Sleep(300);
         }
 
         public void SelectPaymentMethod(string paymentText)
         {
             var select = new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(paymentFilter)));
             select.SelectByText(paymentText);
-            System.Threading.Thread.Sleep(500);
+            System.Threading.Thread.Sleep(300);
         }
 
         public void SelectDatePreset(string preset)
         {
             var select = new SelectElement(wait.Until(ExpectedConditions.ElementIsVisible(datePreset)));
             select.SelectByText(preset);
-            System.Threading.Thread.Sleep(500);
+            System.Threading.Thread.Sleep(300);
         }
 
         public void ClickFilter()
         {
-            wait.Until(ExpectedConditions.ElementToBeClickable(filterButton)).Click();
+            wait.Until(ExpectedConditions.ElementToBeClickable(filterSubmit)).Click();
             System.Threading.Thread.Sleep(500);
         }
 
@@ -105,27 +103,25 @@ namespace PhoneStore.AutoTests.Pages
 
         public string GetFirstOrderStatus()
         {
-            try
-            {
-                var statusCell = driver.FindElement(By.XPath("//tbody/tr[1]/td[6]"));
-                return statusCell.Text.Trim();
-            }
+            try { return driver.FindElement(firstRowStatusCell).Text.Trim(); }
             catch { return string.Empty; }
         }
 
         public string GetFirstOrderId()
         {
-            try
-            {
-                var idCell = driver.FindElement(By.XPath("//tbody/tr[1]/td[1]"));
-                return idCell.Text.Trim().Replace("#", "");
-            }
+            try { return driver.FindElement(firstRowIdCell).Text.Replace("#", "").Trim(); }
             catch { return string.Empty; }
+        }
+
+        public bool IsCancelButtonPresent()
+        {
+            try { return driver.FindElement(firstRowCancelBtn).Displayed; }
+            catch { return false; }
         }
 
         public void ClickFirstCancelButton()
         {
-            wait.Until(ExpectedConditions.ElementToBeClickable(firstRowCancelButton)).Click();
+            wait.Until(ExpectedConditions.ElementToBeClickable(firstRowCancelBtn)).Click();
             System.Threading.Thread.Sleep(500);
         }
 
@@ -144,7 +140,7 @@ namespace PhoneStore.AutoTests.Pages
 
         public void ConfirmCancel()
         {
-            wait.Until(ExpectedConditions.ElementToBeClickable(confirmCancelButton)).Click();
+            wait.Until(ExpectedConditions.ElementToBeClickable(confirmCancelBtn)).Click();
         }
 
         public void ClickOkSweetAlert()
@@ -153,17 +149,21 @@ namespace PhoneStore.AutoTests.Pages
             catch { }
         }
 
-        // Mở modal chi tiết bằng cách click vào mã đơn hàng đầu tiên
+        public string GetSweetAlertErrorText()
+        {
+            try { return wait.Until(ExpectedConditions.ElementIsVisible(sweetAlertError)).Text; }
+            catch { return string.Empty; }
+        }
+
         public void ClickFirstOrderId()
         {
-            var idCell = driver.FindElement(By.XPath("//tbody/tr[1]/td[1]"));
-            idCell.Click();
+            wait.Until(ExpectedConditions.ElementToBeClickable(firstRowIdCell)).Click();
             System.Threading.Thread.Sleep(500);
         }
 
         public void CloseModal()
         {
-            try { wait.Until(ExpectedConditions.ElementToBeClickable(modalCloseButton)).Click(); }
+            try { wait.Until(ExpectedConditions.ElementToBeClickable(modalCloseBtn)).Click(); }
             catch { }
             System.Threading.Thread.Sleep(300);
         }
@@ -171,11 +171,18 @@ namespace PhoneStore.AutoTests.Pages
         public decimal GetModalSubtotal() => ParseMoney(modalSubtotal);
         public decimal GetModalShipping() => ParseMoney(modalShipping);
         public decimal GetModalTotal() => ParseMoney(modalTotal);
+        public string GetModalCancelReason() => driver.FindElement(modalCancelReason).Text;
 
         public void ClickPage2()
         {
             wait.Until(ExpectedConditions.ElementToBeClickable(page2Link)).Click();
             System.Threading.Thread.Sleep(500);
+        }
+
+        public bool IsTextareaVisible()
+        {
+            try { return driver.FindElement(otherReasonTextarea).Displayed; }
+            catch { return false; }
         }
 
         private decimal ParseMoney(By locator)
